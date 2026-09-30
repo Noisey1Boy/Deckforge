@@ -39,6 +39,7 @@ export function CreateView() {
   const setOutline = useAppStore((s) => s.setOutline);
   const setView = useAppStore((s) => s.setView);
   const setDataAssets = useAppStore((s) => s.setDataAssets);
+  const setGenSettings = useAppStore((s) => s.setGenSettings);
   const themeChoice = useAppStore((s) => s.themeChoice);
   const setDeck = useAppStore((s) => s.setDeck);
   const reduceMotion = useReducedMotion();
@@ -156,6 +157,8 @@ export function CreateView() {
     }
     setBusy('Designing the outline…');
     try {
+      // Persist generation controls so the slide pipeline uses the same settings.
+      setGenSettings({ audience, tone, language, slideCount });
       let charts: ChartSpec[] = [...chartSpecs];
       let diagramPlan: MermaidPlan | undefined = diagram ?? undefined;
       let dataContext: string | undefined;

@@ -16,8 +16,7 @@ export function GeneratingView() {
   const dataAssets = useAppStore((s) => s.dataAssets);
   const setDeck = useAppStore((s) => s.setDeck);
   const setView = useAppStore((s) => s.setView);
-  const patchDeck = useAppStore((s) => s.patchDeck);
-  const audience = '', tone = '', language = 'English';
+  const genSettings = useAppStore((s) => s.genSettings);
 
   const [slides, setSlides] = useState<Slide[]>([]);
   const [done, setDone] = useState(0);
@@ -43,7 +42,7 @@ export function GeneratingView() {
             outline,
             themeId,
             chartAssignments: dataAssets.chartAssignments,
-            language,
+            language: genSettings.language || 'English',
           }),
         });
         if (!res.ok || !res.body) {
@@ -104,7 +103,13 @@ export function GeneratingView() {
           subtitle: outline.subtitle,
           themeId,
           slides: finalSlides,
-          meta: { sourcePrompt: outline.title, generatedAt: new Date().toISOString(), language },
+          meta: {
+            sourcePrompt: outline.title,
+            generatedAt: new Date().toISOString(),
+            language: genSettings.language || 'English',
+            audience: genSettings.audience || undefined,
+            tone: genSettings.tone || undefined,
+          },
         };
 
         const saveRes = await fetch('/api/decks', {

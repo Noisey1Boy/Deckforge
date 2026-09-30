@@ -10,7 +10,7 @@ import { LAYOUT_IDS, type LayoutId } from '@/lib/deck/types';
 import { LAYOUT_BUDGETS } from '@/lib/deck/limits';
 import { getTheme } from '@/lib/design/themes';
 import { ArrowLeft, ArrowDown, ArrowUp, Plus, Trash2, Wand2, Sparkles, PencilLine } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export function OutlineView() {
   const outline = useAppStore((s) => s.outline);
@@ -19,10 +19,11 @@ export function OutlineView() {
   const themeChoice = useAppStore((s) => s.themeChoice);
   const [editing, setEditing] = useState(true);
 
-  if (!outline) {
-    setView('create');
-    return null;
-  }
+  useEffect(() => {
+    if (!outline) setView('create');
+  }, [outline, setView]);
+
+  if (!outline) return null;
 
   const recTheme = outline.recommendedThemeId ? getTheme(outline.recommendedThemeId) : null;
 

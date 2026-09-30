@@ -2,6 +2,7 @@
 
 import PptxGenJS from 'pptxgenjs';
 import type { Deck, Slide } from '@/lib/deck/types';
+import { visibleSlides } from '@/lib/deck/types';
 import { getTheme } from '@/lib/design/themes';
 
 /**
@@ -47,7 +48,7 @@ export async function exportPptx(deck: Deck): Promise<void> {
     });
   };
 
-  deck.slides.forEach((s: Slide, i: number) => {
+  visibleSlides(deck.slides).forEach((s: Slide, i: number) => {
     const slide = pptx.addSlide();
     slide.background = { color: c.bg.replace('#', '') };
     const primary = c.primary.replace('#', '');

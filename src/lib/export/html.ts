@@ -3,6 +3,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import type { Deck } from '@/lib/deck/types';
+import { visibleSlides } from '@/lib/deck/types';
 import { getTheme } from '@/lib/design/themes';
 import { SlideView } from '@/components/deck/SlideView';
 
@@ -35,7 +36,8 @@ export async function exportStandaloneHtml(deck: Deck): Promise<void> {
   const css = await cssRes.text();
 
   const stageStyle = 'width:min(100vw - 48px, calc((100vh - 130px) * 16 / 9));max-width:1280px;';
-  const slidesHtml = deck.slides
+  const slides = visibleSlides(deck.slides);
+  const slidesHtml = slides
     .map((s, i) => {
       const markup = renderToStaticMarkup(
         createElement(SlideView, {
@@ -43,7 +45,7 @@ export async function exportStandaloneHtml(deck: Deck): Promise<void> {
           theme,
           deckTitle: deck.title,
           index: i,
-          pageCount: deck.slides.length,
+          pageCount: slides.length,
           fixedCharts: true,
         })
       );
@@ -79,10 +81,10 @@ html,body{margin:0;padding:0;background:#101014}
 <main class="df-wrap" id="wrap">
 ${slidesHtml}
 </main>
-<div class="df-notes" id="notes">${escapeHtml(deck.slides.map((s, i) => `${i + 1}. ${s.notes ?? ''}`).join('\n'))}</div>
+<div class="df-notes" id="notes">${escapeHtml(slides.map((s, i) => `${i + 1}. ${s.notes ?? ''}`).join('\n'))}</div>
 <nav class="df-nav" aria-label="Deck navigation">
   <button onclick="step(-1)" aria-label="Previous">&uarr;</button>
-  <span class="df-counter" id="counter">1 / ${deck.slides.length}</span>
+  <span class="df-counter" id="counter">1 / ${slides.length}</span>
   <button onclick="step(1)" aria-label="Next">&darr;</button>
   <button onclick="document.getElementById('notes').classList.toggle('on')" title="Speaker notes">N</button>
   <button onclick="window.print()" title="Print / PDF">P</button>

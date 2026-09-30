@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 import {
   Play, Plus, Trash2, Copy, Presentation, ChevronLeft, ChevronRight, Check, Cloud,
   Undo2, Redo2, Keyboard, Type, Hash, List, Columns2, Image as ImageIcon, Quote,
-  BarChart3, Workflow, Table2, Flag, Sigma,
+  BarChart3, Workflow, Table2, Flag, Sigma, Eye, EyeOff,
 } from 'lucide-react';
 
 const LAYOUT_ICONS: Record<LayoutId, string> = {
@@ -49,7 +49,7 @@ function isTypingTarget(t: EventTarget | null): boolean {
 
 function SlideCard({
   slide, index, active, pageCount,
-  onSelect, onDuplicate, onDelete, onDragStart, onDragOver, onDrop,
+  onSelect, onDuplicate, onDelete, onToggleHidden, onDragStart, onDragOver, onDrop,
   dragging, dropTarget,
 }: {
   slide: Slide;
@@ -59,6 +59,7 @@ function SlideCard({
   onSelect: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onToggleHidden: () => void;
   onDragStart: () => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: () => void;
@@ -76,20 +77,36 @@ function SlideCard({
         'group relative rounded-lg overflow-hidden border-2 transition-all cursor-grab active:cursor-grabbing bg-card',
         active ? 'border-neutral-900 shadow-md' : 'border-transparent hover:border-neutral-300',
         dragging && 'opacity-40',
-        dropTarget && 'ring-2 ring-neutral-900/60'
+        dropTarget && 'ring-2 ring-neutral-900/60',
+        slide.hidden && !dragging && 'opacity-55 border-dashed'
       )}
       onClick={onSelect}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onSelect()}
-      aria-label={`Slide ${index + 1}: ${slide.title || slide.layout}`}
+      aria-label={`Slide ${index + 1}: ${slide.title || slide.layout}${slide.hidden ? ' (hidden)' : ''}`}
       aria-current={active}
     >
       <div className="pointer-events-none">
         <ScaledSlide slide={slide} theme={getTheme(theme)} index={index} pageCount={pageCount} />
       </div>
-      <div className="absolute top-1 left-1 bg-black/60 text-white text-[10px] rounded px-1.5 py-0.5 font-mono">{index + 1}</div>
+      <div className="absolute top-1 left-1 flex items-center gap-1">
+        <span className="bg-black/60 text-white text-[10px] rounded px-1.5 py-0.5 font-mono">{index + 1}</span>
+        {slide.hidden && (
+          <span className="bg-neutral-900/80 text-white text-[9px] uppercase tracking-wider rounded px-1.5 py-0.5 font-semibold inline-flex items-center gap-0.5">
+            <EyeOff className="h-2.5 w-2.5" /> Hidden
+          </span>
+        )}
+      </div>
       <div className="absolute top-1 right-1 hidden group-hover:flex gap-1">
+        <button
+          onClick={(e) => { e.stopPropagation(); onToggleHidden(); }}
+          className="bg-black/60 hover:bg-black/80 text-white rounded p-1"
+          aria-label={slide.hidden ? 'Show slide in presentation' : 'Hide slide from presentation'}
+          title={slide.hidden ? 'Show slide (H)' : 'Hide slide (H)'}
+        >
+          {slide.hidden ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+        </button>
         <button
           onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
           className="bg-black/60 hover:bg-black/80 text-white rounded p-1"
@@ -174,6 +191,12 @@ export function EditorView() {
         if (cur) st.duplicateSlide(cur.id);
         return;
       }
+      if (e.key === 'h' || e.key === 'H') {
+        e.preventDefault();
+        const cur = st.deck.slides[idx];
+        if (cur) st.updateSlide(cur.id, { hidden: !cur.hidden });
+        return;
+      }
       if (mod && e.key.toLowerCase() === 'z' && !e.shiftKey) {
         e.preventDefault(); st.undo(); return;
       }
@@ -209,10 +232,11 @@ export function EditorView() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  if (!deck) {
-    setView('create');
-    return null;
-  }
+  useEffect(() => {
+    if (!deck) setView('create');
+  }, [deck, setView]);
+
+  if (!deck) return null;
 
   const slides = deck.slides;
   const current = slides[currentSlideIndex] ?? slides[0];
@@ -228,6 +252,7 @@ export function EditorView() {
   const SHORTCUTS: Array<{ keys: string; label: string }> = [
     { keys: 'J / K · ↑ ↓', label: 'Previous / next slide' },
     { keys: '⌘ D', label: 'Duplicate current slide' },
+    { keys: 'H', label: 'Hide / show slide in presentation' },
     { keys: 'Del', label: 'Delete current slide' },
     { keys: '⌘ Z', label: 'Undo' },
     { keys: '⇧⌘ Z', label: 'Redo' },
@@ -323,6 +348,7 @@ export function EditorView() {
                   onSelect={() => setCurrentSlide(i)}
                   onDuplicate={() => duplicateSlide(s.id)}
                   onDelete={() => removeSlide(s.id)}
+                  onToggleHidden={() => updateSlide(s.id, { hidden: !s.hidden })}
                   onDragStart={() => setDragIndex(i)}
                   onDragOver={(e) => { e.preventDefault(); setOverIndex(i); }}
                   onDrop={() => { if (dragIndex != null && dragIndex !== i) reorderSlides(dragIndex, i); setDragIndex(null); setOverIndex(null); }}

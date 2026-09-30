@@ -4,11 +4,13 @@ import { useState } from 'react';
 import { useAppStore } from '@/lib/store/deck-store';
 import { exportPptx } from '@/lib/export/pptx';
 import { exportStandaloneHtml } from '@/lib/export/html';
+import { exportNotesMarkdown } from '@/lib/export/notes';
 import { SlideView } from '@/components/deck/SlideView';
 import { getTheme } from '@/lib/design/themes';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { visibleSlides } from '@/lib/deck/types';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
-import { Download, FileText, Globe, Presentation, Loader2 } from 'lucide-react';
+import { Download, FileText, Globe, Presentation, Loader2, StickyNote } from 'lucide-react';
 
 /**
  * PPTX → PptxGenJS (client), PDF → print CSS (@page 1280x720), HTML →
@@ -52,6 +54,17 @@ export function ExportMenu() {
     }
   };
 
+  const notes = () => {
+    if (!deck) return;
+    try {
+      exportNotesMarkdown(deck);
+      toast.success('Speaker notes downloaded.');
+    } catch (e) {
+      console.error(e);
+      toast.error('Notes export failed.');
+    }
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -73,6 +86,10 @@ export function ExportMenu() {
         <DropdownMenuItem onClick={html} className="gap-2">
           <Globe className="h-4 w-4 text-neutral-500" /> Standalone HTML
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={notes} className="gap-2">
+          <StickyNote className="h-4 w-4 text-neutral-500" /> Speaker notes (Markdown)
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -87,11 +104,12 @@ export function PrintSurface() {
   const themeId = useAppStore((s) => s.deck?.themeId);
   if (!deck || typeof window === 'undefined') return null;
   const t = getTheme(themeId);
+  const slides = visibleSlides(deck.slides);
   return (
     <div className="print-root" aria-hidden>
-      {deck.slides.map((s, i) => (
+      {slides.map((s, i) => (
         <div className="print-slide" key={s.id}>
-          <SlideView slide={s} theme={t} deckTitle={deck.title} index={i} pageCount={deck.slides.length} />
+          <SlideView slide={s} theme={t} deckTitle={deck.title} index={i} pageCount={slides.length} />
         </div>
       ))}
     </div>

@@ -7,7 +7,7 @@ import { getTheme } from '@/lib/design/themes';
 import { SlideView } from '@/components/deck/SlideView';
 import { ScaledSlide } from '@/components/deck/ScaledSlide';
 import { Button } from '@/components/ui/button';
-import { X, ChevronLeft, ChevronRight, StickyNote, Maximize2, Minimize2, LayoutGrid, Timer } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, StickyNote, Maximize2, Minimize2, LayoutGrid, Timer, Play, Pause } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -26,20 +26,27 @@ export function PresentOverlay() {
   const [isFull, setIsFull] = useState(false);
   const [scale, setScale] = useState(1);
   const [elapsed, setElapsed] = useState(0);
+  const [autoplay, setAutoplay] = useState(false);
   const startedAt = useRef<number | null>(null);
   const reduceMotion = useReducedMotion();
 
   const slides = deck?.slides ?? [];
   const theme = useMemo(() => getTheme(deck?.themeId), [deck?.themeId]);
   const slide = slides[index];
+  const visibleCount = useMemo(() => slides.filter((s) => !s.hidden).length, [slides]);
+  const visiblePos = useMemo(() => slides.slice(0, index).filter((s) => !s.hidden).length, [slides, index]);
 
-  const go = useCallback(
-    (delta: number) => {
-      const next = Math.min(Math.max(index + delta, 0), slides.length - 1);
-      setCurrent(next);
+  /** Move one slide in a direction, skipping hidden slides. */
+  const stepTo = useCallback(
+    (dir: 1 | -1) => {
+      let j = index + dir;
+      while (j >= 0 && j < slides.length && slides[j]?.hidden) j += dir;
+      if (j >= 0 && j < slides.length) setCurrent(j);
     },
-    [index, slides.length, setCurrent]
+    [index, slides, setCurrent]
   );
+
+  const go = useCallback((delta: number) => stepTo(delta as 1 | -1), [stepTo]);
 
   // viewport scaling
   useEffect(() => {
@@ -57,6 +64,7 @@ export function PresentOverlay() {
   useEffect(() => {
     if (!presenting) {
       startedAt.current = null;
+      setAutoplay(false);
       return;
     }
     startedAt.current = Date.now();
@@ -65,6 +73,31 @@ export function PresentOverlay() {
     }, 500);
     return () => clearInterval(t);
   }, [presenting]);
+
+  // never land on a hidden slide when entering presentation mode
+  useEffect(() => {
+    if (!presenting) return;
+    const st = useAppStore.getState();
+    const all = st.deck?.slides ?? [];
+    if (all[st.currentSlideIndex]?.hidden) {
+      const first = all.findIndex((s) => !s.hidden);
+      if (first >= 0) st.setCurrentSlide(first);
+    }
+  }, [presenting]);
+
+  // auto-play: advance every 6s, skipping hidden slides; stops at the end
+  useEffect(() => {
+    if (!presenting || !autoplay || showOverview) return;
+    const t = setInterval(() => {
+      const st = useAppStore.getState();
+      const all = st.deck?.slides ?? [];
+      let j = st.currentSlideIndex + 1;
+      while (j < all.length && all[j]?.hidden) j++;
+      if (j < all.length) st.setCurrentSlide(j);
+      else setAutoplay(false);
+    }, 6000);
+    return () => clearInterval(t);
+  }, [presenting, autoplay, showOverview, index]);
 
   // keyboard nav
   useEffect(() => {
@@ -82,11 +115,19 @@ export function PresentOverlay() {
           e.preventDefault();
           go(-1);
           break;
-        case 'Home':
-          setCurrent(0);
+        case 'Home': {
+          const first = slides.findIndex((s) => !s.hidden);
+          if (first >= 0) setCurrent(first);
           break;
-        case 'End':
-          setCurrent(slides.length - 1);
+        }
+        case 'End': {
+          const last = slides.length - 1 - [...slides].reverse().findIndex((s) => !s.hidden);
+          if (slides[last] && !slides[last].hidden) setCurrent(last);
+          break;
+        }
+        case 'p':
+        case 'P':
+          setAutoplay((v) => !v);
           break;
         case 'Escape':
           if (showOverview) setShowOverview(false);
@@ -186,9 +227,9 @@ export function PresentOverlay() {
         </AnimatePresence>
       </div>
 
-      {/* progress */}
-      <div className="h-1.5 bg-neutral-800 shrink-0" role="progressbar" aria-valuenow={index + 1} aria-valuemin={1} aria-valuemax={slides.length}>
-        <div className="h-full transition-all duration-300" style={{ width: `${((index + 1) / Math.max(slides.length, 1)) * 100}%`, background: theme.tokens.colors.primary }} />
+      {/* progress — paced over visible slides */}
+      <div className="h-1.5 bg-neutral-800 shrink-0" role="progressbar" aria-valuenow={Math.min(visiblePos + 1, visibleCount)} aria-valuemin={1} aria-valuemax={Math.max(visibleCount, 1)}>
+        <div className="h-full transition-all duration-300" style={{ width: `${((visiblePos + 1) / Math.max(visibleCount, 1)) * 100}%`, background: theme.tokens.colors.primary }} />
       </div>
 
       {/* transient keyboard hint (CSS-animated: fades out once per entry) */}
@@ -198,7 +239,7 @@ export function PresentOverlay() {
           className="df-present-hint absolute top-5 left-1/2 rounded-full bg-black/70 backdrop-blur px-4 py-1.5 text-xs text-white/85 border border-white/10 shadow-lg"
           aria-hidden
         >
-          <span className="font-mono">← →</span> navigate · <span className="font-mono">N</span> notes · <span className="font-mono">G</span> grid · <span className="font-mono">Esc</span> exit
+          <span className="font-mono">← →</span> navigate · <span className="font-mono">N</span> notes · <span className="font-mono">G</span> grid · <span className="font-mono">P</span> auto · <span className="font-mono">Esc</span> exit
         </div>
       )}
 
@@ -207,9 +248,21 @@ export function PresentOverlay() {
         <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/15" onClick={() => go(-1)} disabled={index === 0} aria-label="Previous slide">
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <span className="text-white/80 text-sm font-mono min-w-14 text-center">{index + 1} / {slides.length}</span>
+        <span className="text-white/80 text-sm font-mono min-w-14 text-center">{Math.min(visiblePos + 1, visibleCount)} / {visibleCount}</span>
         <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/15" onClick={() => go(1)} disabled={index >= slides.length - 1} aria-label="Next slide">
           <ChevronRight className="h-4 w-4" />
+        </Button>
+        <span className="w-px h-5 bg-white/20 mx-1" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn('h-8 w-8 text-white hover:bg-white/15', autoplay && 'bg-white/15')}
+          onClick={() => setAutoplay((v) => !v)}
+          aria-label={autoplay ? 'Pause auto-play (P)' : 'Auto-play (P)'}
+          aria-pressed={autoplay}
+          title={autoplay ? 'Pause auto-play (P)' : 'Auto-play (P)'}
+        >
+          {autoplay ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
         </Button>
         <span className="w-px h-5 bg-white/20 mx-1" />
         <span className="text-white/70 text-sm font-mono tabular-nums inline-flex items-center gap-1.5" title="Elapsed time">
@@ -267,7 +320,7 @@ export function PresentOverlay() {
                 </Button>
               </div>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {slides.map((s, i) => (
+                {slides.map((s, i) => ({ s, i })).filter(({ s }) => !s.hidden).map(({ s, i }, vi) => (
                   <button
                     key={s.id}
                     onClick={() => { setCurrent(i); setShowOverview(false); }}
@@ -275,11 +328,11 @@ export function PresentOverlay() {
                       'relative rounded-lg overflow-hidden border-2 transition-all text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white',
                       i === index ? 'border-white shadow-xl scale-[1.02]' : 'border-white/15 hover:border-white/60'
                     )}
-                    aria-label={`Go to slide ${i + 1}: ${s.title || s.layout}`}
+                    aria-label={`Go to slide ${vi + 1}: ${s.title || s.layout}`}
                     aria-current={i === index}
                   >
                     <ScaledSlide slide={s} theme={theme} index={i} pageCount={slides.length} />
-                    <span className="absolute top-1.5 left-1.5 bg-black/70 text-white text-[10px] rounded px-1.5 py-0.5 font-mono">{i + 1}</span>
+                    <span className="absolute top-1.5 left-1.5 bg-black/70 text-white text-[10px] rounded px-1.5 py-0.5 font-mono">{vi + 1}</span>
                   </button>
                 ))}
               </div>

@@ -32,6 +32,21 @@ export interface GenProgress {
   error?: string;
 }
 
+/** Generation controls chosen in CreateView; consumed by the slide pipeline. */
+export interface GenSettings {
+  audience: string;
+  tone: string;
+  language: string;
+  slideCount: number;
+}
+
+export const DEFAULT_GEN_SETTINGS: GenSettings = {
+  audience: '',
+  tone: 'professional',
+  language: 'English',
+  slideCount: 10,
+};
+
 interface AppState {
   view: AppView;
   deck: Deck | null;
@@ -43,6 +58,7 @@ interface AppState {
   progress: GenProgress;
   dirty: boolean;
   dataAssets: DataAssets;
+  genSettings: GenSettings;
   /** Undo/redo stacks of deck snapshots (structural slide ops only). */
   past: Deck[];
   future: Deck[];
@@ -51,6 +67,7 @@ interface AppState {
   redo: () => void;
 
   setDataAssets: (d: DataAssets) => void;
+  setGenSettings: (g: GenSettings) => void;
   setView: (v: AppView) => void;
   setThemeChoice: (id: string) => void;
   setOutline: (o: DeckOutline | null) => void;
@@ -98,6 +115,7 @@ export const useAppStore = create<AppState>((set, get) => {
   progress: { done: 0, total: 0, currentTitle: '' },
   dirty: false,
   dataAssets: EMPTY_DATA_ASSETS,
+  genSettings: DEFAULT_GEN_SETTINGS,
   past: [],
   future: [],
 
@@ -125,6 +143,7 @@ export const useAppStore = create<AppState>((set, get) => {
     }),
 
   setDataAssets: (dataAssets) => set({ dataAssets }),
+  setGenSettings: (genSettings) => set({ genSettings }),
   setView: (view) => set({ view }),
   setThemeChoice: (themeChoice) => set({ themeChoice }),
   setOutline: (outline) => set({ outline }),

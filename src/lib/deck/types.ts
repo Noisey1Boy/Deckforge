@@ -88,6 +88,8 @@ export interface Slide {
   comparison?: ComparisonSpec;
   image?: ImageSpec;
   notes?: string;
+  /** Hidden slides stay editable but are skipped in present mode and exports. */
+  hidden?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -180,4 +182,9 @@ export interface ThemeManifest {
 export interface ChartDataPoint {
   label: string;
   value: number;
+}
+
+/** Slides that participate in present mode and exports (hidden ones excluded). */
+export function visibleSlides(slides: Slide[]): Slide[] {
+  return slides.filter((s) => !s.hidden);
 }
