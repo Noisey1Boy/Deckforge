@@ -188,3 +188,35 @@ Work Log (completed):
 Stage Summary:
 - All 4 features verified end-to-end in browser; accent/footer/pageNumbers persist (PUT 200s) and flow to every render + export path; lint clean; console clean; dev.log clean.
 - Risks/next: accent uses raw hex over primaryContrast (very light custom accents on light themes could reduce contrast — presets chosen mid/dark; consider auto contrast fixup); JSON import of older decks without meta works (all fields optional); per-slide accent override remains an open idea; multi-select drag-reorder (move a block) not yet supported; PPTX native-chart series colors use accent only for series 1 (matches on-screen behavior).
+
+---
+Task ID: r8 (cron review round 8)
+Agent: webDevReview agent
+Task: Status assessment + browser QA, then feature + styling round (markdown→outline, AI speaker notes, ⌘K palette, library timestamps, hero polish)
+
+Work Log:
+- Status assessment: lint clean, page 200, dev.log healthy (200s only), landing/editor/present all render. Phase STABLE → feature + styling round chosen.
+- F1 Markdown paste → outline (new "Markdown" tab in CreateView data section):
+  - New parser lib src/lib/data/markdown-outline.ts — deterministic client-side parse: first `#` = deck title (+ optional `subtitle:` line), each `##` = one slide, bullets/numbered lines become the brief, `[chart]`/`[stats]`/`[quote]`… square-bracket tags or `@layout:` lines pick the layout, `###` = section break. `suggestThemeId()` keyword heuristic scores the text against the 8 design systems when Auto theme is selected.
+  - LIVE parse preview chips (N slides · M bullets · deck title) as you type; "Build outline from markdown" flows into the same OutlineView (editable) → generate pipeline — zero LLM cost for outline.
+  - BUG FIXED during QA: the deck title never became a slide and the first content slide was wrongly forced to `title` layout — parser now prepends a proper cover slide from the H1 (unless the markdown already marks one) and keeps user headings as content.
+  - Verified end-to-end: pasted 6-section markdown → chips correct → outline (Title cover + Stats via `[stats]` tag + Closing auto-detected) → generated 6 slides → bullets faithful to the markdown ("20% of new hires…", "8 hours per new hire") → PPTX export valid (unzipped: 6 slides, correct titles).
+- F2 AI speaker notes:
+  - New `speaker_notes` action in /api/ai/slide (60-110 words, spoken tone, no invented stats, returns only `notes`).
+  - Per-slide "Generate with AI" button in the inspector Speaker notes section (+ word/minute count under the textarea); verified: natural 700-char note written for slide 5.
+  - Batch "Notes" toolbar button: sequentially generates for every VISIBLE slide missing notes, live `done/total` progress on the button, applies via NEW store action `patchSlides()` — ONE undo snapshot for the whole batch. Verified: 5 slides filled in one pass; store-level undo/redo roundtrip verified via a new dev-only `useAppStoreDebug()` window hook (past/future counts + content checked).
+- F3 ⌘K command palette (CommandPalette.tsx, cmdk via shadcn CommandDialog):
+  - Groups: Jump to slide (hidden slides marked, current marked), Insert slide (all 11 layouts), This slide (duplicate/hide/delete), Deck (present, shuffle theme, style popover, batch AI notes), History & export (undo/redo + all 4 export kinds via new shared `useExportActions()` hook extracted from ExportMenu so palette and menu share the exact same code path).
+  - Opens via ⌘K/Ctrl+K (handler skips typing targets) or the new toolbar Command button. Verified: search filter "add quote" → Enter inserted quote slide (store total 6→7), jump to "Common Pitfalls" (5/6), palette closes before side effects (60ms) so the print dialog works.
+- F4 Deck library relative timestamps: `timeAgo()` ("just now / 5m ago / 3h ago / 2d ago") with Clock icon + absolute-time tooltip on every deck card. Verified visually.
+- S1 Landing hero: three drifting gradient orbs (teal/amber/violet, CSS keyframes, `prefers-reduced-motion` disables) + gradient text on "polished deck".
+- S2 Inspector AI action buttons get violet hover tint; AI ACTIONS label with sparkle icon.
+- BUG FIXED (hydration regression I introduced): `timeAgo()` computed from Date.now() during SSR → "attributes didn't match" hydration error on the landing. Fixed with `suppressHydrationWarning` on the relative-time span (intentionally client-time). Verified 0 console errors after fresh load.
+- ExportMenu refactored to `useExportActions()` hook (same behavior); verified menu opens and PPTX downloads (106 KB, valid zip, 6 slides).
+- README features section updated (markdown paste, AI notes batch, ⌘K palette, relative timestamps).
+
+Stage Summary:
+- New: markdown→outline deterministic import (with layout tags + auto-cover), AI speaker notes (per-slide + batch with single undo snapshot via patchSlides), ⌘K command palette, deck library relative times, hero orbs + gradient text.
+- Bugs fixed: markdown cover-slide/first-heading confusion, SSR hydration mismatch from timeAgo.
+- Verified in browser end-to-end (outline flow, generation, notes, palette, exports); lint clean; 0 console errors; PPTX integrity checked.
+- Risks/next: batch notes is sequential (5 slides ≈ 20s — could parallelize 2-way like the slide pipeline); markdown parser ignores nested lists and tables by design (documented in the tab hint); palette exports route through the shared hook (PDF still opens print dialog); command palette intentionally omits present-mode-only actions; consider a "Paste outline" entry point from the OutlineView empty state too.

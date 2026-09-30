@@ -1,12 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useAppStore, newSlideId } from '@/lib/store/deck-store';
+import { useAppStore, useAppStoreDebug, newSlideId } from '@/lib/store/deck-store';
 import { THEMES, deckTheme, getTheme } from '@/lib/design/themes';
 import { deckFooterText } from '@/lib/deck/types';
 import { ScaledSlide } from '@/components/deck/ScaledSlide';
 import { SlideInspector } from './SlideInspector';
-import { ExportMenu } from '@/components/app/ExportMenu';
+import { ExportMenu, useExportActions } from '@/components/app/ExportMenu';
+import { CommandPalette, LAYOUT_MENU_ITEMS, type ExportKind } from './CommandPalette';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -24,27 +25,13 @@ import {
   Play, Plus, Trash2, Copy, Presentation, ChevronLeft, ChevronRight, Check, Cloud,
   Undo2, Redo2, Keyboard, Type, Hash, List, Columns2, Image as ImageIcon, Quote,
   BarChart3, Workflow, Table2, Flag, Sigma, Eye, EyeOff, Shuffle, Palette, X,
-  SquareStack, Clock3,
+  SquareStack, Clock3, Command as CommandIcon, NotebookPen, Loader2,
 } from 'lucide-react';
 
 const LAYOUT_ICONS: Record<LayoutId, string> = {
   title: 'T', section: '§', bullets: '•', 'two-column': '⫿', image: '🖼',
   quote: '❝', stats: '#', chart: '▮', diagram: '⇄', comparison: '⇋', closing: '◆',
 };
-
-const LAYOUT_MENU_ITEMS: Array<{ id: LayoutId; label: string; icon: React.ReactNode }> = [
-  { id: 'title', label: 'Title', icon: <Type className="h-4 w-4" /> },
-  { id: 'section', label: 'Section break', icon: <Hash className="h-4 w-4" /> },
-  { id: 'bullets', label: 'Bullets', icon: <List className="h-4 w-4" /> },
-  { id: 'two-column', label: 'Two column', icon: <Columns2 className="h-4 w-4" /> },
-  { id: 'stats', label: 'Stats', icon: <Sigma className="h-4 w-4" /> },
-  { id: 'chart', label: 'Chart', icon: <BarChart3 className="h-4 w-4" /> },
-  { id: 'diagram', label: 'Diagram', icon: <Workflow className="h-4 w-4" /> },
-  { id: 'comparison', label: 'Comparison', icon: <Table2 className="h-4 w-4" /> },
-  { id: 'quote', label: 'Quote', icon: <Quote className="h-4 w-4" /> },
-  { id: 'image', label: 'Image', icon: <ImageIcon className="h-4 w-4" /> },
-  { id: 'closing', label: 'Closing', icon: <Flag className="h-4 w-4" /> },
-];
 
 function isTypingTarget(t: EventTarget | null): boolean {
   const el = t as HTMLElement | null;
@@ -142,6 +129,7 @@ function SlideCard({
 }
 
 export function EditorView() {
+  useAppStoreDebug();
   const deck = useAppStore((s) => s.deck);
   const patchDeck = useAppStore((s) => s.patchDeck);
   const currentSlideIndex = useAppStore((s) => s.currentSlideIndex);
@@ -166,6 +154,8 @@ export function EditorView() {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [droppingImage, setDroppingImage] = useState(false);
   const [showStyle, setShowStyle] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [notesProgress, setNotesProgress] = useState<{ done: number; total: number } | null>(null);
   // multi-selection (editor only): cmd/ctrl-click toggles, shift-click ranges
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const anchorRef = useRef<number | null>(null);
@@ -177,6 +167,8 @@ export function EditorView() {
   const redo = useAppStore((s) => s.redo);
   const canUndo = useAppStore((s) => s.past.length > 0);
   const canRedo = useAppStore((s) => s.future.length > 0);
+  const patchSlides = useAppStore((s) => s.patchSlides);
+  const { pptx, pdf, html, notes: exportNotes } = useExportActions();
 
   // ------------------------------------------------------------ autosave
   const save = useCallback(async () => {
@@ -230,6 +222,11 @@ export function EditorView() {
       if ((mod && e.key.toLowerCase() === 'z' && e.shiftKey) || (mod && e.key.toLowerCase() === 'y')) {
         e.preventDefault(); st.redo(); return;
       }
+      if (mod && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setPaletteOpen((v) => !v);
+        return;
+      }
       if (mod) return; // let other mod-combos through to the browser
       if (e.key === '?' || (e.shiftKey && e.key === '/')) {
         e.preventDefault(); setShowShortcuts((v) => !v); return;
@@ -277,6 +274,44 @@ export function EditorView() {
   useEffect(() => {
     if (!deck) setView('create');
   }, [deck, setView]);
+
+  // ---- AI: write speaker notes for every visible slide that lacks them ----
+  // (defined before the early return so hook order stays stable)
+  const writeAllNotes = useCallback(async () => {
+    const d = useAppStore.getState().deck;
+    if (!d) return;
+    const targets = d.slides.filter((s) => !s.hidden && !(s.notes ?? '').trim());
+    if (!targets.length) {
+      toast.info('All visible slides already have speaker notes.');
+      return;
+    }
+    setNotesProgress({ done: 0, total: targets.length });
+    const patches: Record<string, { notes: string }> = {};
+    const language = d.meta?.language ?? 'English';
+    let failures = 0;
+    for (const s of targets) {
+      try {
+        const res = await fetch('/api/ai/slide', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'speaker_notes', slide: s, language }),
+        });
+        const json = await res.json();
+        if (res.ok && typeof json.patch?.notes === 'string' && json.patch.notes.trim()) {
+          patches[s.id] = { notes: json.patch.notes };
+        } else failures++;
+      } catch {
+        failures++;
+      }
+      setNotesProgress((p) => (p ? { ...p, done: p.done + 1 } : p));
+    }
+    const n = Object.keys(patches).length;
+    if (n) patchSlides(patches); // one undo snapshot for the whole batch
+    setNotesProgress(null);
+    if (n && !failures) toast.success(`Speaker notes written for ${n} slide${n > 1 ? 's' : ''}.`);
+    else if (n) toast(`Speaker notes written for ${n} slide${n > 1 ? 's' : ''}`, { description: `${failures} could not be generated.` });
+    else toast.error('Could not generate notes — please retry.');
+  }, [patchSlides]);
 
   if (!deck) return null;
 
@@ -371,6 +406,7 @@ export function EditorView() {
 
   const SHORTCUTS: Array<{ keys: string; label: string }> = [
     { keys: 'J / K · ↑ ↓', label: 'Previous / next slide' },
+    { keys: '⌘ K', label: 'Command palette' },
     { keys: '⌘ D', label: 'Duplicate current slide' },
     { keys: 'H', label: 'Hide / show slide in presentation' },
     { keys: 'Del', label: 'Delete current slide (or selection)' },
@@ -548,6 +584,32 @@ export function EditorView() {
             </SelectContent>
           </Select>
           <span className="w-px h-6 bg-neutral-200 mx-1" aria-hidden />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-9 px-2.5 gap-1.5 text-neutral-500 hover:text-violet-700"
+            onClick={writeAllNotes}
+            disabled={!!notesProgress}
+            aria-label="Write speaker notes for empty slides with AI"
+            title="Write speaker notes for empty slides (AI)"
+          >
+            {notesProgress ? <Loader2 className="h-4 w-4 animate-spin" /> : <NotebookPen className="h-4 w-4" />}
+            {notesProgress ? (
+              <span className="text-xs tabular-nums">{notesProgress.done}/{notesProgress.total}</span>
+            ) : (
+              <span className="text-xs hidden lg:inline">Notes</span>
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 text-neutral-500 hover:text-neutral-900"
+            onClick={() => setPaletteOpen(true)}
+            aria-label="Open command palette"
+            title="Command palette (⌘K)"
+          >
+            <CommandIcon className="h-4 w-4" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
@@ -738,6 +800,49 @@ export function EditorView() {
       >
         <Presentation className="h-5 w-5" />
       </button>
+
+      {/* ⌘K command palette */}
+      <CommandPalette
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        slides={slides}
+        currentSlideIndex={currentSlideIndex}
+        onJump={(i) => setCurrentSlide(i)}
+        onInsert={(layout) => insertSlide(currentSlideIndex + 1, {
+          id: newSlideId(),
+          layout,
+          title: layout === 'title' ? 'New title' : `New ${layout.replace('-', ' ')}`,
+        } as Slide)}
+        onDuplicate={() => current && duplicateSlide(current.id)}
+        onToggleHidden={() => current && updateSlide(current.id, { hidden: !current.hidden })}
+        onDelete={() => {
+          if (total <= 1) {
+            toast.error('A deck needs at least one slide.');
+            return;
+          }
+          if (current) {
+            removeSlide(current.id);
+            toast('Slide deleted', { description: 'Press ⌘Z to undo.' });
+          }
+        }}
+        onUndo={undo}
+        onRedo={redo}
+        onPresent={() => setPresenting(true)}
+        onShuffleTheme={() => {
+          const others = THEMES.filter((t) => t.id !== deck.themeId);
+          const pick = others[Math.floor(Math.random() * others.length)];
+          setDeckTheme(pick.id);
+          toast(`Theme: ${pick.name}`, { description: pick.tone });
+        }}
+        onStyle={() => setShowStyle(true)}
+        onWriteNotes={writeAllNotes}
+        onExport={(kind: ExportKind) => {
+          if (kind === 'pptx') void pptx();
+          else if (kind === 'pdf') pdf();
+          else if (kind === 'html') void html();
+          else exportNotes();
+        }}
+      />
 
       {/* keyboard shortcuts cheat-sheet */}
       <Dialog open={showShortcuts} onOpenChange={setShowShortcuts}>

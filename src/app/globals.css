@@ -181,3 +181,36 @@
   background: #a3a3a3;
   background-clip: content-box;
 }
+
+/* ---------------------------------------------------------------------------
+ * Landing hero: drifting gradient orbs (pure CSS, GPU-cheap) + gradient text.
+ * Disabled entirely under prefers-reduced-motion.
+ * ------------------------------------------------------------------------- */
+@keyframes df-orb-drift {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  33%  { transform: translate3d(4%, -6%, 0) scale(1.08); }
+  66%  { transform: translate3d(-5%, 4%, 0) scale(0.94); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+.df-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  opacity: 0.75;
+  pointer-events: none;
+  will-change: transform;
+  animation: df-orb-drift 22s ease-in-out infinite;
+}
+.df-orb-2 { animation-duration: 28s; animation-delay: -8s; }
+.df-orb-3 { animation-duration: 34s; animation-delay: -16s; }
+
+.df-gradient-text {
+  background: linear-gradient(92deg, #0f766e 0%, #b45309 48%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .df-orb { animation: none; }
+}

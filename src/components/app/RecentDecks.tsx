@@ -23,6 +23,21 @@ interface RecentDeck {
   updatedAt: string;
 }
 
+/** Compact relative time: "just now", "5m ago", "3h ago", "2d ago", else a date. */
+function timeAgo(iso: string): string {
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return '';
+  const secs = Math.max(0, Math.floor((Date.now() - then) / 1000));
+  if (secs < 60) return 'just now';
+  const mins = Math.floor(secs / 60);
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
 /** Landing-page deck library: open, duplicate, export JSON, delete, import. */
 export function RecentDecks({ onOpen }: { onOpen: (d: RecentDeck) => void }) {
   const [decks, setDecks] = useState<RecentDeck[]>([]);
@@ -233,7 +248,11 @@ export function RecentDecks({ onOpen }: { onOpen: (d: RecentDeck) => void }) {
                   <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 font-medium">
                     <Layers className="h-3 w-3" /> {d.slideCount} slides
                   </span>
-                  <span>{new Date(d.updatedAt).toLocaleDateString()}</span>
+                  {/* relative time is intentionally computed client-side (Date.now()),
+                      so suppress the SSR text mismatch warning */}
+                  <span className="inline-flex items-center gap-1" title={`Last edited ${new Date(d.updatedAt).toLocaleString()}`} suppressHydrationWarning>
+                    <Clock className="h-3 w-3" /> {timeAgo(d.updatedAt)}
+                  </span>
                 </div>
               </button>
               {/* hover actions */}

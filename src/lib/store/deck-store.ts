@@ -79,6 +79,8 @@ interface AppState {
 
   // slide ops
   updateSlide: (id: string, patch: Partial<Slide>) => void;
+  /** Apply many per-slide patches with ONE undo snapshot (batch AI notes). */
+  patchSlides: (patches: Record<string, Partial<Slide>>) => void;
   reorderSlides: (from: number, to: number) => void;
   insertSlide: (index: number, slide: Slide) => void;
   removeSlide: (id: string) => void;
@@ -161,6 +163,12 @@ export const useAppStore = create<AppState>((set, get) => {
     commit((d) => ({
       ...d,
       slides: d.slides.map((sl) => (sl.id === id ? { ...sl, ...patch } : sl)),
+    })),
+
+  patchSlides: (patches) =>
+    commit((d) => ({
+      ...d,
+      slides: d.slides.map((sl) => (patches[sl.id] ? { ...sl, ...patches[sl.id] } : sl)),
     })),
 
   reorderSlides: (from, to) =>
@@ -288,4 +296,12 @@ export function useActiveTheme() {
   const deck = useAppStore((s) => s.deck);
   const themeChoice = useAppStore((s) => s.themeChoice);
   return getTheme(deck?.themeId ?? (themeChoice === 'auto' ? DEFAULT_THEME_ID : themeChoice));
+}
+
+/** Dev/E2E hook: lets browser tests inspect history state without UI indirection. */
+export function useAppStoreDebug() {
+  if (typeof window !== 'undefined') {
+    (window as unknown as { __deckStore?: typeof useAppStore }).__deckStore = useAppStore;
+  }
+  return useAppStore;
 }

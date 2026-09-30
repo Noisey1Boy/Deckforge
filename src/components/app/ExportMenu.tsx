@@ -15,8 +15,11 @@ import { Download, FileText, Globe, Presentation, Loader2, StickyNote } from 'lu
 /**
  * PPTX → PptxGenJS (client), PDF → print CSS (@page 1280x720), HTML →
  * server-rendered standalone file from /api/export/html/:id.
+ *
+ * The export actions live in a hook so the editor command palette (⌘K)
+ * can trigger the exact same code paths as this menu.
  */
-export function ExportMenu() {
+export function useExportActions() {
   const deck = useAppStore((s) => s.deck);
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -64,6 +67,12 @@ export function ExportMenu() {
       toast.error('Notes export failed.');
     }
   };
+
+  return { deck, busy, pptx, pdf, html, notes };
+}
+
+export function ExportMenu() {
+  const { busy, pptx, pdf, html, notes } = useExportActions();
 
   return (
     <DropdownMenu>

@@ -10,6 +10,7 @@ const ACTIONS = {
   expand: 'Enrich the copy with one concrete detail or example per element (no invented statistics). Keep the same layout and language.',
   regenerate: 'Regenerate the slide copy from scratch with a fresh angle on the same brief. Keep the same layout and language.',
   add_chart: 'Add a small chart: pick the best chart kind for this content and provide 3-6 plausible illustrative data points clearly marked as illustrative. Return "chart" plus a one-line "insight".',
+  speaker_notes: 'Write presenter speaker notes for this slide: 60-110 words, natural spoken tone, first person. Open with a hook or transition, cover every visual element on the slide in order, add one concrete example or number already present on the slide, and close with a segue to the next topic. Never invent statistics that are not on the slide. Return only a "notes" field.',
 } as const;
 
 type Action = keyof typeof ACTIONS;
@@ -40,7 +41,7 @@ ${JSON.stringify(slide, null, 1)}
 ${context ? `Extra context from the user: ${context}` : ''}
 Language: ${language}
 
-Return a JSON object with ONLY the fields you changed, using the same field names (title, subtitle, body, bullets, quote, attribution, notes, chart, leftTitle, leftContent, rightTitle, rightContent). Character limits: title<=70, subtitle<=110, body<=160, bullets<=6x90.`;
+Return a JSON object with ONLY the fields you changed, using the same field names (title, subtitle, body, bullets, quote, attribution, notes, chart, leftTitle, leftContent, rightTitle, rightContent). Character limits: title<=70, subtitle<=110, body<=160, bullets<=6x90, notes<=700. For the speaker_notes action return only {"notes": "..."}.`;
 
     const completion = await zai.chat.completions.create({
       messages: [

@@ -70,7 +70,7 @@ export function SlideInspector({ slide }: { slide: Slide }) {
     }
   };
 
-  const runAI = async (action: AIAction | 'add_chart') => {
+  const runAI = async (action: AIAction | 'add_chart' | 'speaker_notes') => {
     setAiBusy(action);
     try {
       const res = await fetch('/api/ai/slide', {
@@ -81,7 +81,12 @@ export function SlideInspector({ slide }: { slide: Slide }) {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'AI action failed');
       set(json.patch as Partial<Slide>);
-      toast.success(`Slide ${action === 'add_chart' ? 'chart added' : action + 'd'}.`);
+      const labels: Record<string, string> = {
+        add_chart: 'chart added', speaker_notes: 'notes written',
+        rewrite: 'copy rewritten', shorten: 'copy shortened',
+        expand: 'copy expanded', regenerate: 'slide regenerated',
+      };
+      toast.success(labels[action] ?? `Slide ${action}d.`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'AI action failed');
     } finally {
@@ -114,19 +119,21 @@ export function SlideInspector({ slide }: { slide: Slide }) {
     <div className="space-y-5">
       {/* AI actions */}
       <section className="space-y-2">
-        <Label className="text-xs uppercase tracking-wide text-muted-foreground">AI actions</Label>
+        <Label className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+          <Sparkles className="h-3 w-3 text-violet-500" aria-hidden /> AI actions
+        </Label>
         <div className="flex flex-wrap gap-1.5">
           {AI_ACTIONS.map((a) => (
-            <Button key={a.id} variant="outline" size="sm" className="gap-1.5 h-8" disabled={!!aiBusy} onClick={() => runAI(a.id)}>
+            <Button key={a.id} variant="outline" size="sm" className="gap-1.5 h-8 hover:border-violet-300 hover:bg-violet-50/60 transition-colors" disabled={!!aiBusy} onClick={() => runAI(a.id)}>
               {aiBusy === a.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : a.icon}
               {a.label}
             </Button>
           ))}
-          <Button variant="outline" size="sm" className="gap-1.5 h-8" disabled={!!aiBusy} onClick={() => runAI('add_chart')}>
+          <Button variant="outline" size="sm" className="gap-1.5 h-8 hover:border-violet-300 hover:bg-violet-50/60 transition-colors" disabled={!!aiBusy} onClick={() => runAI('add_chart')}>
             {aiBusy === 'add_chart' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
             Add chart
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 h-8" disabled={imgBusy} onClick={illustrate}>
+          <Button variant="outline" size="sm" className="gap-1.5 h-8 hover:border-violet-300 hover:bg-violet-50/60 transition-colors" disabled={imgBusy} onClick={illustrate}>
             {imgBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
             Illustrate
           </Button>
@@ -454,8 +461,20 @@ export function SlideInspector({ slide }: { slide: Slide }) {
 
       {/* Speaker notes */}
       <section className="space-y-1.5">
-        <Label htmlFor="insp-notes" className="text-xs uppercase tracking-wide text-muted-foreground">Speaker notes</Label>
+        <div className="flex items-center justify-between gap-2">
+          <Label htmlFor="insp-notes" className="text-xs uppercase tracking-wide text-muted-foreground">Speaker notes</Label>
+          <Button
+            variant="ghost" size="sm"
+            className="h-6 px-2 text-[11px] gap-1 text-violet-600 hover:text-violet-700 hover:bg-violet-50"
+            disabled={aiBusy === 'speaker_notes'}
+            onClick={() => runAI('speaker_notes')}
+          >
+            {aiBusy === 'speaker_notes' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+            {aiBusy === 'speaker_notes' ? 'Writing…' : 'Generate with AI'}
+          </Button>
+        </div>
         <Textarea id="insp-notes" value={slide.notes ?? ''} onChange={(e) => set({ notes: e.target.value })} className="min-h-24 text-sm" placeholder="What you'll say when this slide is up…" />
+        {slide.notes && <p className="text-[11px] text-muted-foreground">{slide.notes.trim().split(/\s+/).length} words · ~{Math.max(1, Math.round(slide.notes.trim().split(/\s+/).length / 110))} min spoken</p>}
       </section>
 
       {/* Motion — per-slide transition override */}

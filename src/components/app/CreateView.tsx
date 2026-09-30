@@ -12,14 +12,15 @@ import { Slider } from '@/components/ui/slider';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import type { ChartSpec, DeckOutline } from '@/lib/deck/types';
+import type { ChartSpec, DeckOutline, OutlineItem } from '@/lib/deck/types';
 import type { ChartPlan, MermaidPlan } from '@/lib/data/plans';
 import { buildChartSpec, parseFileToTables, tableToMeta, type ParsedTable } from '@/lib/data/parse';
+import { parseMarkdownOutline, suggestThemeId } from '@/lib/data/markdown-outline';
 import { cn } from '@/lib/utils';
 import {
   FileSpreadsheet, FileJson2, ImageIcon, Loader2, Sparkles, Wand2,
   BarChart3, Workflow, AlertTriangle, X, FileUp, PenLine, LayoutTemplate,
-  MonitorPlay, Share2, Dices,
+  MonitorPlay, Share2, Dices, FileText, ListTree,
 } from 'lucide-react';
 
 const EXAMPLES = [
@@ -72,7 +73,7 @@ export function CreateView() {
   const [slideCount, setSlideCount] = useState(10);
   const [language, setLanguage] = useState('English');
   const [busy, setBusy] = useState<string | null>(null);
-  const [dataTab, setDataTab] = useState<'files' | 'image' | 'mermaid'>('files');
+  const [dataTab, setDataTab] = useState<'files' | 'image' | 'mermaid' | 'markdown'>('files');
   // Start with a deterministic seed so SSR and the first client render match
   // (avoids a hydration mismatch); deal a random set right after mount.
   const [ideaSeed, setIdeaSeed] = useState(0);
@@ -86,6 +87,7 @@ export function CreateView() {
   const [chartSpecs, setChartSpecs] = useState<ChartSpec[]>([]);
   const [diagram, setDiagram] = useState<MermaidPlan | null>(null);
   const [mermaid, setMermaid] = useState('');
+  const [markdown, setMarkdown] = useState('');
   const [dataError, setDataError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLInputElement>(null);
@@ -247,6 +249,49 @@ export function CreateView() {
     }
   };
 
+  // ------------------------------------------------- markdown → outline
+  const buildFromMarkdown = () => {
+    if (markdown.trim().length < 10) {
+      toast.error('Paste some markdown first — headings become slides.');
+      return;
+    }
+    try {
+      const parsed = parseMarkdownOutline(markdown);
+      if (parsed.slides.length < 1) throw new Error('No headings found');
+      // persist generation controls so the slide pipeline uses the same settings
+      setGenSettings({ audience, tone, language, slideCount });
+      const outline: DeckOutline = {
+        title: parsed.title,
+        subtitle: parsed.subtitle || prompt.trim().slice(0, 110),
+        slides: parsed.slides,
+      };
+      // deterministic theme suggestion when Auto is selected
+      if (themeChoice === 'auto') {
+        outline.recommendedThemeId = suggestThemeId(markdown);
+        outline.themeRationale = 'Matched to your markdown content.';
+      }
+      // attach user charts to slides tagged [chart], in order
+      const chartAssignments: Record<string, ChartSpec> = {};
+      const pool = [...chartSpecs];
+      outline.slides.forEach((s: OutlineItem, i: number) => {
+        if (s.layout === 'chart' && pool.length) {
+          chartAssignments[String(i)] = pool.shift()!;
+        }
+      });
+      setDataAssets({
+        tables, charts: chartSpecs,
+        diagram: diagram ?? undefined,
+        dataContext: undefined,
+        chartAssignments,
+      });
+      setOutline(outline);
+      setView('outline');
+      toast.success(`Outline built — ${outline.slides.length} slides from your markdown.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not parse markdown');
+    }
+  };
+
   const openDeck = async (d: { id: string; title: string }) => {
     try {
       setBusy('Opening deck…');
@@ -314,6 +359,12 @@ export function CreateView() {
       )}
       {/* Hero */}
       <motion.header {...enter(0)} className="text-center space-y-5 max-w-3xl mx-auto relative">
+        {/* drifting gradient orbs */}
+        <div className="absolute -top-16 left-1/2 -translate-x-1/2 -z-10 w-[42rem] max-w-none h-72 overflow-visible" aria-hidden>
+          <span className="df-orb left-[6%] top-2 h-56 w-56 bg-teal-300/70" />
+          <span className="df-orb df-orb-2 left-[38%] -top-6 h-64 w-64 bg-amber-200/80" />
+          <span className="df-orb df-orb-3 right-[4%] top-6 h-52 w-52 bg-violet-300/60" />
+        </div>
         <div
           className="absolute inset-x-0 -top-6 h-64 -z-10 opacity-60"
           style={{
@@ -328,7 +379,7 @@ export function CreateView() {
           <Sparkles className="h-3.5 w-3.5 text-amber-500" /> AI presentation studio
         </Badge>
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-neutral-900">
-          Prompt to <span className="text-neutral-500">polished deck</span> in minutes
+          Prompt to <span className="df-gradient-text">polished deck</span> in minutes
         </h1>
         <p className="text-muted-foreground text-lg">
           Describe your topic or drop your data. DeckForge writes, structures and designs the
@@ -433,11 +484,12 @@ export function CreateView() {
             <CardContent className="p-4">
               {/* Static-button tabs (no Radix id generation — keeps SSR/hydration
                   ids fully deterministic) */}
-              <div role="tablist" aria-label="Data input type" className="grid grid-cols-3 mb-3">
+              <div role="tablist" aria-label="Data input type" className="grid grid-cols-4 mb-3">
                 {([
                   { id: 'files', label: 'Files', icon: <FileSpreadsheet className="h-3.5 w-3.5" /> },
                   { id: 'image', label: 'Chart img', icon: <ImageIcon className="h-3.5 w-3.5" /> },
                   { id: 'mermaid', label: 'Mermaid', icon: <Workflow className="h-3.5 w-3.5" /> },
+                  { id: 'markdown', label: 'Markdown', icon: <FileText className="h-3.5 w-3.5" /> },
                 ] as const).map((t) => (
                   <button
                     key={t.id}
@@ -519,6 +571,41 @@ export function CreateView() {
                       ))}
                     </ul>
                   )}
+              </div>
+              )}
+
+              {dataTab === 'markdown' && (
+              <div role="tabpanel" id="data-panel-markdown" aria-labelledby="data-tab-markdown" className="space-y-3">
+                  <Textarea
+                    value={markdown}
+                    onChange={(e) => setMarkdown(e.target.value)}
+                    placeholder={'# Q3 Review\nsubtitle: Revenue, wins and risks\n## Highlights\n- Revenue up 18%\n- Churn at all-time low\n## Revenue by region [chart]\n## Thank you / next steps'}
+                    className="font-mono text-xs min-h-40"
+                    aria-label="Markdown outline"
+                  />
+                  {(() => {
+                    const trimmed = markdown.trim();
+                    if (!trimmed) {
+                      return (
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          <code className="bg-neutral-100 rounded px-1">#</code> title · <code className="bg-neutral-100 rounded px-1">##</code> slide · bullets become the brief · <code className="bg-neutral-100 rounded px-1">[chart]</code> tag picks the layout. Structure stays exactly as you write it — no AI rewriting.
+                        </p>
+                      );
+                    }
+                    const parsed = parseMarkdownOutline(trimmed);
+                    const bullets = parsed.slides.reduce((n, s) => n + (s.brief ? s.brief.split(' • ').length : 0), 0);
+                    return (
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <Badge variant="outline" className="gap-1 text-[11px] bg-white/70"><ListTree className="h-3 w-3" /> {parsed.slides.length} slides</Badge>
+                        <Badge variant="outline" className="text-[11px] bg-white/70">{bullets} bullets</Badge>
+                        <Badge variant="outline" className="gap-1 max-w-45 text-[11px] bg-white/70 truncate"><FileText className="h-3 w-3 shrink-0" /> {parsed.title}</Badge>
+                      </div>
+                    );
+                  })()}
+                  <Button size="sm" className="w-full gap-1.5" onClick={buildFromMarkdown} disabled={!!busy}>
+                    <ListTree className="h-4 w-4" />
+                    Build outline from markdown
+                  </Button>
               </div>
               )}
 
