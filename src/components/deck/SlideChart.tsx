@@ -1,6 +1,6 @@
 'use client';
 
-import { isValidElement, cloneElement, useMemo } from 'react';
+import { isValidElement, cloneElement, useEffect, useMemo, useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -45,6 +45,21 @@ function ChartSizer({ fixed, children }: { fixed?: { width: number; height: numb
       </FixedBox>
     );
   }
+  return <BrowserSizer>{children}</BrowserSizer>;
+}
+
+/**
+ * Defers ResponsiveContainer by one frame so the layout has settled —
+ * avoids recharts measuring a 0×0 box on the first paint (thumbnail
+ * grids / animated entrances) and the resulting console noise.
+ */
+function BrowserSizer({ children }: { children: React.ReactNode }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setReady(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+  if (!ready) return <div style={{ width: '100%', height: '100%' }} aria-hidden />;
   return <ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer>;
 }
 

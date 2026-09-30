@@ -148,7 +148,22 @@ export function PresentOverlay() {
   return (
     <div className="fixed inset-0 z-[100] bg-black flex flex-col" role="dialog" aria-modal="true" aria-label="Presentation mode">
       {/* stage */}
-      <div className="flex-1 min-h-0 grid place-items-center" onClick={(e) => { if ((e.target as HTMLElement).closest('[data-ui]')) return; go(1); }}>
+      <div className="flex-1 min-h-0 grid place-items-center relative">
+        {/* split click zones: left 28% back, rest forward (keyboard/arrows also work) */}
+        <button
+          className="absolute inset-y-0 left-0 w-[28%] z-[1] cursor-w-resize"
+          onClick={() => go(-1)}
+          disabled={index === 0}
+          tabIndex={-1}
+          aria-hidden
+        />
+        <button
+          className="absolute inset-y-0 right-0 w-[72%] z-[1] cursor-e-resize"
+          onClick={() => go(1)}
+          disabled={index >= slides.length - 1}
+          tabIndex={-1}
+          aria-hidden
+        />
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={index}
@@ -175,6 +190,17 @@ export function PresentOverlay() {
       <div className="h-1.5 bg-neutral-800 shrink-0" role="progressbar" aria-valuenow={index + 1} aria-valuemin={1} aria-valuemax={slides.length}>
         <div className="h-full transition-all duration-300" style={{ width: `${((index + 1) / Math.max(slides.length, 1)) * 100}%`, background: theme.tokens.colors.primary }} />
       </div>
+
+      {/* transient keyboard hint (CSS-animated: fades out once per entry) */}
+      {presenting && !showOverview && (
+        <div
+          data-ui
+          className="df-present-hint absolute top-5 left-1/2 rounded-full bg-black/70 backdrop-blur px-4 py-1.5 text-xs text-white/85 border border-white/10 shadow-lg"
+          aria-hidden
+        >
+          <span className="font-mono">← →</span> navigate · <span className="font-mono">N</span> notes · <span className="font-mono">G</span> grid · <span className="font-mono">Esc</span> exit
+        </div>
+      )}
 
       {/* controls */}
       <div data-ui className={cn('absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-full bg-black/70 backdrop-blur px-4 py-2 transition-opacity', 'opacity-40 hover:opacity-100 focus-within:opacity-100')}>

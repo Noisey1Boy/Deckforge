@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useAppStore } from '@/lib/store/deck-store';
-import type { LayoutId, Slide } from '@/lib/deck/types';
+import type { ChartKind, LayoutId, Slide } from '@/lib/deck/types';
 import { LAYOUT_IDS } from '@/lib/deck/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,9 +10,51 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Loader2, Sparkles, Scissors, Expand, RefreshCcw, Wand2, ImageIcon } from 'lucide-react';
+import {
+  Loader2, Sparkles, Scissors, Expand, RefreshCcw, Wand2, ImageIcon,
+  ImagePlus, Trash2, BarChart3, BarChartHorizontal, LineChart, AreaChart,
+  PieChart, Donut,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type AIAction = 'rewrite' | 'shorten' | 'expand' | 'regenerate';
+
+/**
+ * Read an image file as a data URL, downscaled so deck JSON stays small.
+ * Long edge capped at 1600px, re-encoded as WebP (fallback JPEG/PNG).
+ */
+async function fileToDeckImage(file: File): Promise<string> {
+  if (!/^image\/(png|jpe?g|webp|gif|avif)$/.test(file.type)) {
+    throw new Error('Use a PNG, JPG, WebP or GIF image.');
+  }
+  if (file.size > 8_000_000) throw new Error('Image must be under 8 MB.');
+  const raw = await new Promise<string>((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(new Error('Could not read the file.'));
+    r.readAsDataURL(file);
+  });
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error('Could not decode the image.'));
+      el.src = raw;
+    });
+    const MAX = 1600;
+    const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+    if (scale >= 1 && raw.length < 900_000) return raw; // already small
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(img.width * scale);
+    canvas.height = Math.round(img.height * scale);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return raw;
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/webp', 0.85);
+  } catch {
+    return raw; // decode unsupported in this browser — keep original
+  }
+}
 
 const AI_ACTIONS: Array<{ id: AIAction; label: string; icon: React.ReactNode }> = [
   { id: 'rewrite', label: 'Rewrite', icon: <Sparkles className="h-3.5 w-3.5" /> },
@@ -28,13 +70,40 @@ function textToLines(text: string, max: number): string[] {
   return text.split('\n').map((l) => l.trim()).filter(Boolean).slice(0, max);
 }
 
+const CHART_KINDS: Array<{ kind: ChartKind; label: string; icon: React.ReactNode }> = [
+  { kind: 'column', label: 'Column', icon: <BarChart3 className="h-3.5 w-3.5" /> },
+  { kind: 'bar', label: 'Bar', icon: <BarChartHorizontal className="h-3.5 w-3.5" /> },
+  { kind: 'line', label: 'Line', icon: <LineChart className="h-3.5 w-3.5" /> },
+  { kind: 'area', label: 'Area', icon: <AreaChart className="h-3.5 w-3.5" /> },
+  { kind: 'pie', label: 'Pie', icon: <PieChart className="h-3.5 w-3.5" /> },
+  { kind: 'donut', label: 'Donut', icon: <Donut className="h-3.5 w-3.5" /> },
+];
+
 export function SlideInspector({ slide }: { slide: Slide }) {
   const updateSlide = useAppStore((s) => s.updateSlide);
   const deck = useAppStore((s) => s.deck);
   const [aiBusy, setAiBusy] = useState<string | null>(null);
   const [imgBusy, setImgBusy] = useState(false);
+  const [uploadBusy, setUploadBusy] = useState(false);
+  const picRef = useRef<HTMLInputElement>(null);
 
   const set = (patch: Partial<Slide>) => updateSlide(slide.id, patch);
+
+  const handlePicUpload = async (files: FileList | null) => {
+    const file = files?.[0];
+    if (!file) return;
+    setUploadBusy(true);
+    try {
+      const url = await fileToDeckImage(file);
+      set({ layout: 'image', image: { url, alt: slide.title ?? 'Uploaded image' } });
+      toast.success('Image added to slide.');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Upload failed');
+    } finally {
+      setUploadBusy(false);
+      if (picRef.current) picRef.current.value = '';
+    }
+  };
 
   const runAI = async (action: AIAction | 'add_chart') => {
     setAiBusy(action);
@@ -205,8 +274,36 @@ export function SlideInspector({ slide }: { slide: Slide }) {
         )}
 
         {slide.layout === 'chart' && slide.chart && (
-          <div className="space-y-1.5">
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Chart insight</Label>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Chart type</Label>
+              <div
+                className="grid grid-cols-6 gap-1 rounded-lg bg-neutral-100 p-1"
+                role="radiogroup"
+                aria-label="Chart type"
+              >
+                {CHART_KINDS.map((k) => (
+                  <button
+                    key={k.kind}
+                    role="radio"
+                    aria-checked={slide.chart!.kind === k.kind}
+                    title={k.label}
+                    aria-label={`${k.label} chart`}
+                    onClick={() => set({ chart: { ...slide.chart!, kind: k.kind } })}
+                    className={cn(
+                      'h-8 grid place-items-center rounded-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900',
+                      slide.chart!.kind === k.kind
+                        ? 'bg-white shadow-sm text-neutral-900'
+                        : 'text-neutral-400 hover:text-neutral-700'
+                    )}
+                  >
+                    {k.icon}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Chart insight</Label>
             <Textarea value={slide.chart.insight ?? ''} onChange={(e) => set({ chart: { ...slide.chart!, insight: e.target.value } })} className="min-h-16 text-sm" maxLength={140} />
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">Data (label = value per line)</Label>
             <Textarea
@@ -220,6 +317,7 @@ export function SlideInspector({ slide }: { slide: Slide }) {
               }}
               className="min-h-24 text-xs font-mono"
             />
+            </div>
           </div>
         )}
 
@@ -241,11 +339,65 @@ export function SlideInspector({ slide }: { slide: Slide }) {
           </div>
         )}
 
-        {slide.layout === 'image' && slide.image && (
-          <div className="space-y-1.5">
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Image URL</Label>
-            <Input value={slide.image.url} onChange={(e) => set({ image: { ...slide.image!, url: e.target.value } })} />
-            <img src={slide.image.url} alt={slide.image.alt} className="rounded-md border w-full object-cover max-h-32" />
+        {slide.layout === 'image' && (
+          <div className="space-y-2.5">
+            {slide.image?.url ? (
+              <div className="relative group rounded-lg overflow-hidden border">
+                <img src={slide.image.url} alt={slide.image.alt} className="w-full object-cover max-h-36" />
+                <button
+                  onClick={() => set({ image: undefined })}
+                  className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-red-600 text-white rounded p-1 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+                  aria-label="Remove image"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => picRef.current?.click()}
+                disabled={uploadBusy}
+                className="w-full rounded-lg border-2 border-dashed border-neutral-300 hover:border-neutral-900 transition-colors p-5 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 disabled:opacity-60"
+              >
+                {uploadBusy
+                  ? <Loader2 className="h-5 w-5 mx-auto text-neutral-400 animate-spin" />
+                  : <ImagePlus className="h-5 w-5 mx-auto text-neutral-400" />}
+                <p className="text-sm font-medium mt-1.5">{uploadBusy ? 'Processing…' : 'Upload an image'}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">PNG · JPG · WebP · GIF, max 8 MB</p>
+              </button>
+            )}
+            <input
+              ref={picRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              hidden
+              onChange={(e) => handlePicUpload(e.target.files)}
+            />
+            {!slide.image?.url && (
+              <Button variant="secondary" size="sm" className="w-full" onClick={() => picRef.current?.click()} disabled={uploadBusy}>
+                <ImagePlus className="h-3.5 w-3.5" /> Choose file
+              </Button>
+            )}
+            {slide.image?.url && (
+              <>
+                <div className="space-y-1.5">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Replace image</Label>
+                  <Input
+                    value={slide.image.url.startsWith('data:') ? '' : slide.image.url}
+                    onChange={(e) => set({ image: { ...slide.image!, url: e.target.value } })}
+                    placeholder="Paste an image URL…"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Alt text</Label>
+                  <Input
+                    value={slide.image.alt}
+                    onChange={(e) => set({ image: { ...slide.image!, alt: e.target.value } })}
+                    maxLength={160}
+                    placeholder="Describe the image for accessibility"
+                  />
+                </div>
+              </>
+            )}
           </div>
         )}
       </section>

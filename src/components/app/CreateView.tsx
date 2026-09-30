@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useAppStore } from '@/lib/store/deck-store';
 import { TemplateGallery } from './TemplateGallery';
 import { RecentDecks, type RecentDeck } from './RecentDecks';
@@ -40,6 +41,16 @@ export function CreateView() {
   const setDataAssets = useAppStore((s) => s.setDataAssets);
   const themeChoice = useAppStore((s) => s.themeChoice);
   const setDeck = useAppStore((s) => s.setDeck);
+  const reduceMotion = useReducedMotion();
+
+  const enter = (delay: number) =>
+    reduceMotion
+      ? {}
+      : {
+          initial: { opacity: 0, y: 18 },
+          animate: { opacity: 1, y: 0 },
+          transition: { duration: 0.5, delay, ease: [0.22, 0.61, 0.36, 1] as const },
+        };
 
   const [prompt, setPrompt] = useState('');
   const [audience, setAudience] = useState('');
@@ -232,7 +243,7 @@ export function CreateView() {
   return (
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-12">
       {/* Hero */}
-      <header className="text-center space-y-5 max-w-3xl mx-auto relative">
+      <motion.header {...enter(0)} className="text-center space-y-5 max-w-3xl mx-auto relative">
         <div
           className="absolute inset-x-0 -top-6 h-64 -z-10 opacity-60"
           style={{
@@ -268,9 +279,10 @@ export function CreateView() {
             </span>
           ))}
         </div>
-      </header>
+      </motion.header>
 
       {/* Prompt card */}
+      <motion.div {...enter(0.08)}>
       <Card className="border-neutral-200 shadow-xl shadow-neutral-900/5">
         <CardContent className="p-4 sm:p-6 space-y-5">
           <Textarea
@@ -330,10 +342,11 @@ export function CreateView() {
           )}
         </CardContent>
       </Card>
+      </motion.div>
 
       {/* Data + Templates */}
       <div className="grid gap-8 lg:grid-cols-5">
-        <section className="lg:col-span-2 space-y-4">
+        <motion.section {...enter(0.16)} className="lg:col-span-2 space-y-4">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold">2. Your data <span className="text-muted-foreground text-sm font-normal">(optional)</span></h2>
             {hasData && <Badge className="bg-emerald-600">{tables.length + chartSpecs.length + (diagram ? 1 : 0)} assets</Badge>}
@@ -424,12 +437,12 @@ export function CreateView() {
               </Tabs>
             </CardContent>
           </Card>
-        </section>
+        </motion.section>
 
-        <section className="lg:col-span-3 space-y-4">
+        <motion.section {...enter(0.22)} className="lg:col-span-3 space-y-4">
           <h2 className="text-lg font-semibold">3. Pick a design system <span className="text-muted-foreground text-sm font-normal">— or let AI choose</span></h2>
           <TemplateGallery compact />
-        </section>
+        </motion.section>
       </div>
 
       {/* Deck library */}

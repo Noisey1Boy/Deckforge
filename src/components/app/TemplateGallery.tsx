@@ -63,17 +63,19 @@ export function TemplateGallery({ compact = false }: { compact?: boolean }) {
         const selected = themeChoice === item.id;
         const theme = item.id === 'auto' ? getTheme('minimal-mono') : (item as { manifest: typeof THEMES[number] }).manifest;
         const sample = SAMPLES[theme.tone] ?? SAMPLES.minimal;
+        const accent = item.id === 'auto' ? '#f59e0b' : theme.tokens.colors.primary;
         return (
           <button
             key={item.id}
             role="radio"
             aria-checked={selected}
             onClick={() => setThemeChoice(item.id)}
+            style={selected ? { borderColor: accent } : undefined}
             className={cn(
-              'group text-left rounded-xl border-2 p-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-neutral-900',
+              'group text-left rounded-xl border-2 p-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-neutral-900 hover:-translate-y-0.5',
               selected
-                ? 'border-neutral-900 shadow-lg shadow-neutral-900/10'
-                : 'border-transparent hover:border-neutral-300 bg-card'
+                ? 'shadow-lg shadow-neutral-900/10'
+                : 'border-transparent hover:border-neutral-300 hover:shadow-md bg-card'
             )}
           >
             <div className="rounded-lg overflow-hidden border border-neutral-200 shadow-sm">

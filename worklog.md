@@ -82,3 +82,26 @@ Stage Summary:
 - New: undo/redo history, deck library management (duplicate/delete/JSON in+out), presenter timer, slide overview grid, animated view transitions, landing/toolbar polish.
 - All verified in browser; lint clean; page healthy.
 - Risks/next: JSON import UI couldn't be exercised via hidden-file-input automation (API contract verified directly); consider upload progress toasts, image-slide file upload (data URL), per-slide transition override, multi-select reorder; deck list pagination if library grows.
+
+---
+Task ID: r3 (cron review round 3)
+Agent: webDevReview agent
+Task: Status assessment + browser QA, then feature + styling round (image upload, chart switcher, editor shortcuts, present polish)
+
+Work Log:
+- Status assessment: dev.log clean (only Prisma query noise + historical 200s), page 200, lint clean, no runtime console errors on fresh load. Phase stable → chose feature + styling work per round mandate.
+- F1 Image upload for image slides (SlideInspector): file input → FileReader → canvas downscale (long edge 1600px, WebP q0.85; keeps original if already small) → data URL into slide.image; guards type (PNG/JPG/WebP/GIF/AVIF) + 8 MB size; UI = dashed dropzone + "Choose file" when empty, preview with hover remove (Trash) when set, plus "Replace image" URL field and alt-text editor. Verified in browser: uploaded /tmp/test-upload.png → full-bleed image layout rendered, preview + fields shown. Data URLs flow through PPTX export (addImage path) and HTML export unchanged.
+- F2 Chart type switcher (SlideInspector): segmented 6-icon radiogroup (column/bar/line/area/pie/donut, lucide) writes slide.chart.kind; theme palette + PPTX native-chart mapping already support all kinds. Verified: flipped deck's real "Revenue by Region" chart to donut and back to column in browser.
+- F3 Editor keyboard shortcuts (EditorView): J/K or ↑/↓ navigate slides, ⌘D duplicate current, Del/Backspace delete current (blocked at 1 slide; toast with undo hint), ⌘Z/⇧⌘Z/Ctrl+Y history, `?` toggles cheat-sheet; all no-ops while typing (INPUT/TEXTAREA/SELECT/contentEditable). Toolbar got a Keyboard icon button. Shortcuts cheat-sheet = shadcn Dialog with kbd-styled rows. Verified: J J → 1→3, Ctrl+D → 11 slides, Ctrl+Z → 10, ? → dialog renders.
+- F5 Add-slide layout picker: "Add slide" is now a DropdownMenu listing all 11 layouts with icons (Type/Hash/List/Columns2/Sigma/BarChart3/Workflow/Table2/Quote/Image/Flag); inserts after current slide. Verified: added Chart slide, then Image slide.
+- F4 Present mode (PresentOverlay): split click zones (left 28% back with cursor-w-resize, right 72% forward), transient keyboard hint chip "← → navigate · N notes · G grid · Esc exit" implemented as pure CSS animation (deck.css df-hint-fade 4.2s forwards; 0.6s under prefers-reduced-motion) — avoids setState-in-effect lint and JS timers. Verified: hint shows on entry and fades, right zone advances 4→5, left zone returns 5→4.
+- S1 Editor canvas: dot-grid texture (radial-gradient 22px) + deeper shadow/ring on the slide frame; removed dead hidden mobile-strip div.
+- S2 Template gallery: selected card border now uses the theme's own primary color (amber for Auto), cards get hover lift (-translate-y-0.5) + hover shadow. Verified visually (Bold Impact teal ring).
+- S3 Landing entrance: framer-motion staggered fade/rise on hero (0s), prompt card (0.08s), data section (0.16s), gallery (0.22s), all disabled under prefers-reduced-motion.
+- Fixed during round: missing closing </div> in inspector chart section (JSX parse error caught by lint); react-hooks/set-state-in-effect on the present-hint timer (replaced with CSS animation approach); recharts width(0) first-paint console noise (BrowserSizer: rAF-gated ResponsiveContainer mount) — 0 warnings after reload.
+- README features section updated (editor shortcuts, image upload, chart switcher, present click zones/hints).
+
+Stage Summary:
+- New: image upload (data URL + downscale + alt editor), chart kind switcher, editor keyboard shortcuts + cheat-sheet dialog, layout-picker add menu, present click zones + CSS key hints, gallery accent rings + hover lift, landing staggered entrance, chart first-paint noise fixed.
+- All verified in browser; lint clean; page healthy; no console errors after reload.
+- Risks/next: data-URL images increase deck JSON size (downscale mitigates; consider blob storage if decks get heavy); image upload is click-only (no drag-drop onto the slide canvas yet); AI "Add chart" on a blank chart slide remains the path to fill empty chart slides; JSON import UI still untested via automation (hidden file input); deck-list pagination if library grows.

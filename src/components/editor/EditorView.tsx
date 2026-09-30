@@ -9,19 +9,43 @@ import { ExportMenu } from '@/components/app/ExportMenu';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import type { LayoutId, Slide } from '@/lib/deck/types';
 import { LAYOUT_IDS } from '@/lib/deck/types';
 import { cn } from '@/lib/utils';
 import {
   Play, Plus, Trash2, Copy, Presentation, ChevronLeft, ChevronRight, Check, Cloud,
-  Undo2, Redo2,
+  Undo2, Redo2, Keyboard, Type, Hash, List, Columns2, Image as ImageIcon, Quote,
+  BarChart3, Workflow, Table2, Flag, Sigma,
 } from 'lucide-react';
 
 const LAYOUT_ICONS: Record<LayoutId, string> = {
   title: 'T', section: '§', bullets: '•', 'two-column': '⫿', image: '🖼',
   quote: '❝', stats: '#', chart: '▮', diagram: '⇄', comparison: '⇋', closing: '◆',
 };
+
+const LAYOUT_MENU_ITEMS: Array<{ id: LayoutId; label: string; icon: React.ReactNode }> = [
+  { id: 'title', label: 'Title', icon: <Type className="h-4 w-4" /> },
+  { id: 'section', label: 'Section break', icon: <Hash className="h-4 w-4" /> },
+  { id: 'bullets', label: 'Bullets', icon: <List className="h-4 w-4" /> },
+  { id: 'two-column', label: 'Two column', icon: <Columns2 className="h-4 w-4" /> },
+  { id: 'stats', label: 'Stats', icon: <Sigma className="h-4 w-4" /> },
+  { id: 'chart', label: 'Chart', icon: <BarChart3 className="h-4 w-4" /> },
+  { id: 'diagram', label: 'Diagram', icon: <Workflow className="h-4 w-4" /> },
+  { id: 'comparison', label: 'Comparison', icon: <Table2 className="h-4 w-4" /> },
+  { id: 'quote', label: 'Quote', icon: <Quote className="h-4 w-4" /> },
+  { id: 'image', label: 'Image', icon: <ImageIcon className="h-4 w-4" /> },
+  { id: 'closing', label: 'Closing', icon: <Flag className="h-4 w-4" /> },
+];
+
+function isTypingTarget(t: EventTarget | null): boolean {
+  const el = t as HTMLElement | null;
+  if (!el) return false;
+  const tag = el.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+}
 
 function SlideCard({
   slide, index, active, pageCount,
@@ -104,6 +128,7 @@ export function EditorView() {
   const [saving, setSaving] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const undo = useAppStore((s) => s.undo);
   const redo = useAppStore((s) => s.redo);
   const canUndo = useAppStore((s) => s.past.length > 0);
@@ -133,19 +158,51 @@ export function EditorView() {
     return () => clearTimeout(t);
   }, [dirty, deck, save]);
 
-  // Undo/redo keyboard shortcuts (⌘Z / ⌘⇧Z / Ctrl+Z / Ctrl+Y)
+  // Editor keyboard shortcuts: J/K or ↑/↓ navigate, ⌘D duplicate, Del remove,
+  // ⌘Z / ⇧⌘Z history, ? toggles the cheat-sheet. Ignored while typing.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement | null)?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement | null)?.isContentEditable) return;
+      if (isTypingTarget(e.target)) return;
+      const st = useAppStore.getState();
+      if (!st.deck) return;
       const mod = e.metaKey || e.ctrlKey;
-      if (!mod) return;
-      if (e.key.toLowerCase() === 'z' && !e.shiftKey) {
+      const idx = st.currentSlideIndex;
+      const total = st.deck.slides.length;
+      if (mod && e.key.toLowerCase() === 'd') {
         e.preventDefault();
-        useAppStore.getState().undo();
-      } else if ((e.key.toLowerCase() === 'z' && e.shiftKey) || e.key.toLowerCase() === 'y') {
-        e.preventDefault();
-        useAppStore.getState().redo();
+        const cur = st.deck.slides[idx];
+        if (cur) st.duplicateSlide(cur.id);
+        return;
+      }
+      if (mod && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+        e.preventDefault(); st.undo(); return;
+      }
+      if ((mod && e.key.toLowerCase() === 'z' && e.shiftKey) || (mod && e.key.toLowerCase() === 'y')) {
+        e.preventDefault(); st.redo(); return;
+      }
+      if (mod) return; // let other mod-combos through to the browser
+      if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+        e.preventDefault(); setShowShortcuts((v) => !v); return;
+      }
+      switch (e.key) {
+        case 'j': case 'J': case 'ArrowDown':
+          e.preventDefault();
+          if (idx < total - 1) st.setCurrentSlide(idx + 1);
+          break;
+        case 'k': case 'K': case 'ArrowUp':
+          e.preventDefault();
+          if (idx > 0) st.setCurrentSlide(idx - 1);
+          break;
+        case 'Delete': case 'Backspace': {
+          if (total <= 1) break;
+          e.preventDefault();
+          const cur = st.deck.slides[idx];
+          if (cur) {
+            st.removeSlide(cur.id);
+            toast('Slide deleted', { description: 'Press ⌘Z to undo.' });
+          }
+          break;
+        }
       }
     };
     window.addEventListener('keydown', onKey);
@@ -167,6 +224,15 @@ export function EditorView() {
   };
 
   const total = slides.length;
+
+  const SHORTCUTS: Array<{ keys: string; label: string }> = [
+    { keys: 'J / K · ↑ ↓', label: 'Previous / next slide' },
+    { keys: '⌘ D', label: 'Duplicate current slide' },
+    { keys: 'Del', label: 'Delete current slide' },
+    { keys: '⌘ Z', label: 'Undo' },
+    { keys: '⇧⌘ Z', label: 'Redo' },
+    { keys: '?', label: 'Toggle this cheat-sheet' },
+  ];
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
@@ -222,6 +288,17 @@ export function EditorView() {
             </SelectContent>
           </Select>
           <span className="w-px h-6 bg-neutral-200 mx-1" aria-hidden />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 text-neutral-500 hover:text-neutral-900"
+            onClick={() => setShowShortcuts(true)}
+            aria-label="Keyboard shortcuts"
+            title="Keyboard shortcuts (?)"
+          >
+            <Keyboard className="h-4 w-4" />
+          </Button>
+          <span className="w-px h-6 bg-neutral-200 mx-1" aria-hidden />
           <ExportMenu />
           <Button onClick={() => setPresenting(true)} className="gap-1.5 bg-neutral-900 hover:bg-neutral-800 h-9">
             <Play className="h-4 w-4" /> Present
@@ -254,20 +331,35 @@ export function EditorView() {
             </div>
           </ScrollArea>
           <div className="p-3 border-t">
-            <Button variant="secondary" className="w-full gap-1.5" onClick={() => addSlide('bullets')}>
-              <Plus className="h-4 w-4" /> Add slide
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="secondary" className="w-full gap-1.5">
+                  <Plus className="h-4 w-4" /> Add slide
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" side="top" className="w-52 max-h-80 overflow-y-auto">
+                {LAYOUT_MENU_ITEMS.map((l) => (
+                  <DropdownMenuItem key={l.id} onClick={() => addSlide(l.id)} className="gap-2.5">
+                    <span className="text-neutral-400">{l.icon}</span>
+                    {l.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </aside>
 
-        {/* mobile slide strip */}
-        <div className="md:hidden absolute" style={{ display: 'none' }} />
-
         {/* canvas */}
-        <main className="flex-1 min-w-0 flex flex-col bg-neutral-100">
+        <main
+          className="flex-1 min-w-0 flex flex-col bg-neutral-100"
+          style={{
+            backgroundImage: 'radial-gradient(#d8d8d8 1px, transparent 1.4px)',
+            backgroundSize: '22px 22px',
+          }}
+        >
           <div className="flex-1 min-h-0 p-4 sm:p-8 flex items-center justify-center overflow-hidden">
             {current && (
-              <div className="w-full max-w-4xl rounded-xl overflow-hidden shadow-2xl shadow-neutral-900/20 ring-1 ring-neutral-200">
+              <div className="w-full max-w-4xl rounded-xl overflow-hidden shadow-2xl shadow-neutral-900/25 ring-1 ring-black/10">
                 <ScaledSlide slide={current} theme={theme} deckTitle={deck.title} index={currentSlideIndex} pageCount={total} interactive />
               </div>
             )}
@@ -327,6 +419,26 @@ export function EditorView() {
       >
         <Presentation className="h-5 w-5" />
       </button>
+
+      {/* keyboard shortcuts cheat-sheet */}
+      <Dialog open={showShortcuts} onOpenChange={setShowShortcuts}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Keyboard className="h-5 w-5" /> Keyboard shortcuts</DialogTitle>
+            <DialogDescription>
+              Work faster in the editor. Shortcuts are ignored while typing in a field.
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="divide-y divide-neutral-100">
+            {SHORTCUTS.map((s) => (
+              <li key={s.keys} className="flex items-center justify-between py-2.5 text-sm">
+                <span className="text-neutral-600">{s.label}</span>
+                <kbd className="rounded border border-neutral-200 bg-neutral-50 px-2 py-0.5 text-xs font-mono text-neutral-700 shadow-sm">{s.keys}</kbd>
+              </li>
+            ))}
+          </ul>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
