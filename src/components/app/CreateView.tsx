@@ -264,8 +264,54 @@ export function CreateView() {
 
   const hasData = tables.length > 0 || chartSpecs.length > 0 || diagram;
 
+  // ---- drop a data file anywhere on the page to attach it ---------------
+  const [droppingData, setDroppingData] = useState(false);
+  const pageDrag = (e: React.DragEvent) => {
+    if (!e.dataTransfer.types.includes('Files')) return;
+    e.preventDefault();
+    setDroppingData(true);
+  };
+  const pageDragLeave = (e: React.DragEvent) => {
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    setDroppingData(false);
+  };
+  const pageDrop = (e: React.DragEvent) => {
+    if (!e.dataTransfer.types.includes('Files')) return;
+    e.preventDefault();
+    setDroppingData(false);
+    const files = Array.from(e.dataTransfer.files);
+    const images = files.filter((f) => f.type.startsWith('image/'));
+    const data = files.filter((f) => !f.type.startsWith('image/'));
+    if (data.length > 0) {
+      setDataTab('files');
+      const dt = new DataTransfer();
+      data.forEach((f) => dt.items.add(f));
+      void handleFiles(dt.files);
+    }
+    if (images.length > 0) {
+      setDataTab('image');
+      const dt = new DataTransfer();
+      images.forEach((f) => dt.items.add(f));
+      void handleChartImage(dt.files);
+    }
+  };
+
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-12">
+    <div
+      className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-12"
+      onDragOver={pageDrag}
+      onDragLeave={pageDragLeave}
+      onDrop={pageDrop}
+    >
+      {droppingData && (
+        <div className="fixed inset-2 z-40 grid place-items-center rounded-2xl border-2 border-dashed border-neutral-900 bg-white/80 backdrop-blur-sm pointer-events-none" aria-hidden>
+          <div className="text-center">
+            <FileUp className="h-8 w-8 mx-auto text-neutral-700" />
+            <p className="mt-2 text-base font-semibold text-neutral-900">Drop your data</p>
+            <p className="text-xs text-muted-foreground mt-0.5">CSV · XLSX · JSON attach as data — images attach as chart screenshots</p>
+          </div>
+        </div>
+      )}
       {/* Hero */}
       <motion.header {...enter(0)} className="text-center space-y-5 max-w-3xl mx-auto relative">
         <div

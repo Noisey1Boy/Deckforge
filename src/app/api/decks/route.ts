@@ -16,6 +16,7 @@ export async function GET() {
         title: d.title,
         subtitle: d.subtitle,
         themeId: d.themeId,
+        meta: (JSON.parse(d.metaJson || '{}') || {}) as DeckMeta,
         slideCount: JSON.parse(d.slidesJson || '[]').length,
         updatedAt: d.updatedAt,
       })),

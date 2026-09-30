@@ -158,3 +158,33 @@ Stage Summary:
 - New: chart data cell-grid editor (+unit/source/series), per-slide transition override, presenter view (V), autoplay speed+loop persistence, shuffle theme button, theme-colored active thumbnail, clickable logo + toolbar back button.
 - All verified in browser; bun run lint clean; README features updated.
 - Risks/next: presenter view sidebar is fixed-width on desktop (could get a resize handle); data-URL images still grow deck JSON (downscale mitigates); consider per-deck export/import including transition field (already serializes automatically); a production build (next build) should be verified once outside sandbox constraints to confirm the dev-only useId flake disappears with it; multi-select slide operations remain open ideas.
+
+---
+Task ID: r7 (cron review round 7)
+Agent: webDevReview agent
+Task: Status assessment + browser QA, then feature + styling round (accent/branding customization, multi-select batch ops, landing data drop, outline polish)
+
+Work Log:
+- Status assessment: lint clean, page 200, dev.log clean (200s only). Browser QA: landing, deck library (4 decks), editor (toolbar/inspector/AI actions), chart slide with real CSV data + cell editor, present mode (controls/timer/progress), export menu (PPTX/PDF/HTML/Notes), console clean, no hydration issues. Phase STABLE -> feature + styling round chosen.
+- PLAN this round: F1 deck accent-color override + custom footer text + page-number toggle (theme personalization, threaded through editor/present/PPTX/HTML exports via Deck.meta), F2 multi-select slide batch ops (cmd/shift-click, range select, batch duplicate/hide/delete with single undo snapshots), F3 drop data files anywhere on landing to attach, S1 OutlineView visual upgrade, S2 deck stats chip in toolbar. IN PROGRESS below.
+
+Work Log (completed):
+- F1 Accent color override + branding (Deck style popover in editor toolbar, Palette-icon with live two-tone swatch):
+  - DeckMeta gains accent (hex), footerText, showPageNumbers; persisted via existing metaJson — no schema change; /api/decks list now returns meta so library cards reflect it.
+  - themes.ts: applyAccent() layers hex over theme primary+accent+chart palette[0]; deckTheme(deck) resolves effective render theme; deckFooterText() helper in types.ts.
+  - Threaded through: EditorView (canvas + thumbnails), PresentOverlay (stage/notes-preview/overview-grid), PrintSurface (PDF), PPTX export (primary + footer text + conditional page number), standalone HTML export, RecentDecks cards (band gradient + dot).
+  - SlideView/ScaledSlide gain showPageNumbers prop (default true); present-mode previews/overview pass false so counters don't duplicate.
+  - UI: 8 preset swatches + "Theme" reset + native custom color input; footer text input (80 chars, placeholder = deck title); page-numbers Switch. Verified: emerald accent re-tinted kicker/rules/stats values/chart first series/thumbnail rings INSTANTLY; footer text swapped on canvas; page number removed; deck autosaved ("Saved"); full reset works.
+- F2 Multi-select batch ops:
+  - Store: removeSlides/duplicateSlides/setHiddenSlides — each ONE undo snapshot; duplicate inserts copies bottom-up adjacent to originals; removeSlides never empties deck; currentSlideIndex adjusted.
+  - Interaction: cmd/ctrl-click toggle, shift-click range (anchor = last plain click), plain click clears; Escape clears selection; Delete/Backspace deletes selection (ref-synced via effect for the global key handler).
+  - Emerald batch action bar above thumbnails: count + duplicate/hide/show/delete/clear icons, role=toolbar, Delete works while focused; selected thumbnails get emerald ring + check badge + aria-label "(selected)".
+  - Verified: cmd-click 2 → "2 selected", batch hide → both HIDDEN badges + dashed thumbs + stats chip recompute 10→8 visible (~3→~2 min); range select 1-4 → "4 selected"; batch duplicate → 10→14 slides with copies adjacent; single undo restored 10.
+- F3 Landing-wide data drop: dragover/dragleave/drop on CreateView root; files route to existing handleFiles (tab auto-switches to Files), images to handleChartImage (Chart img tab); full-page dashed "Drop your data" overlay (fixed inset-2, backdrop blur) while dragging. Verified with synthetic DataTransfer drop: test.csv (3 rows × 2 cols) attached, "1 assets" badge, Files tab active.
+- S1 OutlineView polish: layout icons (lucide, matches editor add-menu) inside layout select trigger AND items; numbered chips in bordered squares; card hover lift + shadow; gradient AI-picked banner with icon chip; Approve button elevated (shadow + hover translate).
+- S2 Editor toolbar: live talk-time chip "N visible · ~X min" (words/110wpm + 0.25 min/slide, updates with hidden slides), xl+ screens.
+- README features updated (deck style & branding, multi-select, landing drop, talk-time chip).
+
+Stage Summary:
+- All 4 features verified end-to-end in browser; accent/footer/pageNumbers persist (PUT 200s) and flow to every render + export path; lint clean; console clean; dev.log clean.
+- Risks/next: accent uses raw hex over primaryContrast (very light custom accents on light themes could reduce contrast — presets chosen mid/dark; consider auto contrast fixup); JSON import of older decks without meta works (all fields optional); per-slide accent override remains an open idea; multi-select drag-reorder (move a block) not yet supported; PPTX native-chart series colors use accent only for series 1 (matches on-screen behavior).

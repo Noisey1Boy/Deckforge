@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useAppStore } from '@/lib/store/deck-store';
-import { getTheme } from '@/lib/design/themes';
+import { getTheme, deckTheme } from '@/lib/design/themes';
+import { deckFooterText } from '@/lib/deck/types';
 import { SlideView } from '@/components/deck/SlideView';
 import { ScaledSlide } from '@/components/deck/ScaledSlide';
 import { Button } from '@/components/ui/button';
@@ -91,7 +92,9 @@ export function PresentOverlay() {
   }, []);
 
   const slides = deck?.slides ?? [];
-  const theme = useMemo(() => getTheme(deck?.themeId), [deck?.themeId]);
+  const theme = useMemo(() => (deck ? deckTheme(deck) : getTheme(deck?.themeId)), [deck]);
+  const footerText = deck ? deckFooterText(deck) : '';
+  const showPageNumbers = deck?.meta?.showPageNumbers !== false;
   const slide = slides[index];
   const visibleCount = useMemo(() => slides.filter((s) => !s.hidden).length, [slides]);
   const visiblePos = useMemo(() => slides.slice(0, index).filter((s) => !s.hidden).length, [slides, index]);
@@ -317,7 +320,7 @@ export function PresentOverlay() {
         >
           <div style={{ width: 1280, height: 720, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
             {slide ? (
-              <SlideView slide={slide} theme={theme} deckTitle={deck.title} index={index} pageCount={slides.length} />
+              <SlideView slide={slide} theme={theme} deckTitle={footerText} index={index} pageCount={slides.length} showPageNumbers={showPageNumbers} />
             ) : null}
           </div>
         </motion.div>
@@ -370,7 +373,7 @@ export function PresentOverlay() {
                   className="block w-full rounded-md overflow-hidden border border-white/15 hover:border-white/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white text-left"
                   aria-label={`Preview next slide: ${nextSlide.title || nextSlide.layout}`}
                 >
-                  <ScaledSlide slide={nextSlide} theme={theme} index={nextIndex ?? undefined} pageCount={slides.length} />
+                  <ScaledSlide slide={nextSlide} theme={theme} index={nextIndex ?? undefined} pageCount={slides.length} showPageNumbers={false} />
                 </button>
               ) : (
                 <div className="h-24 grid place-items-center rounded-md border border-dashed border-white/15 text-white/35 text-xs">
@@ -558,7 +561,7 @@ export function PresentOverlay() {
                     aria-label={`Go to slide ${vi + 1}: ${s.title || s.layout}`}
                     aria-current={i === index}
                   >
-                    <ScaledSlide slide={s} theme={theme} index={i} pageCount={slides.length} />
+                    <ScaledSlide slide={s} theme={theme} index={i} pageCount={slides.length} showPageNumbers={false} />
                     <span className="absolute top-1.5 left-1.5 bg-black/70 text-white text-[10px] rounded px-1.5 py-0.5 font-mono">{vi + 1}</span>
                   </button>
                 ))}

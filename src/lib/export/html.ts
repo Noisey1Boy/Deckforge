@@ -4,7 +4,8 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import type { Deck } from '@/lib/deck/types';
 import { visibleSlides } from '@/lib/deck/types';
-import { getTheme } from '@/lib/design/themes';
+import { getTheme, applyAccent } from '@/lib/design/themes';
+import { deckFooterText } from '@/lib/deck/types';
 import { SlideView } from '@/components/deck/SlideView';
 
 /**
@@ -29,7 +30,9 @@ function escapeHtml(s: string): string {
 }
 
 export async function exportStandaloneHtml(deck: Deck): Promise<void> {
-  const theme = getTheme(deck.themeId);
+  const theme = applyAccent(getTheme(deck.themeId), deck.meta?.accent);
+  const footerText = deckFooterText(deck);
+  const showPageNumbers = deck.meta?.showPageNumbers !== false;
 
   const cssRes = await fetch('/api/export/deck-css');
   if (!cssRes.ok) throw new Error('Could not load deck stylesheet');
@@ -43,9 +46,10 @@ export async function exportStandaloneHtml(deck: Deck): Promise<void> {
         createElement(SlideView, {
           slide: s,
           theme,
-          deckTitle: deck.title,
+          deckTitle: footerText,
           index: i,
           pageCount: slides.length,
+          showPageNumbers,
           fixedCharts: true,
         })
       );

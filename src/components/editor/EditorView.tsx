@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAppStore, newSlideId } from '@/lib/store/deck-store';
-import { THEMES, getTheme } from '@/lib/design/themes';
+import { THEMES, deckTheme, getTheme } from '@/lib/design/themes';
+import { deckFooterText } from '@/lib/deck/types';
 import { ScaledSlide } from '@/components/deck/ScaledSlide';
 import { SlideInspector } from './SlideInspector';
 import { ExportMenu } from '@/components/app/ExportMenu';
@@ -10,6 +11,9 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { fileToDeckImage } from '@/lib/media/image';
@@ -19,7 +23,8 @@ import { cn } from '@/lib/utils';
 import {
   Play, Plus, Trash2, Copy, Presentation, ChevronLeft, ChevronRight, Check, Cloud,
   Undo2, Redo2, Keyboard, Type, Hash, List, Columns2, Image as ImageIcon, Quote,
-  BarChart3, Workflow, Table2, Flag, Sigma, Eye, EyeOff, Shuffle,
+  BarChart3, Workflow, Table2, Flag, Sigma, Eye, EyeOff, Shuffle, Palette, X,
+  SquareStack, Clock3,
 } from 'lucide-react';
 
 const LAYOUT_ICONS: Record<LayoutId, string> = {
@@ -51,13 +56,13 @@ function isTypingTarget(t: EventTarget | null): boolean {
 function SlideCard({
   slide, index, active, pageCount,
   onSelect, onDuplicate, onDelete, onToggleHidden, onDragStart, onDragOver, onDrop,
-  dragging, dropTarget,
+  dragging, dropTarget, selected,
 }: {
   slide: Slide;
   index: number;
   active: boolean;
   pageCount: number;
-  onSelect: () => void;
+  onSelect: (e: React.MouseEvent) => void;
   onDuplicate: () => void;
   onDelete: () => void;
   onToggleHidden: () => void;
@@ -66,9 +71,10 @@ function SlideCard({
   onDrop: () => void;
   dragging: boolean;
   dropTarget: boolean;
+  selected: boolean;
 }) {
-  const theme = useAppStore((s) => s.deck?.themeId);
-  const themeManifest = getTheme(theme);
+  const deck = useAppStore((s) => s.deck);
+  const themeManifest = deck ? deckTheme(deck) : getTheme(deck?.themeId ?? 'corporate-clean');
   return (
     <div
       draggable
@@ -80,18 +86,19 @@ function SlideCard({
         active ? 'shadow-md' : 'border-transparent hover:border-neutral-300',
         dragging && 'opacity-40',
         dropTarget && 'ring-2 ring-neutral-900/60',
+        selected && !active && 'ring-2 ring-emerald-500/70 ring-offset-1',
         slide.hidden && !dragging && 'opacity-55 border-dashed'
       )}
       style={active ? { borderColor: themeManifest.tokens.colors.primary } : undefined}
       onClick={onSelect}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onSelect()}
-      aria-label={`Slide ${index + 1}: ${slide.title || slide.layout}${slide.hidden ? ' (hidden)' : ''}`}
+      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onSelect(e as unknown as React.MouseEvent)}
+      aria-label={`Slide ${index + 1}: ${slide.title || slide.layout}${slide.hidden ? ' (hidden)' : ''}${selected ? ' (selected)' : ''}`}
       aria-current={active}
     >
       <div className="pointer-events-none">
-        <ScaledSlide slide={slide} theme={themeManifest} index={index} pageCount={pageCount} />
+        <ScaledSlide slide={slide} theme={themeManifest} index={index} pageCount={pageCount} showPageNumbers={false} />
       </div>
       <div className="absolute top-1 left-1 flex items-center gap-1">
         <span className="bg-black/60 text-white text-[10px] rounded px-1.5 py-0.5 font-mono">{index + 1}</span>
@@ -101,6 +108,11 @@ function SlideCard({
           </span>
         )}
       </div>
+      {selected && (
+        <span className="absolute bottom-1 right-1 bg-emerald-600 text-white rounded-full p-0.5 shadow" aria-hidden>
+          <Check className="h-3 w-3" />
+        </span>
+      )}
       <div className="absolute top-1 right-1 hidden group-hover:flex gap-1">
         <button
           onClick={(e) => { e.stopPropagation(); onToggleHidden(); }}
@@ -139,6 +151,9 @@ export function EditorView() {
   const insertSlide = useAppStore((s) => s.insertSlide);
   const removeSlide = useAppStore((s) => s.removeSlide);
   const duplicateSlide = useAppStore((s) => s.duplicateSlide);
+  const removeSlides = useAppStore((s) => s.removeSlides);
+  const duplicateSlides = useAppStore((s) => s.duplicateSlides);
+  const setHiddenSlides = useAppStore((s) => s.setHiddenSlides);
   const setDeckTheme = useAppStore((s) => s.setDeckTheme);
   const setPresenting = useAppStore((s) => s.setPresenting);
   const setView = useAppStore((s) => s.setView);
@@ -150,6 +165,14 @@ export function EditorView() {
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [droppingImage, setDroppingImage] = useState(false);
+  const [showStyle, setShowStyle] = useState(false);
+  // multi-selection (editor only): cmd/ctrl-click toggles, shift-click ranges
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const anchorRef = useRef<number | null>(null);
+  const selectedIdsRef = useRef<string[]>([]);
+  useEffect(() => {
+    selectedIdsRef.current = selectedIds;
+  }, [selectedIds]);
   const undo = useAppStore((s) => s.undo);
   const redo = useAppStore((s) => s.redo);
   const canUndo = useAppStore((s) => s.past.length > 0);
@@ -211,6 +234,13 @@ export function EditorView() {
       if (e.key === '?' || (e.shiftKey && e.key === '/')) {
         e.preventDefault(); setShowShortcuts((v) => !v); return;
       }
+      if (e.key === 'Escape') {
+        if (selectedIdsRef.current.length > 0) {
+          setSelectedIds([]);
+          anchorRef.current = null;
+        }
+        return;
+      }
       switch (e.key) {
         case 'j': case 'J': case 'ArrowDown':
           e.preventDefault();
@@ -223,6 +253,14 @@ export function EditorView() {
         case 'Delete': case 'Backspace': {
           if (total <= 1) break;
           e.preventDefault();
+          const sel = selectedIdsRef.current;
+          if (sel.length > 0) {
+            st.removeSlides(sel);
+            toast(`${sel.length} slide${sel.length > 1 ? 's' : ''} deleted`, { description: 'Press ⌘Z to undo.' });
+            setSelectedIds([]);
+            anchorRef.current = null;
+            break;
+          }
           const cur = st.deck.slides[idx];
           if (cur) {
             st.removeSlide(cur.id);
@@ -244,7 +282,60 @@ export function EditorView() {
 
   const slides = deck.slides;
   const current = slides[currentSlideIndex] ?? slides[0];
-  const theme = getTheme(deck.themeId);
+  const theme = deckTheme(deck);
+  const footerText = deckFooterText(deck);
+  const showPageNumbers = deck.meta?.showPageNumbers !== false;
+
+  // ---- multi-select helpers --------------------------------------------
+  const clearSelection = () => { setSelectedIds([]); anchorRef.current = null; };
+
+  const handleThumbSelect = (i: number, e: React.MouseEvent) => {
+    const id = slides[i]?.id;
+    if (!id) return;
+    if (e.shiftKey && anchorRef.current != null) {
+      const [a, b] = [anchorRef.current, i].sort((x, y) => x - y);
+      setSelectedIds(slides.slice(a, b + 1).map((s) => s.id));
+      setCurrentSlide(i);
+      return;
+    }
+    if (e.metaKey || e.ctrlKey) {
+      setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+      anchorRef.current = i;
+      setCurrentSlide(i);
+      return;
+    }
+    setSelectedIds([]);
+    anchorRef.current = i;
+    setCurrentSlide(i);
+  };
+
+  const batchDelete = () => {
+    const n = selectedIds.length;
+    if (n === 0) return;
+    removeSlides(selectedIds);
+    toast(`${n} slide${n > 1 ? 's' : ''} deleted`, { description: 'Press ⌘Z to undo.' });
+    clearSelection();
+  };
+  const batchDuplicate = () => {
+    const n = selectedIds.length;
+    if (n === 0) return;
+    duplicateSlides(selectedIds);
+    toast.success(`${n} slide${n > 1 ? 's' : ''} duplicated`);
+    clearSelection();
+  };
+  const batchHide = (hidden: boolean) => {
+    const n = selectedIds.length;
+    if (n === 0) return;
+    setHiddenSlides(selectedIds, hidden);
+    toast(hidden ? `${n} slide${n > 1 ? 's' : ''} hidden from presentation` : `${n} slide${n > 1 ? 's' : ''} shown`);
+    clearSelection();
+  };
+
+  // ---- deck style (accent / footer / page numbers) ---------------------
+  const patchMeta = (p: Partial<NonNullable<typeof deck.meta>>) =>
+    patchDeck({ meta: { ...deck.meta, ...p } });
+  const ACCENTS = ['#e11d48', '#ea580c', '#d97706', '#16a34a', '#0d9488', '#7c3aed', '#db2777', '#2563eb'];
+  const activeAccent = deck.meta?.accent ?? theme.tokens.colors.primary;
 
   const addSlide = (layout: LayoutId) => {
     const blank: Slide = { id: newSlideId(), layout, title: 'New slide', bullets: layout === 'bullets' ? ['First point'] : undefined };
@@ -267,12 +358,24 @@ export function EditorView() {
   };
 
   const total = slides.length;
+  const visibleCount = slides.filter((s) => !s.hidden).length;
+  const words = slides.reduce(
+    (acc, s) =>
+      acc +
+      (s.title ?? '').split(/\s+/).filter(Boolean).length +
+      (s.bullets ?? []).join(' ').split(/\s+/).filter(Boolean).length +
+      (s.body ?? '').split(/\s+/).filter(Boolean).length,
+    0
+  );
+  const estMinutes = Math.max(1, Math.round(words / 110 + visibleCount * 0.25));
 
   const SHORTCUTS: Array<{ keys: string; label: string }> = [
     { keys: 'J / K · ↑ ↓', label: 'Previous / next slide' },
     { keys: '⌘ D', label: 'Duplicate current slide' },
     { keys: 'H', label: 'Hide / show slide in presentation' },
-    { keys: 'Del', label: 'Delete current slide' },
+    { keys: 'Del', label: 'Delete current slide (or selection)' },
+    { keys: '⌘ click', label: 'Add slide to selection' },
+    { keys: '⇧ click', label: 'Select slide range' },
     { keys: '⌘ Z', label: 'Undo' },
     { keys: '⇧⌘ Z', label: 'Redo' },
     { keys: '?', label: 'Toggle this cheat-sheet' },
@@ -301,6 +404,14 @@ export function EditorView() {
         />
         <span className="text-xs text-muted-foreground hidden sm:flex items-center gap-1 w-20">
           {saving === 'saving' ? (<><Cloud className="h-3.5 w-3.5 animate-pulse" /> Saving…</>) : saving === 'saved' ? (<><Check className="h-3.5 w-3.5 text-emerald-600" /> Saved</>) : null}
+        </span>
+        <span
+          className="hidden xl:flex items-center gap-1.5 text-[11px] text-neutral-400 border border-neutral-200 rounded-full px-2.5 py-1 bg-neutral-50/70"
+          title="Visible slides · estimated talk duration (words ÷ 110 wpm + pacing)"
+        >
+          <SquareStack className="h-3 w-3" /> {visibleCount} visible
+          <span className="text-neutral-300">·</span>
+          <Clock3 className="h-3 w-3" /> ~{estMinutes} min
         </span>
         <div className="flex items-center gap-1.5 ml-auto flex-wrap">
           <div className="flex items-center rounded-md border border-neutral-200 overflow-hidden" role="group" aria-label="History">
@@ -348,6 +459,86 @@ export function EditorView() {
           >
             <Shuffle className="h-4 w-4" />
           </Button>
+          <Popover open={showStyle} onOpenChange={setShowStyle}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-neutral-500 hover:text-neutral-900"
+                aria-label="Deck style and branding"
+                title="Accent color, footer text & page numbers"
+              >
+                <span
+                  className="relative inline-flex h-4 w-4 rounded-full border border-black/10"
+                  style={{ background: `conic-gradient(${activeAccent} 0 55%, #e5e5e5 55% 100%)` }}
+                  aria-hidden
+                />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-72 space-y-4">
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Accent color</p>
+                <div className="flex items-center gap-1.5 flex-wrap" role="radiogroup" aria-label="Accent color">
+                  <button
+                    onClick={() => patchMeta({ accent: undefined })}
+                    className={cn(
+                      'h-7 px-2 rounded-md border text-[11px] font-medium transition-colors',
+                      !deck.meta?.accent ? 'border-neutral-900 bg-neutral-900 text-white' : 'border-neutral-200 hover:border-neutral-400 text-neutral-600'
+                    )}
+                    title="Use the theme's own accent"
+                  >
+                    Theme
+                  </button>
+                  {ACCENTS.map((c) => (
+                    <button
+                      key={c}
+                      role="radio"
+                      aria-checked={deck.meta?.accent === c}
+                      onClick={() => patchMeta({ accent: c })}
+                      className={cn(
+                        'h-7 w-7 rounded-full border-2 transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-1',
+                        deck.meta?.accent === c ? 'border-neutral-900 scale-110' : 'border-transparent'
+                      )}
+                      style={{ background: c }}
+                      aria-label={`Accent ${c}`}
+                      title={c}
+                    />
+                  ))}
+                  <label
+                    className="h-7 w-7 rounded-full border-2 border-dashed border-neutral-300 grid place-items-center cursor-pointer hover:border-neutral-500 transition-colors"
+                    title="Custom color"
+                  >
+                    <Plus className="h-3.5 w-3.5 text-neutral-500" />
+                    <input
+                      type="color"
+                      value={activeAccent}
+                      onChange={(e) => patchMeta({ accent: e.target.value })}
+                      className="sr-only"
+                      aria-label="Custom accent color"
+                    />
+                  </label>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-snug">
+                  Re-tints bullets, stats, rules and the first chart series — instantly, on every slide.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Footer text</p>
+                <Input
+                  value={deck.meta?.footerText ?? ''}
+                  onChange={(e) => patchMeta({ footerText: e.target.value.slice(0, 80) })}
+                  placeholder={deck.title}
+                  maxLength={80}
+                  aria-label="Footer text on slides"
+                />
+                <p className="text-[11px] text-muted-foreground">Shown bottom-left of every slide. Defaults to the deck title.</p>
+              </div>
+              <label className="flex items-center justify-between gap-3 cursor-pointer">
+                <span className="text-sm text-neutral-700">Show page numbers</span>
+                <Switch checked={showPageNumbers} onCheckedChange={(v) => patchMeta({ showPageNumbers: v })} aria-label="Toggle page numbers in slide footers" />
+              </label>
+            </PopoverContent>
+          </Popover>
           <Select value={current?.layout ?? 'bullets'} onValueChange={(v) => current && updateSlide(current.id, { layout: v as LayoutId })}>
             <SelectTrigger className="w-36 h-9 capitalize" aria-label="Current layout"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -378,6 +569,31 @@ export function EditorView() {
       <div className="flex flex-1 min-h-0">
         {/* slide list */}
         <aside className="w-56 md:w-64 shrink-0 border-r bg-neutral-50 hidden md:flex md:flex-col">
+          {/* batch selection action bar */}
+          {selectedIds.length > 0 && (
+            <div
+              className="px-3 pt-3"
+              role="toolbar"
+              aria-label={`Batch actions for ${selectedIds.length} selected slides`}
+              onKeyDown={(e) => {
+                if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); batchDelete(); }
+                if (e.key === 'Escape') { e.stopPropagation(); clearSelection(); }
+              }}
+            >
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-2 flex items-center gap-1.5 flex-wrap shadow-sm">
+                <span className="text-xs font-semibold text-emerald-900 tabular-nums w-full sm:w-auto">
+                  {selectedIds.length} selected
+                </span>
+                <div className="flex items-center gap-1 ml-auto">
+                  <button onClick={batchDuplicate} className="p-1.5 rounded hover:bg-emerald-100 text-emerald-900 transition-colors" title="Duplicate selected" aria-label="Duplicate selected slides"><Copy className="h-3.5 w-3.5" /></button>
+                  <button onClick={() => batchHide(true)} className="p-1.5 rounded hover:bg-emerald-100 text-emerald-900 transition-colors" title="Hide selected from presentation" aria-label="Hide selected slides"><EyeOff className="h-3.5 w-3.5" /></button>
+                  <button onClick={() => batchHide(false)} className="p-1.5 rounded hover:bg-emerald-100 text-emerald-900 transition-colors" title="Show selected in presentation" aria-label="Show selected slides"><Eye className="h-3.5 w-3.5" /></button>
+                  <button onClick={batchDelete} className="p-1.5 rounded hover:bg-red-100 text-red-700 transition-colors" title="Delete selected" aria-label="Delete selected slides"><Trash2 className="h-3.5 w-3.5" /></button>
+                  <button onClick={clearSelection} className="p-1.5 rounded hover:bg-emerald-100 text-emerald-900 transition-colors" title="Clear selection (Esc)" aria-label="Clear selection"><X className="h-3.5 w-3.5" /></button>
+                </div>
+              </div>
+            </div>
+          )}
           <ScrollArea className="flex-1">
             <div className="p-3 space-y-3">
               {slides.map((s, i) => (
@@ -387,9 +603,10 @@ export function EditorView() {
                   index={i}
                   active={i === currentSlideIndex}
                   pageCount={total}
+                  selected={selectedIds.includes(s.id)}
                   dragging={dragIndex === i}
                   dropTarget={overIndex === i && dragIndex !== i}
-                  onSelect={() => setCurrentSlide(i)}
+                  onSelect={(e) => handleThumbSelect(i, e)}
                   onDuplicate={() => duplicateSlide(s.id)}
                   onDelete={() => removeSlide(s.id)}
                   onToggleHidden={() => updateSlide(s.id, { hidden: !s.hidden })}
@@ -449,7 +666,15 @@ export function EditorView() {
           <div className="flex-1 min-h-0 p-4 sm:p-8 flex items-center justify-center overflow-hidden">
             {current && (
               <div className="w-full max-w-4xl rounded-xl overflow-hidden shadow-2xl shadow-neutral-900/25 ring-1 ring-black/10">
-                <ScaledSlide slide={current} theme={theme} deckTitle={deck.title} index={currentSlideIndex} pageCount={total} interactive />
+                <ScaledSlide
+                  slide={current}
+                  theme={theme}
+                  deckTitle={footerText}
+                  index={currentSlideIndex}
+                  pageCount={total}
+                  showPageNumbers={showPageNumbers}
+                  interactive
+                />
               </div>
             )}
           </div>

@@ -3,7 +3,8 @@
 import PptxGenJS from 'pptxgenjs';
 import type { Deck, Slide } from '@/lib/deck/types';
 import { visibleSlides } from '@/lib/deck/types';
-import { getTheme } from '@/lib/design/themes';
+import { getTheme, applyAccent } from '@/lib/design/themes';
+import { deckFooterText } from '@/lib/deck/types';
 
 /**
  * PPTX export with the deck's theme fonts, colors and chart palette applied.
@@ -11,7 +12,7 @@ import { getTheme } from '@/lib/design/themes';
  * Canvas: 13.333 x 7.5 in (16:9).
  */
 export async function exportPptx(deck: Deck): Promise<void> {
-  const theme = getTheme(deck.themeId);
+  const theme = applyAccent(getTheme(deck.themeId), deck.meta?.accent);
   const c = theme.tokens.colors;
   const ts = theme.tokens.typeScale;
   const px2in = (px: number) => px / 96; // canvas px -> inches (96dpi logical)
@@ -31,11 +32,13 @@ export async function exportPptx(deck: Deck): Promise<void> {
 
   const footer = (slide: PptxGenJS.Slide, index: number) => {
     slide.background = { color: c.bg.replace('#', '') };
-    slide.addText(String(index + 1).padStart(2, '0'), {
-      x: W - 0.7, y: H - 0.42, w: 0.5, h: 0.3,
-      fontSize: pt(ts.caption), color: c.textMuted.replace('#', ''), fontFace: bodyFont, align: 'right',
-    });
-    slide.addText(deck.title.slice(0, 60), {
+    if (deck.meta?.showPageNumbers !== false) {
+      slide.addText(String(index + 1).padStart(2, '0'), {
+        x: W - 0.7, y: H - 0.42, w: 0.5, h: 0.3,
+        fontSize: pt(ts.caption), color: c.textMuted.replace('#', ''), fontFace: bodyFont, align: 'right',
+      });
+    }
+    slide.addText(deckFooterText(deck).slice(0, 60), {
       x: px2in(PAD), y: H - 0.42, w: 6, h: 0.3,
       fontSize: pt(ts.caption), color: c.textMuted.replace('#', ''), fontFace: bodyFont, align: 'left',
     });

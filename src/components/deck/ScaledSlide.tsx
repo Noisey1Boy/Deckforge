@@ -16,6 +16,7 @@ export function ScaledSlide({
   index,
   pageCount,
   showFooter,
+  showPageNumbers,
   className,
   onClick,
   interactive = false,
@@ -26,6 +27,7 @@ export function ScaledSlide({
   index?: number;
   pageCount?: number;
   showFooter?: boolean;
+  showPageNumbers?: boolean;
   className?: string;
   onClick?: () => void;
   interactive?: boolean;
@@ -74,6 +76,7 @@ export function ScaledSlide({
             index={index}
             pageCount={pageCount}
             showFooter={showFooter}
+            showPageNumbers={showPageNumbers}
           />
         </div>
       ) : null}

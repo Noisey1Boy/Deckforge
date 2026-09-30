@@ -339,6 +339,36 @@ export function getTheme(id: string | undefined | null): ThemeManifest {
   return THEMES.find((t) => t.id === id) ?? THEMES.find((t) => t.id === DEFAULT_THEME_ID)!;
 }
 
+const HEX_RE = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+/**
+ * Layer a user-chosen accent over a theme: the primary color (titles' rule,
+ * bullets, stats values, chart series 1, decor) re-tints instantly while the
+ * rest of the theme (fonts, layout, backgrounds, motion) stays intact.
+ * Returns the manifest untouched when no valid accent is given.
+ */
+export function applyAccent(theme: ThemeManifest, accent?: string | null): ThemeManifest {
+  if (!accent || !HEX_RE.test(accent)) return theme;
+  return {
+    ...theme,
+    tokens: {
+      ...theme.tokens,
+      colors: { ...theme.tokens.colors, primary: accent, accent },
+      chart: { ...theme.tokens.chart, palette: [accent, ...theme.tokens.chart.palette.slice(1)] },
+    },
+  };
+}
+
+/** Resolve the effective render theme for a deck (theme + optional accent). */
+export function deckTheme(deck: Pick<ThemeDeck, 'themeId' | 'meta'>): ThemeManifest {
+  return applyAccent(getTheme(deck.themeId), deck.meta?.accent);
+}
+
+interface ThemeDeck {
+  themeId: string;
+  meta?: { accent?: string };
+}
+
 /** Compact catalog used in AI prompts (Auto theme selection). */
 export function themeCatalogForPrompt(): string {
   return THEMES.map(

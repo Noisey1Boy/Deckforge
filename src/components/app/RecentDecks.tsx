@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getTheme } from '@/lib/design/themes';
+import { deckTheme } from '@/lib/design/themes';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -205,7 +205,7 @@ export function RecentDecks({ onOpen }: { onOpen: (d: RecentDeck) => void }) {
       ) : (
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {shown.map((d) => {
-          const theme = getTheme(d.themeId);
+          const theme = deckTheme(d);
           return (
             <div
               key={d.id}

@@ -83,6 +83,10 @@ interface AppState {
   insertSlide: (index: number, slide: Slide) => void;
   removeSlide: (id: string) => void;
   duplicateSlide: (id: string) => void;
+  /** Batch ops: one undo snapshot per call. */
+  removeSlides: (ids: string[]) => void;
+  duplicateSlides: (ids: string[]) => void;
+  setHiddenSlides: (ids: string[], hidden: boolean) => void;
   setDeckTheme: (themeId: string) => void;
   markSaved: () => void;
 }
@@ -216,6 +220,56 @@ export const useAppStore = create<AppState>((set, get) => {
         past: [...s.past.slice(-39), s.deck],
         future: [],
         currentSlideIndex: idx + 1,
+        dirty: true,
+      };
+    }),
+
+  removeSlides: (ids) =>
+    set((s) => {
+      if (!s.deck || ids.length === 0) return s;
+      const drop = new Set(ids);
+      const slides = s.deck.slides.filter((sl) => !drop.has(sl.id));
+      if (slides.length === 0) return s; // never empty the deck
+      const firstRemoved = s.deck.slides.findIndex((sl) => drop.has(sl.id));
+      return {
+        deck: { ...s.deck, slides },
+        past: [...s.past.slice(-39), s.deck],
+        future: [],
+        currentSlideIndex: Math.min(Math.max(0, firstRemoved - 1), Math.max(0, slides.length - 1)),
+        dirty: true,
+      };
+    }),
+
+  duplicateSlides: (ids) =>
+    set((s) => {
+      if (!s.deck || ids.length === 0) return s;
+      const order = ids.map((id) => s.deck!.slides.findIndex((sl) => sl.id === id));
+      if (order.some((i) => i === -1)) return s;
+      const slides = [...s.deck.slides];
+      // insert copies bottom-up so positions stay valid
+      const pairs = ids
+        .map((id, k) => ({ id, idx: order[k] }))
+        .sort((a, b) => b.idx - a.idx);
+      for (const { id, idx } of pairs) {
+        slides.splice(idx + 1, 0, { ...s.deck.slides[idx], id: newSlideId() });
+      }
+      return {
+        deck: { ...s.deck, slides },
+        past: [...s.past.slice(-39), s.deck],
+        future: [],
+        dirty: true,
+      };
+    }),
+
+  setHiddenSlides: (ids, hidden) =>
+    set((s) => {
+      if (!s.deck || ids.length === 0) return s;
+      const target = new Set(ids);
+      const slides = s.deck.slides.map((sl) => (target.has(sl.id) ? { ...sl, hidden } : sl));
+      return {
+        deck: { ...s.deck, slides },
+        past: [...s.past.slice(-39), s.deck],
+        future: [],
         dirty: true,
       };
     }),

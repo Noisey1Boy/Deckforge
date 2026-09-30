@@ -15,6 +15,8 @@ export interface SlideViewProps {
   index?: number;
   pageCount?: number;
   showFooter?: boolean;
+  /** Render the "01 / 10" counter in the footer (default true). */
+  showPageNumbers?: boolean;
   className?: string;
   style?: CSSProperties;
   /** Render charts at fixed pixel size (used by static HTML export). */
@@ -49,15 +51,17 @@ function Footer({
   deckTitle,
   index,
   pageCount,
+  showPageNumbers = true,
 }: {
   deckTitle?: string;
   index?: number;
   pageCount?: number;
+  showPageNumbers?: boolean;
 }) {
   return (
     <div className="slide-footer" aria-hidden>
       <span>{deckTitle ?? ''}</span>
-      {typeof index === 'number' && typeof pageCount === 'number' ? (
+      {showPageNumbers && typeof index === 'number' && typeof pageCount === 'number' ? (
         <span className="page-no">
           {String(index + 1).padStart(2, '0')} / {String(pageCount).padStart(2, '0')}
         </span>
@@ -278,7 +282,7 @@ function ClosingLayout({ slide }: { slide: Slide }) {
 // --------------------------------------------------------------------------
 // Root
 // --------------------------------------------------------------------------
-export function SlideView({ slide, theme, deckTitle, index, pageCount, showFooter = true, className, style, fixedCharts }: SlideViewProps) {
+export function SlideView({ slide, theme, deckTitle, index, pageCount, showFooter = true, showPageNumbers = true, className, style, fixedCharts }: SlideViewProps) {
   const fit = fitFactor(slide);
   const vars: CSSProperties = {
     ...themeToCssVars(theme),
@@ -309,7 +313,7 @@ export function SlideView({ slide, theme, deckTitle, index, pageCount, showFoote
       {slide.layout === 'closing' && <ClosingLayout slide={slide} />}
 
       {showFooter && slide.layout !== 'image' ? (
-        <Footer deckTitle={deckTitle} index={index} pageCount={pageCount} />
+        <Footer deckTitle={deckTitle} index={index} pageCount={pageCount} showPageNumbers={showPageNumbers} />
       ) : null}
     </div>
   );

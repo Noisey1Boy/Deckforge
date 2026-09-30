@@ -110,6 +110,12 @@ export interface DeckMeta {
   language?: string;
   sourcePrompt?: string;
   generatedAt?: string;
+  /** Optional accent color (hex) layered over the theme's primary. */
+  accent?: string;
+  /** Optional footer text on slides — defaults to the deck title. */
+  footerText?: string;
+  /** Show "01 / 10" page numbers in the slide footer (default true). */
+  showPageNumbers?: boolean;
 }
 
 export interface Deck {
@@ -121,6 +127,12 @@ export interface Deck {
   meta?: DeckMeta;
   createdAt?: string;
   updatedAt?: string;
+}
+
+/** Footer text shown on slides: the custom brand line, else the deck title. */
+export function deckFooterText(deck: Pick<Deck, 'title' | 'meta'>): string {
+  const t = deck.meta?.footerText?.trim();
+  return t || deck.title;
 }
 
 // ---------------------------------------------------------------------------

@@ -6,8 +6,8 @@ import { exportPptx } from '@/lib/export/pptx';
 import { exportStandaloneHtml } from '@/lib/export/html';
 import { exportNotesMarkdown } from '@/lib/export/notes';
 import { SlideView } from '@/components/deck/SlideView';
-import { getTheme } from '@/lib/design/themes';
-import { visibleSlides } from '@/lib/deck/types';
+import { deckTheme } from '@/lib/design/themes';
+import { deckFooterText, visibleSlides } from '@/lib/deck/types';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { Download, FileText, Globe, Presentation, Loader2, StickyNote } from 'lucide-react';
@@ -101,15 +101,21 @@ export function ExportMenu() {
  */
 export function PrintSurface() {
   const deck = useAppStore((s) => s.deck);
-  const themeId = useAppStore((s) => s.deck?.themeId);
   if (!deck || typeof window === 'undefined') return null;
-  const t = getTheme(themeId);
+  const t = deckTheme(deck);
   const slides = visibleSlides(deck.slides);
   return (
     <div className="print-root" aria-hidden>
       {slides.map((s, i) => (
         <div className="print-slide" key={s.id}>
-          <SlideView slide={s} theme={t} deckTitle={deck.title} index={i} pageCount={slides.length} />
+          <SlideView
+            slide={s}
+            theme={t}
+            deckTitle={deckFooterText(deck)}
+            index={i}
+            pageCount={slides.length}
+            showPageNumbers={deck.meta?.showPageNumbers !== false}
+          />
         </div>
       ))}
     </div>

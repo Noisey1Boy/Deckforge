@@ -4,13 +4,27 @@ import { useAppStore } from '@/lib/store/deck-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { LAYOUT_IDS, type LayoutId } from '@/lib/deck/types';
-import { LAYOUT_BUDGETS } from '@/lib/deck/limits';
 import { getTheme } from '@/lib/design/themes';
-import { ArrowLeft, ArrowDown, ArrowUp, Plus, Trash2, Wand2, Sparkles, PencilLine } from 'lucide-react';
+import { ArrowLeft, ArrowDown, ArrowUp, Plus, Trash2, Wand2, Sparkles, PencilLine, Type, Hash, List, Columns2, Image as ImageIcon, Quote, BarChart3, Workflow, Table2, Flag, Sigma } from 'lucide-react';
 import { useEffect, useState } from 'react';
+
+/** Icon per layout — matches the editor's add-slide menu. */
+const LAYOUT_ICONS: Record<LayoutId, React.ReactNode> = {
+  title: <Type className="h-3.5 w-3.5" />,
+  section: <Hash className="h-3.5 w-3.5" />,
+  bullets: <List className="h-3.5 w-3.5" />,
+  'two-column': <Columns2 className="h-3.5 w-3.5" />,
+  image: <ImageIcon className="h-3.5 w-3.5" />,
+  quote: <Quote className="h-3.5 w-3.5" />,
+  stats: <Sigma className="h-3.5 w-3.5" />,
+  chart: <BarChart3 className="h-3.5 w-3.5" />,
+  diagram: <Workflow className="h-3.5 w-3.5" />,
+  comparison: <Table2 className="h-3.5 w-3.5" />,
+  closing: <Flag className="h-3.5 w-3.5" />,
+};
 
 export function OutlineView() {
   const outline = useAppStore((s) => s.outline);
@@ -97,27 +111,42 @@ export function OutlineView() {
         )}
 
         {themeChoice === 'auto' && recTheme && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm flex items-start gap-2.5">
-            <Sparkles className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
-            <p>
-              <span className="font-semibold">AI picked “{recTheme.name}”</span>{' '}
-              <span className="text-muted-foreground">{outline.themeRationale}</span>
-            </p>
+          <div className="rounded-xl border border-amber-200/80 bg-gradient-to-r from-amber-50 via-orange-50 to-transparent px-4 py-3.5 text-sm flex items-start gap-3 shadow-sm">
+            <span className="rounded-lg bg-amber-100 p-1.5 shrink-0">
+              <Sparkles className="h-4 w-4 text-amber-600" />
+            </span>
+            <div>
+              <p className="font-semibold text-amber-900">AI picked “{recTheme.name}”</p>
+              <p className="text-muted-foreground mt-0.5">{outline.themeRationale}</p>
+            </div>
           </div>
         )}
       </header>
 
       <ol className="space-y-2">
         {outline.slides.map((s, i) => (
-          <li key={i} className="rounded-lg border border-neutral-200 bg-card p-3 flex flex-col sm:flex-row gap-3 sm:items-center">
-            <span className="font-mono text-xs text-muted-foreground w-8 text-center shrink-0">{String(i + 1).padStart(2, '0')}</span>
+          <li
+            key={i}
+            className="group rounded-xl border border-neutral-200 bg-card p-3 flex flex-col sm:flex-row gap-3 sm:items-center transition-all hover:border-neutral-300 hover:shadow-md hover:shadow-neutral-900/5 focus-within:border-neutral-400"
+          >
+            <span className="font-mono text-xs text-neutral-500 w-8 h-8 grid place-items-center rounded-lg border border-neutral-200 bg-neutral-50 shrink-0 group-hover:border-neutral-300">
+              {String(i + 1).padStart(2, '0')}
+            </span>
             <Select value={s.layout} onValueChange={(v) => update(i, { layout: v as LayoutId })} disabled={!editing}>
-              <SelectTrigger className="w-full sm:w-40 shrink-0" aria-label="Layout">
-                <SelectValue />
+              <SelectTrigger className="w-full sm:w-44 shrink-0" aria-label="Layout">
+                <span className="flex items-center gap-2 min-w-0">
+                  <span className="text-neutral-400 shrink-0">{LAYOUT_ICONS[s.layout]}</span>
+                  <span className="truncate capitalize">{s.layout.replace('-', ' ')}</span>
+                </span>
               </SelectTrigger>
               <SelectContent>
                 {LAYOUT_IDS.map((l) => (
-                  <SelectItem key={l} value={l}>{LAYOUT_BUDGETS[l].describe.split(':')[0]}</SelectItem>
+                  <SelectItem key={l} value={l}>
+                    <span className="flex items-center gap-2">
+                      <span className="text-neutral-400">{LAYOUT_ICONS[l]}</span>
+                      <span className="capitalize">{l.replace('-', ' ')}</span>
+                    </span>
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -147,10 +176,10 @@ export function OutlineView() {
           <Plus className="h-4 w-4" /> Add slide
         </Button>
         <Button
-          className="flex-1 bg-neutral-900 hover:bg-neutral-800 gap-2 h-12 text-base"
+          className="flex-1 bg-neutral-900 hover:bg-neutral-800 gap-2 h-12 text-base shadow-lg shadow-neutral-900/15 transition-all hover:-translate-y-0.5"
           onClick={() => setView('generating')}
         >
-          <Wand2 className="h-5 w-5" /> Approve & write {outline.slides.length} slides
+          <Wand2 className="h-5 w-5" /> Approve &amp; write {outline.slides.length} slides
         </Button>
       </div>
     </div>
