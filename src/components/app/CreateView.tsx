@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
 import {
   FileSpreadsheet, FileJson2, ImageIcon, Loader2, Sparkles, Wand2,
   BarChart3, Workflow, AlertTriangle, X, FileUp, PenLine, LayoutTemplate,
-  MonitorPlay, Share2,
+  MonitorPlay, Share2, Dices,
 } from 'lucide-react';
 
 const EXAMPLES = [
@@ -28,7 +28,21 @@ const EXAMPLES = [
   'Teach beginners the basics of photography in 10 minutes',
   'Pitch an AI-powered recycling assistant to a city council',
   'Onboarding deck for new engineers: our stack, rituals and how we ship',
+  '2026 sustainability strategy for a mid-size apparel brand, for investors',
+  'Market landscape of electric scooters in Southeast Asia',
+  'Introduce our new design system to the whole company',
+  'Quarterly OKR planning offsite: retro, focus areas, owners',
+  'Health benefits of sleep, backed by recent research, for a general audience',
+  'Launch plan for a mobile budgeting app: positioning, channels, milestones',
+  'A history of jazz in five eras, for a school audience',
+  'State of our customer support: SLAs, ticket trends, hiring plan',
 ];
+
+/** Pick `count` example prompts starting from a rotating seed. */
+function dealExamples(seed: number, count = 4): string[] {
+  const start = (seed * count) % EXAMPLES.length;
+  return Array.from({ length: Math.min(count, EXAMPLES.length) }, (_, i) => EXAMPLES[(start + i) % EXAMPLES.length]);
+}
 
 interface RecentDeckRef {
   id: string;
@@ -59,6 +73,7 @@ export function CreateView() {
   const [slideCount, setSlideCount] = useState(10);
   const [language, setLanguage] = useState('English');
   const [busy, setBusy] = useState<string | null>(null);
+  const [ideaSeed, setIdeaSeed] = useState(() => Math.floor(Math.random() * 3));
 
   // data inputs
   const [tables, setTables] = useState<ParsedTable[]>([]);
@@ -296,8 +311,8 @@ export function CreateView() {
             maxLength={1200}
             aria-label="Presentation topic"
           />
-          <div className="flex flex-wrap gap-2">
-            {EXAMPLES.map((ex) => (
+          <div className="flex flex-wrap items-center gap-2">
+            {dealExamples(ideaSeed).map((ex) => (
               <button
                 key={ex}
                 onClick={() => setPrompt(ex)}
@@ -306,6 +321,14 @@ export function CreateView() {
                 {ex.length > 52 ? ex.slice(0, 52) + '…' : ex}
               </button>
             ))}
+            <button
+              onClick={() => setIdeaSeed((s) => s + 1)}
+              className="inline-flex items-center gap-1.5 text-xs rounded-full border border-dashed border-neutral-300 px-3 py-1.5 text-neutral-500 hover:border-neutral-900 hover:text-neutral-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900"
+              title="Show other starter ideas"
+              aria-label="Show other starter ideas"
+            >
+              <Dices className="h-3.5 w-3.5" /> More ideas
+            </button>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

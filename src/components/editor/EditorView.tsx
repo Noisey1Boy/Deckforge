@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
+import { fileToDeckImage } from '@/lib/media/image';
 import type { LayoutId, Slide } from '@/lib/deck/types';
 import { LAYOUT_IDS } from '@/lib/deck/types';
 import { cn } from '@/lib/utils';
@@ -146,6 +147,7 @@ export function EditorView() {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [droppingImage, setDroppingImage] = useState(false);
   const undo = useAppStore((s) => s.undo);
   const redo = useAppStore((s) => s.redo);
   const canUndo = useAppStore((s) => s.past.length > 0);
@@ -245,6 +247,21 @@ export function EditorView() {
   const addSlide = (layout: LayoutId) => {
     const blank: Slide = { id: newSlideId(), layout, title: 'New slide', bullets: layout === 'bullets' ? ['First point'] : undefined };
     insertSlide(currentSlideIndex + 1, blank);
+  };
+
+  // ---- drop an image file anywhere on the canvas to fill the current slide
+  const handleCanvasDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setDroppingImage(false);
+    const file = Array.from(e.dataTransfer.files).find((f) => f.type.startsWith('image/'));
+    if (!file || !current) return;
+    try {
+      const url = await fileToDeckImage(file);
+      updateSlide(current.id, { layout: 'image', image: { url, alt: file.name.replace(/\.[^.]+$/, '') || 'Dropped image' } });
+      toast.success('Image dropped onto the slide.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not use that image.');
+    }
   };
 
   const total = slides.length;
@@ -377,12 +394,31 @@ export function EditorView() {
 
         {/* canvas */}
         <main
-          className="flex-1 min-w-0 flex flex-col bg-neutral-100"
+          className="relative flex-1 min-w-0 flex flex-col bg-neutral-100"
           style={{
             backgroundImage: 'radial-gradient(#d8d8d8 1px, transparent 1.4px)',
             backgroundSize: '22px 22px',
           }}
+          onDragOver={(e) => {
+            if (!e.dataTransfer.types.includes('Files')) return;
+            e.preventDefault();
+            setDroppingImage(true);
+          }}
+          onDragLeave={(e) => {
+            if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+            setDroppingImage(false);
+          }}
+          onDrop={handleCanvasDrop}
         >
+          {droppingImage && (
+            <div className="absolute inset-2 z-20 grid place-items-center rounded-xl border-2 border-dashed border-neutral-900 bg-neutral-50/85 backdrop-blur-sm pointer-events-none" aria-hidden>
+              <div className="text-center">
+                <ImageIcon className="h-7 w-7 mx-auto text-neutral-700" />
+                <p className="mt-2 text-sm font-semibold text-neutral-900">Drop to fill this slide</p>
+                <p className="text-xs text-muted-foreground mt-0.5">PNG · JPG · WebP · GIF</p>
+              </div>
+            </div>
+          )}
           <div className="flex-1 min-h-0 p-4 sm:p-8 flex items-center justify-center overflow-hidden">
             {current && (
               <div className="w-full max-w-4xl rounded-xl overflow-hidden shadow-2xl shadow-neutral-900/25 ring-1 ring-black/10">
@@ -391,6 +427,11 @@ export function EditorView() {
             )}
           </div>
           <div className="flex items-center justify-center gap-3 pb-3 px-4">
+            {current?.hidden && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 px-3 py-1 text-xs font-medium" title="This slide is skipped in present mode and exports">
+                <EyeOff className="h-3 w-3" /> Hidden from presentation — press H to show
+              </span>
+            )}
             <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentSlide(currentSlideIndex - 1)} disabled={currentSlideIndex === 0} aria-label="Previous slide">
               <ChevronLeft className="h-4 w-4" />
             </Button>

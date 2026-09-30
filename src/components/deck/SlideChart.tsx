@@ -1,6 +1,6 @@
 'use client';
 
-import { isValidElement, cloneElement, useEffect, useMemo, useState } from 'react';
+import { isValidElement, cloneElement, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -49,18 +49,33 @@ function ChartSizer({ fixed, children }: { fixed?: { width: number; height: numb
 }
 
 /**
- * Defers ResponsiveContainer by one frame so the layout has settled —
- * avoids recharts measuring a 0×0 box on the first paint (thumbnail
- * grids / animated entrances) and the resulting console noise.
+ * Mounts ResponsiveContainer only once the wrapper has real, non-zero size —
+ * recharts warns (and mis-renders) when measured at 0×0, which happens in
+ * thumbnail grids, hidden tabs and animated entrances. A single rAF is not
+ * always enough, so a ResizeObserver waits until the box is measurable.
  */
 function BrowserSizer({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
   useEffect(() => {
-    const id = requestAnimationFrame(() => setReady(true));
-    return () => cancelAnimationFrame(id);
+    const el = ref.current;
+    if (!el) return;
+    const measurable = () => el.clientWidth > 0 && el.clientHeight > 0;
+    if (measurable()) {
+      const id = requestAnimationFrame(() => setReady(true));
+      return () => cancelAnimationFrame(id);
+    }
+    const ro = new ResizeObserver(() => {
+      if (measurable()) setReady(true);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
-  if (!ready) return <div style={{ width: '100%', height: '100%' }} aria-hidden />;
-  return <ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer>;
+  return (
+    <div ref={ref} style={{ width: '100%', height: '100%' }}>
+      {ready ? <ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer> : null}
+    </div>
+  );
 }
 
 /**

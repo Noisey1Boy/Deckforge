@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import type { Deck } from '@/lib/deck/types';
 import { cn } from '@/lib/utils';
 import {
-  Clock, Copy, Trash2, Download, Upload, FolderOpen, Loader2, Layers,
+  Clock, Copy, Trash2, Download, Upload, FolderOpen, Loader2, Layers, Search,
 } from 'lucide-react';
 
 interface RecentDeck {
@@ -29,6 +29,7 @@ export function RecentDecks({ onOpen }: { onOpen: (d: RecentDeck) => void }) {
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<RecentDeck | null>(null);
+  const [query, setQuery] = useState('');
   const importRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -170,12 +171,26 @@ export function RecentDecks({ onOpen }: { onOpen: (d: RecentDeck) => void }) {
     );
   }
 
+  const q = query.trim().toLowerCase();
+  const shown = q ? decks.filter((d) => d.title.toLowerCase().includes(q)) : decks;
+
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center gap-3">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Clock className="h-4 w-4 text-muted-foreground" /> Your decks
+          <span className="text-xs font-normal text-muted-foreground">({decks.length})</span>
         </h2>
+        <div className="relative ml-auto">
+          <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" aria-hidden />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search decks…"
+            aria-label="Search your decks"
+            className="h-9 w-40 sm:w-52 rounded-md border border-neutral-200 bg-white pl-8 pr-3 text-sm outline-none transition-colors focus:border-neutral-900 focus-visible:ring-2 focus-visible:ring-neutral-900/10"
+          />
+        </div>
         <Button variant="outline" size="sm" className="gap-1.5" onClick={() => importRef.current?.click()} disabled={busy === 'import'}>
           {busy === 'import' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
           Import JSON
@@ -183,8 +198,13 @@ export function RecentDecks({ onOpen }: { onOpen: (d: RecentDeck) => void }) {
         <input ref={importRef} type="file" accept=".json,application/json" hidden onChange={(e) => importJson(e.target.files)} />
       </div>
 
+      {shown.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-neutral-200 p-8 text-center text-sm text-muted-foreground">
+          No decks match “{query.trim()}”.
+        </div>
+      ) : (
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {decks.map((d) => {
+        {shown.map((d) => {
           const theme = getTheme(d.themeId);
           return (
             <div
@@ -238,6 +258,7 @@ export function RecentDecks({ onOpen }: { onOpen: (d: RecentDeck) => void }) {
           );
         })}
       </div>
+      )}
 
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>

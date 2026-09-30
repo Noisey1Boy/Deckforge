@@ -105,3 +105,31 @@ Stage Summary:
 - New: image upload (data URL + downscale + alt editor), chart kind switcher, editor keyboard shortcuts + cheat-sheet dialog, layout-picker add menu, present click zones + CSS key hints, gallery accent rings + hover lift, landing staggered entrance, chart first-paint noise fixed.
 - All verified in browser; lint clean; page healthy; no console errors after reload.
 - Risks/next: data-URL images increase deck JSON size (downscale mitigates; consider blob storage if decks get heavy); image upload is click-only (no drag-drop onto the slide canvas yet); AI "Add chart" on a blank chart slide remains the path to fill empty chart slides; JSON import UI still untested via automation (hidden file input); deck-list pagination if library grows.
+
+---
+Task ID: r5 (cron review round 5)
+Agent: webDevReview agent
+Task: Status assessment + browser QA, then finish interrupted round-4 features, fix bugs, add new features + styling polish
+
+Work Log:
+- Status assessment: worklog had rounds r2/r3; dev.log + code revealed an UNLOGGED interrupted round-4 with features already committed but unverified: hidden slides (editor toggle/badge/H shortcut, honored by present + PPTX/HTML/notes exports), present autoplay (fixed 6s), speaker-notes Markdown export (src/lib/export/notes.ts + ExportMenu item), notes editor in inspector. Code was committed; only artifact missing was the worklog entry.
+- FIXED (lint): react-hooks/set-state-in-effect in PresentOverlay — autoplay/elapsed reset moved out of the effect body into an exitPresent() callback (also resets timer state on re-entry; Escape + X button both route through it). Lint now clean.
+- Browser QA (agent-browser, 1600x900): landing OK; opened "Global Sales Performance Review" deck; present mode (hint chip, click zones, timer, controls), autoplay advance, Escape exit, Export menu → "Speaker notes (Markdown)" runs clean; hidden-slide flow: H → badge + dashed thumbnail + present shows "1 / 9" visible count → unhide restored. dev.log clean (all 200s); module-not-found noise in old logs was transient (file exists, compiles).
+- BUG FIXED (z-order): present-mode click zones (z-[1]) intercepted mouse clicks on the controls bar / notes / overview (all had no z-index) — controls were mouse-unusable; assigned explicit layers: zones z-[1], hint z-[2], controls z-[3], notes z-[4], overview z-[5]. Verified: clicks now hit the buttons.
+- BUG FIXED (portal z): Radix DropdownMenuContent (z-50, portaled to body) rendered BEHIND the present overlay (z-[100]) — autoplay settings menu invisible in present mode; content now z-[110]. Verified open + select.
+- BUG FIXED (Escape): Escape pressed to close the Radix menu also bubbled to the window handler and exited the whole presentation; the present Escape branch now no-ops while a Radix menu/popper is open. Verified: menu closes, deck stays up.
+- F1 Present mode: autoplay speed dropdown next to Play (5/10/15/20 s, default 10) + **Loop deck** toggle (wraps to first visible slide instead of stopping — verified by seeking to end and waiting one tick); progress bar is now a click-to-seek role=slider with keyboard arrows, hover height growth, theme gradient fill (verified 50% → slide 6, 100% → last); subtle stage spotlight vignette; pulsing emerald ring on the Play button while autoplay runs.
+- F2 Editor: drag & drop an image file anywhere on the canvas → current slide converts to image layout (drop overlay "Drop to fill this slide" appears on file-drag only; internal thumbnail drags ignored). Verified with synthetic DataTransfer drop: overlay shown, layout→image, alt auto-set from filename. Deck restored afterwards via undo.
+- F3 Editor: amber "Hidden from presentation — press H to show" chip next to the page counter when the current slide is hidden (beyond the thumbnail badge).
+- F4 Landing: starter-prompt pool expanded 4→12, deals 4 random chips per seed + dashed "More ideas" dice button to re-deal (verified rotation).
+- F5 Deck library: search-by-title filter with count in the header and a "No decks match" empty state (verified "sales" match + "zzz" empty state).
+- S1 Template gallery: tone badge moved onto the preview thumbnail as a dark overlay pill — full theme names ("Corporate Clean") no longer truncate to "Corporat…".
+- FIX (recharts noise): recurring "width(0)/height(0)" dev warning — BrowserSizer now mounts ResponsiveContainer only after the wrapper has non-zero size (ResizeObserver, rAF fast-path). Verified 0 warnings after opening chart slides.
+- Restored QA deck state via undo (2 hide-toggles + 1 image drop) and confirmed final layout back to stats with all slides visible.
+- README features section updated (canvas image drop, hidden slides, click-to-seek progress, autoplay speed/loop, notes Markdown export, deck search, More ideas).
+
+Stage Summary:
+- Round-4 leftovers (hidden slides, autoplay, notes export) verified end-to-end and now documented; 3 real bugs fixed (controls z-order, dropdown behind overlay, Escape double-handling) plus the lint error and recharts warning.
+- New: autoplay speed + loop, click-to-seek progress bar, canvas image drop, hidden-slide editor chip, 12-prompt "More ideas" pool, deck search, gallery badge redesign.
+- All verified in browser; bun run lint clean; dev.log clean; page healthy with no console errors.
+- Risks/next: data-URL images still grow deck JSON (mitigated by downscale); JSON import UI still untested via automation (hidden file input); per-slide transition override and multi-select reorder remain open ideas; consider autoplay speed persisted to localStorage; PPTX diagram linearization unchanged.

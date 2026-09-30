@@ -7,14 +7,14 @@ designed, editable 16:9 deck — then present it and export it (PPTX / PDF / HTM
 
 ## Features
 
-- **Prompt input** — one box for the topic, plus audience, tone, slide count (4–30) and language.
+- **Prompt input** — one box for the topic, plus audience, tone, slide count (4–30) and language. A rotating **“More ideas”** pool of 12 starter prompts is one click away.
 - **Data input** — upload CSV / XLSX / JSON, a screenshot of a chart (AI vision extracts the values), or paste a Mermaid diagram. The AI chooses *how* to chart your data; **the numbers themselves are computed from your file** and can never be invented.
 - **Outline-first pipeline** — the AI proposes a structured outline (you can edit it), then writes each slide with streaming progress. Every slide gets one of 11 fixed layouts so text always fits; per-layout budgets auto-shrink instead of overflowing.
 - **8 curated design systems** — Corporate Clean, Minimal Mono, Bold Impact, Playful Pop, Dark Elegant, Editorial Serif, Tech Modern, Warm Earth — or **Auto**: the AI picks the best match for topic + tone and explains why. Switching theme re-styles the entire deck instantly.
-- **Editor** — reorder (drag), add (layout picker with all 11 layouts), duplicate, delete slides; edit every field inline; **upload your own image** for image slides (auto-downscaled to WebP, alt-text editor) or paste a URL; switch chart type (column / bar / line / area / pie / donut) per chart; per-slide AI actions (rewrite, shorten, expand, regenerate, add chart, AI illustration); **undo/redo** (⌘Z / ⇧⌘Z, 40-step history); **keyboard shortcuts** (J/K or ↑↓ navigate, ⌘D duplicate, Del delete, `?` cheat-sheet). Autosaves.
-- **Present mode** — fullscreen, keyboard navigation (← → Space Home End N **G** Esc), click zones (left ≈28% back / right forward), transient on-entry key hints, progress bar, speaker notes, **slide overview grid (G)**, **presenter timer**, theme-driven Framer Motion transitions that respect `prefers-reduced-motion`.
-- **Export** — PPTX (editable, native charts, theme fonts/colors), PDF (print CSS at exactly 1280×720 per page), standalone HTML (self-contained, no server needed).
-- **Deck library** — duplicate, delete (with confirmation) and **JSON export/import** (`.deck.json`) for backup and portability.
+- **Editor** — reorder (drag), add (layout picker with all 11 layouts), duplicate, delete slides; edit every field inline; **upload your own image** for image slides (auto-downscaled to WebP, alt-text editor) **or just drop an image file anywhere on the canvas**; switch chart type (column / bar / line / area / pie / donut) per chart; per-slide AI actions (rewrite, shorten, expand, regenerate, add chart, AI illustration); **undo/redo** (⌘Z / ⇧⌘Z, 40-step history); **hide/show slides** (H — hidden slides are skipped in present mode and all exports, with a badge + hint chip in the editor); **keyboard shortcuts** (J/K or ↑↓ navigate, ⌘D duplicate, Del delete, `?` cheat-sheet). Autosaves.
+- **Present mode** — fullscreen, keyboard navigation (← → Space Home End N **G** Esc), click zones (left ≈28% back / right forward), transient on-entry key hints, **click-to-seek gradient progress bar**, speaker notes, **slide overview grid (G)**, **presenter timer**, **auto-play (P) with per-slide speed (5/10/15/20 s) and optional deck loop** for kiosk-style replay, theme-driven Framer Motion transitions that respect `prefers-reduced-motion`.
+- **Export** — PPTX (editable, native charts, theme fonts/colors), PDF (print CSS at exactly 1280×720 per page), standalone HTML (self-contained, no server needed), **speaker notes as Markdown** (per-slide notes + on-slide bullets).
+- **Deck library** — search your decks by title, duplicate, delete (with confirmation) and **JSON export/import** (`.deck.json`) for backup and portability.
 
 ## Setup
 

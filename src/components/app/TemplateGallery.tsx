@@ -5,7 +5,6 @@ import type { Slide } from '@/lib/deck/types';
 import { ScaledSlide } from '@/components/deck/ScaledSlide';
 import { useAppStore } from '@/lib/store/deck-store';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
 import { Sparkles } from 'lucide-react';
 import { getTheme } from '@/lib/design/themes';
 
@@ -78,22 +77,25 @@ export function TemplateGallery({ compact = false }: { compact?: boolean }) {
                 : 'border-transparent hover:border-neutral-300 hover:shadow-md bg-card'
             )}
           >
-            <div className="rounded-lg overflow-hidden border border-neutral-200 shadow-sm">
+            <div className="relative rounded-lg overflow-hidden border border-neutral-200 shadow-sm">
               <ScaledSlide slide={sample} theme={theme} index={0} pageCount={12} showFooter />
+              <span
+                className="absolute top-1.5 right-1.5 rounded-full bg-black/65 text-white text-[9px] uppercase tracking-wider px-2 py-0.5 font-semibold backdrop-blur-sm"
+                aria-hidden
+              >
+                {item.tone}
+              </span>
             </div>
             <div className="flex items-start justify-between gap-2 pt-2 px-1">
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   {item.id === 'auto' && <Sparkles className="h-3.5 w-3.5 text-amber-500 shrink-0" />}
-                  <span className="font-semibold text-sm truncate">{item.name}</span>
+                  <span className="font-semibold text-sm leading-snug" title={item.name}>{item.name}</span>
                 </div>
                 {!compact && (
                   <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{item.description}</p>
                 )}
               </div>
-              <Badge variant="secondary" className="text-[10px] uppercase tracking-wide shrink-0 mt-0.5">
-                {item.tone}
-              </Badge>
             </div>
           </button>
         );

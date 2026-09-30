@@ -7,8 +7,11 @@ import { getTheme } from '@/lib/design/themes';
 import { SlideView } from '@/components/deck/SlideView';
 import { ScaledSlide } from '@/components/deck/ScaledSlide';
 import { Button } from '@/components/ui/button';
-import { X, ChevronLeft, ChevronRight, StickyNote, Maximize2, Minimize2, LayoutGrid, Timer, Play, Pause } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { X, ChevronLeft, ChevronRight, StickyNote, Maximize2, Minimize2, LayoutGrid, Timer, Play, Pause, ChevronsUpDown, Repeat } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+const AUTOPLAY_SPEEDS = [5, 10, 15, 20] as const;
 
 /**
  * Fullscreen present mode: keyboard navigation, progress bar, speaker notes,
@@ -27,6 +30,8 @@ export function PresentOverlay() {
   const [scale, setScale] = useState(1);
   const [elapsed, setElapsed] = useState(0);
   const [autoplay, setAutoplay] = useState(false);
+  const [speed, setSpeed] = useState<number>(10);
+  const [loop, setLoop] = useState(false);
   const startedAt = useRef<number | null>(null);
   const reduceMotion = useReducedMotion();
 
@@ -48,6 +53,13 @@ export function PresentOverlay() {
 
   const go = useCallback((delta: number) => stepTo(delta as 1 | -1), [stepTo]);
 
+  /** Exit presentation and reset transient state (autoplay, timer). */
+  const exitPresent = useCallback(() => {
+    setAutoplay(false);
+    setElapsed(0);
+    setPresenting(false);
+  }, [setPresenting]);
+
   // viewport scaling
   useEffect(() => {
     if (!presenting) return;
@@ -60,11 +72,10 @@ export function PresentOverlay() {
     return () => window.removeEventListener('resize', update);
   }, [presenting]);
 
-  // presenter timer (resets on entry)
+  // presenter timer (starts on entry; reset happens in exitPresent)
   useEffect(() => {
     if (!presenting) {
       startedAt.current = null;
-      setAutoplay(false);
       return;
     }
     startedAt.current = Date.now();
@@ -85,7 +96,8 @@ export function PresentOverlay() {
     }
   }, [presenting]);
 
-  // auto-play: advance every 6s, skipping hidden slides; stops at the end
+  // auto-play: advance every `speed` seconds, skipping hidden slides.
+  // At the end it loops back to the first visible slide when loop is on.
   useEffect(() => {
     if (!presenting || !autoplay || showOverview) return;
     const t = setInterval(() => {
@@ -93,11 +105,28 @@ export function PresentOverlay() {
       const all = st.deck?.slides ?? [];
       let j = st.currentSlideIndex + 1;
       while (j < all.length && all[j]?.hidden) j++;
-      if (j < all.length) st.setCurrentSlide(j);
-      else setAutoplay(false);
-    }, 6000);
+      if (j < all.length) {
+        st.setCurrentSlide(j);
+      } else if (loop) {
+        const first = all.findIndex((s) => !s.hidden);
+        if (first >= 0) st.setCurrentSlide(first);
+      } else {
+        setAutoplay(false);
+      }
+    }, speed * 1000);
     return () => clearInterval(t);
-  }, [presenting, autoplay, showOverview, index]);
+  }, [presenting, autoplay, showOverview, speed, loop, index]);
+
+  /** Jump to the visible slide nearest a 0..1 fraction of the deck. */
+  const seekToFraction = useCallback(
+    (f: number) => {
+      const vis = slides.map((s, i) => ({ s, i })).filter(({ s }) => !s.hidden);
+      if (!vis.length) return;
+      const target = Math.min(vis.length - 1, Math.max(0, Math.round(f * (vis.length - 1))));
+      setCurrent(vis[target].i);
+    },
+    [slides, setCurrent]
+  );
 
   // keyboard nav
   useEffect(() => {
@@ -129,10 +158,13 @@ export function PresentOverlay() {
         case 'P':
           setAutoplay((v) => !v);
           break;
-        case 'Escape':
+        case 'Escape': {
+          // let Radix menus / popovers consume Escape first (don't exit the deck)
+          if (document.querySelector('[role="menu"], [data-radix-popper-content-wrapper]')) break;
           if (showOverview) setShowOverview(false);
-          else setPresenting(false);
+          else exitPresent();
           break;
+        }
         case 'n':
         case 'N':
           setShowNotes((v) => !v);
@@ -145,7 +177,7 @@ export function PresentOverlay() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [presenting, go, setCurrent, setPresenting, slides.length, showOverview]);
+  }, [presenting, go, setCurrent, exitPresent, slides.length, showOverview]);
 
   const enterFull = useCallback(async () => {
     try {
@@ -189,7 +221,13 @@ export function PresentOverlay() {
   return (
     <div className="fixed inset-0 z-[100] bg-black flex flex-col" role="dialog" aria-modal="true" aria-label="Presentation mode">
       {/* stage */}
-      <div className="flex-1 min-h-0 grid place-items-center relative">
+      <div className="flex-1 min-h-0 grid place-items-center relative overflow-hidden">
+        {/* subtle spotlight vignette behind the slide */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse 62% 58% at 50% 46%, rgba(255,255,255,0.055), transparent 68%)' }}
+          aria-hidden
+        />
         {/* split click zones: left 28% back, rest forward (keyboard/arrows also work) */}
         <button
           className="absolute inset-y-0 left-0 w-[28%] z-[1] cursor-w-resize"
@@ -227,16 +265,35 @@ export function PresentOverlay() {
         </AnimatePresence>
       </div>
 
-      {/* progress — paced over visible slides */}
-      <div className="h-1.5 bg-neutral-800 shrink-0" role="progressbar" aria-valuenow={Math.min(visiblePos + 1, visibleCount)} aria-valuemin={1} aria-valuemax={Math.max(visibleCount, 1)}>
-        <div className="h-full transition-all duration-300" style={{ width: `${((visiblePos + 1) / Math.max(visibleCount, 1)) * 100}%`, background: theme.tokens.colors.primary }} />
+      {/* progress — paced over visible slides; click / drag to seek */}
+      <div
+        className="group h-1.5 hover:h-3 transition-[height] duration-200 bg-neutral-800 shrink-0 cursor-pointer relative"
+        role="slider"
+        aria-label="Seek to slide"
+        aria-valuemin={1}
+        aria-valuemax={Math.max(visibleCount, 1)}
+        aria-valuenow={Math.min(visiblePos + 1, visibleCount)}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { e.preventDefault(); go(1); }
+          if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { e.preventDefault(); go(-1); }
+        }}
+        onPointerDown={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          seekToFraction((e.clientX - rect.left) / rect.width);
+        }}
+      >
+        <div
+          className="h-full transition-all duration-300 pointer-events-none"
+          style={{ width: `${((visiblePos + 1) / Math.max(visibleCount, 1)) * 100}%`, background: `linear-gradient(90deg, ${theme.tokens.colors.primary}, ${theme.tokens.colors.accent})` }}
+        />
       </div>
 
       {/* transient keyboard hint (CSS-animated: fades out once per entry) */}
       {presenting && !showOverview && (
         <div
           data-ui
-          className="df-present-hint absolute top-5 left-1/2 rounded-full bg-black/70 backdrop-blur px-4 py-1.5 text-xs text-white/85 border border-white/10 shadow-lg"
+          className="df-present-hint absolute top-5 left-1/2 z-[2] rounded-full bg-black/70 backdrop-blur px-4 py-1.5 text-xs text-white/85 border border-white/10 shadow-lg"
           aria-hidden
         >
           <span className="font-mono">← →</span> navigate · <span className="font-mono">N</span> notes · <span className="font-mono">G</span> grid · <span className="font-mono">P</span> auto · <span className="font-mono">Esc</span> exit
@@ -244,7 +301,7 @@ export function PresentOverlay() {
       )}
 
       {/* controls */}
-      <div data-ui className={cn('absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-full bg-black/70 backdrop-blur px-4 py-2 transition-opacity', 'opacity-40 hover:opacity-100 focus-within:opacity-100')}>
+      <div data-ui className={cn('absolute bottom-6 left-1/2 -translate-x-1/2 z-[3] flex items-center gap-2 rounded-full bg-black/70 backdrop-blur px-4 py-2 transition-opacity', 'opacity-40 hover:opacity-100 focus-within:opacity-100')}>
         <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/15" onClick={() => go(-1)} disabled={index === 0} aria-label="Previous slide">
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -256,14 +313,53 @@ export function PresentOverlay() {
         <Button
           variant="ghost"
           size="icon"
-          className={cn('h-8 w-8 text-white hover:bg-white/15', autoplay && 'bg-white/15')}
+          className={cn('h-8 w-8 text-white hover:bg-white/15 relative', autoplay && 'bg-white/15')}
           onClick={() => setAutoplay((v) => !v)}
-          aria-label={autoplay ? 'Pause auto-play (P)' : 'Auto-play (P)'}
+          aria-label={autoplay ? `Pause auto-play (${speed}s per slide, P)` : `Start auto-play (${speed}s per slide, P)`}
           aria-pressed={autoplay}
-          title={autoplay ? 'Pause auto-play (P)' : 'Auto-play (P)'}
+          title={autoplay ? `Pause auto-play — ${speed}s/slide (P)` : `Auto-play — ${speed}s/slide (P)`}
         >
           {autoplay ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+          {autoplay && <span className="absolute inset-0 rounded-md ring-2 ring-emerald-400/70 animate-pulse" aria-hidden />}
         </Button>
+        {/* speed / loop dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn('h-8 w-7 px-0 text-white hover:bg-white/15 -ml-1.5', (autoplay || loop) && 'text-white')}
+              aria-label="Auto-play settings"
+              title="Auto-play speed & loop"
+            >
+              <ChevronsUpDown className="h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="center" className="w-44 z-[110]" side="top">
+            <DropdownMenuLabel className="text-xs text-muted-foreground">Seconds per slide</DropdownMenuLabel>
+            {AUTOPLAY_SPEEDS.map((s) => (
+              <DropdownMenuItem
+                key={s}
+                onClick={() => setSpeed(s)}
+                className={cn('justify-between text-sm', speed === s && 'bg-neutral-100 font-medium')}
+                aria-checked={speed === s}
+                role="menuitemradio"
+              >
+                {s}s {speed === s && <span aria-hidden>✓</span>}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => setLoop((v) => !v)}
+              className="justify-between text-sm"
+              role="menuitemcheckbox"
+              aria-checked={loop}
+            >
+              <span className="inline-flex items-center gap-2"><Repeat className="h-3.5 w-3.5" /> Loop deck</span>
+              {loop && <span aria-hidden>✓</span>}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <span className="w-px h-5 bg-white/20 mx-1" />
         <span className="text-white/70 text-sm font-mono tabular-nums inline-flex items-center gap-1.5" title="Elapsed time">
           <Timer className="h-3.5 w-3.5" /> {mm}:{ss}
@@ -278,7 +374,7 @@ export function PresentOverlay() {
         <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/15" onClick={enterFull} aria-label="Toggle fullscreen">
           {isFull ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
         </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/15" onClick={() => setPresenting(false)} aria-label="Exit presentation (Escape)">
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/15" onClick={exitPresent} aria-label="Exit presentation (Escape)">
           <X className="h-4 w-4" />
         </Button>
       </div>
@@ -291,7 +387,7 @@ export function PresentOverlay() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 24 }}
             data-ui
-            className="absolute bottom-20 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-md rounded-xl bg-black/80 backdrop-blur text-white p-4 text-sm leading-relaxed shadow-xl border border-white/10"
+            className="absolute bottom-20 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-md z-[4] rounded-xl bg-black/80 backdrop-blur text-white p-4 text-sm leading-relaxed shadow-xl border border-white/10"
           >
             <div className="text-[10px] uppercase tracking-widest text-white/50 mb-1.5">Speaker notes · N to toggle</div>
             {slide.notes}
@@ -307,7 +403,7 @@ export function PresentOverlay() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             data-ui
-            className="absolute inset-0 bg-black/85 backdrop-blur-sm overflow-y-auto p-6 sm:p-10"
+            className="absolute inset-0 z-[5] bg-black/85 backdrop-blur-sm overflow-y-auto p-6 sm:p-10"
             role="dialog"
             aria-label="Slide overview"
             onClick={() => setShowOverview(false)}
