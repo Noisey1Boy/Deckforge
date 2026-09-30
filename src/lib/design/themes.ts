@@ -341,10 +341,43 @@ export function getTheme(id: string | undefined | null): ThemeManifest {
 
 const HEX_RE = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
 
+/** Normalize #rgb → #rrggbb so luminance math always sees 6 digits. */
+function expandHex(hex: string): string {
+  if (!/^#[0-9a-f]{6}$/i.test(hex)) {
+    const [r, g, b] = hex.slice(1).split('');
+    return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
+  }
+  return hex.toLowerCase();
+}
+
+/** Relative luminance (WCAG 2.1) of a #rrggbb color. */
+function relLuminance(hex: string): number {
+  const n = parseInt(expandHex(hex).slice(1), 16);
+  const lin = (v: number) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
+}
+
+/**
+ * Pick the most readable foreground (white vs. near-black) for text sitting
+ * on `hex`, per WCAG contrast ratio — keeps light user accents (butter,
+ * mint, sky) from pairing with white text and failing accessibility.
+ */
+function readableOn(hex: string): string {
+  const l = relLuminance(hex);
+  const contrastWhite = 1.05 / (l + 0.05);
+  const contrastBlack = (l + 0.05) / 0.05;
+  return contrastWhite >= contrastBlack ? '#ffffff' : '#101010';
+}
+
 /**
  * Layer a user-chosen accent over a theme: the primary color (titles' rule,
  * bullets, stats values, chart series 1, decor) re-tints instantly while the
  * rest of the theme (fonts, layout, backgrounds, motion) stays intact.
+ * `primaryContrast` is re-derived from the accent so on-primary text always
+ * passes contrast, whatever lightness the user picks.
  * Returns the manifest untouched when no valid accent is given.
  */
 export function applyAccent(theme: ThemeManifest, accent?: string | null): ThemeManifest {
@@ -353,7 +386,7 @@ export function applyAccent(theme: ThemeManifest, accent?: string | null): Theme
     ...theme,
     tokens: {
       ...theme.tokens,
-      colors: { ...theme.tokens.colors, primary: accent, accent },
+      colors: { ...theme.tokens.colors, primary: accent, accent, primaryContrast: readableOn(accent) },
       chart: { ...theme.tokens.chart, palette: [accent, ...theme.tokens.chart.palette.slice(1)] },
     },
   };

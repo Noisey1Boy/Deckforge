@@ -89,6 +89,9 @@ function SlideCard({
       </div>
       <div className="absolute top-1 left-1 flex items-center gap-1">
         <span className="bg-black/60 text-white text-[10px] rounded px-1.5 py-0.5 font-mono">{index + 1}</span>
+        <span className="bg-black/45 text-white/90 text-[10px] rounded px-1 py-0.5" title={`Layout: ${slide.layout.replace('-', ' ')}`}>
+          {LAYOUT_ICONS[slide.layout]}
+        </span>
         {slide.hidden && (
           <span className="bg-neutral-900/80 text-white text-[9px] uppercase tracking-wider rounded px-1.5 py-0.5 font-semibold inline-flex items-center gap-0.5">
             <EyeOff className="h-2.5 w-2.5" /> Hidden
@@ -418,7 +421,7 @@ export function EditorView() {
   ];
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
+    <div className="flex flex-col flex-1 min-h-0">
       {/* toolbar */}
       <div className="flex items-center gap-2 px-3 py-2 border-b bg-background/95 backdrop-blur flex-wrap">
         <Button
@@ -656,7 +659,7 @@ export function EditorView() {
               </div>
             </div>
           )}
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1 min-h-0">
             <div className="p-3 space-y-3">
               {slides.map((s, i) => (
                 <SlideCard

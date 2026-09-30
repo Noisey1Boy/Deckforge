@@ -9,6 +9,7 @@ import { EditorView } from '@/components/editor/EditorView';
 import { PresentOverlay } from '@/components/app/PresentOverlay';
 import { PrintSurface } from '@/components/app/ExportMenu';
 import { Presentation } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export function HomePage() {
   const view = useAppStore((s) => s.view);
@@ -16,7 +17,7 @@ export function HomePage() {
   const reduceMotion = useReducedMotion();
 
   return (
-    <div className="min-h-screen flex flex-col bg-neutral-50">
+    <div className={cn('flex flex-col bg-neutral-50', view === 'editor' ? 'h-screen overflow-hidden' : 'min-h-screen')}>
       {/* header */}
       <header className="sticky top-0 z-40 h-16 border-b bg-background/90 backdrop-blur">
         <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 flex items-center gap-3">
@@ -36,7 +37,7 @@ export function HomePage() {
         </div>
       </header>
 
-      <main className="flex-1">
+      <main className="flex-1 min-h-0 flex flex-col">
         {reduceMotion ? (
           <>
             {view === 'create' && <CreateView />}
@@ -50,6 +51,7 @@ export function HomePage() {
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.28, ease: [0.22, 0.61, 0.36, 1] }}
+            className={view === 'editor' ? 'flex-1 min-h-0 flex flex-col' : undefined}
           >
             {view === 'create' && <CreateView />}
             {view === 'outline' && <OutlineView />}

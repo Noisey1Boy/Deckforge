@@ -20,6 +20,7 @@ interface RecentDeck {
   subtitle?: string | null;
   themeId: string;
   slideCount: number;
+  titles?: string[];
   updatedAt: string;
 }
 
@@ -187,7 +188,14 @@ export function RecentDecks({ onOpen }: { onOpen: (d: RecentDeck) => void }) {
   }
 
   const q = query.trim().toLowerCase();
-  const shown = q ? decks.filter((d) => d.title.toLowerCase().includes(q)) : decks;
+  const shown = q
+    ? decks.filter(
+        (d) =>
+          d.title.toLowerCase().includes(q) ||
+          deckTheme(d).name.toLowerCase().includes(q) ||
+          (d.titles ?? []).some((t) => t.toLowerCase().includes(q))
+      )
+    : decks;
 
   return (
     <div className="space-y-3">
@@ -201,7 +209,7 @@ export function RecentDecks({ onOpen }: { onOpen: (d: RecentDeck) => void }) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search decks…"
+            placeholder="Search titles, slides, themes…"
             aria-label="Search your decks"
             className="h-9 w-40 sm:w-52 rounded-md border border-neutral-200 bg-white pl-8 pr-3 text-sm outline-none transition-colors focus:border-neutral-900 focus-visible:ring-2 focus-visible:ring-neutral-900/10"
           />
@@ -248,11 +256,18 @@ export function RecentDecks({ onOpen }: { onOpen: (d: RecentDeck) => void }) {
                   <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 font-medium">
                     <Layers className="h-3 w-3" /> {d.slideCount} slides
                   </span>
-                  {/* relative time is intentionally computed client-side (Date.now()),
-                      so suppress the SSR text mismatch warning */}
-                  <span className="inline-flex items-center gap-1" title={`Last edited ${new Date(d.updatedAt).toLocaleString()}`} suppressHydrationWarning>
-                    <Clock className="h-3 w-3" /> {timeAgo(d.updatedAt)}
+                  <span
+                    className="inline-flex items-center gap-1.5 min-w-0 text-[10px] uppercase tracking-wider font-medium"
+                    title={`Design system: ${theme.name}`}
+                  >
+                    <span className="h-2 w-2 rounded-full shrink-0" style={{ background: theme.tokens.colors.accent }} aria-hidden />
+                    <span className="truncate">{theme.name}</span>
                   </span>
+                </div>
+                {/* relative time is intentionally computed client-side (Date.now()),
+                    so suppress the SSR text mismatch warning */}
+                <div className="flex items-center gap-1 mt-1.5 text-[11px] text-muted-foreground" title={`Last edited ${new Date(d.updatedAt).toLocaleString()}`} suppressHydrationWarning>
+                  <Clock className="h-3 w-3" /> {timeAgo(d.updatedAt)}
                 </div>
               </button>
               {/* hover actions */}

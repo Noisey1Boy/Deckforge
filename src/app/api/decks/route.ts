@@ -11,15 +11,29 @@ export async function GET() {
       take: 24,
     });
     return NextResponse.json({
-      decks: decks.map((d) => ({
-        id: d.id,
-        title: d.title,
-        subtitle: d.subtitle,
-        themeId: d.themeId,
-        meta: (JSON.parse(d.metaJson || '{}') || {}) as DeckMeta,
-        slideCount: JSON.parse(d.slidesJson || '[]').length,
-        updatedAt: d.updatedAt,
-      })),
+      decks: decks.map((d) => {
+        const slides: Slide[] = (() => {
+          try {
+            return JSON.parse(d.slidesJson || '[]');
+          } catch {
+            return [];
+          }
+        })();
+        return {
+          id: d.id,
+          title: d.title,
+          subtitle: d.subtitle,
+          themeId: d.themeId,
+          meta: (JSON.parse(d.metaJson || '{}') || {}) as DeckMeta,
+          slideCount: slides.length,
+          // slide titles power client-side content search in the library
+          titles: slides
+            .map((s) => String(s?.title ?? '').slice(0, 60))
+            .filter(Boolean)
+            .slice(0, 60),
+          updatedAt: d.updatedAt,
+        };
+      }),
     });
   } catch (err) {
     console.error('GET /api/decks failed', err);

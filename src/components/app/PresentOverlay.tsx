@@ -9,13 +9,17 @@ import { SlideView } from '@/components/deck/SlideView';
 import { ScaledSlide } from '@/components/deck/ScaledSlide';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { X, ChevronLeft, ChevronRight, StickyNote, Maximize2, Minimize2, LayoutGrid, Timer, Play, Pause, ChevronsUpDown, Repeat, Projector } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, StickyNote, Maximize2, Minimize2, LayoutGrid, Timer, Play, Pause, ChevronsUpDown, Repeat, Projector, MonitorOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TransitionKind } from '@/lib/deck/types';
 
 const AUTOPLAY_SPEEDS = [5, 10, 15, 20] as const;
 const LS_SPEED = 'deckforge.autoplay.speed';
 const LS_LOOP = 'deckforge.autoplay.loop';
+const LS_PRESENTER_W = 'deckforge.presenter.width';
+const PRESENTER_W_MIN = 280;
+const PRESENTER_W_MAX = 620;
+const PRESENTER_W_DEFAULT = 416;
 
 function loadSpeed(): number {
   try {
@@ -30,6 +34,16 @@ function loadLoop(): boolean {
     return window.localStorage.getItem(LS_LOOP) === '1';
   } catch {
     return false;
+  }
+}
+function loadPresenterWidth(): number {
+  try {
+    const raw = window.localStorage.getItem(LS_PRESENTER_W);
+    if (!raw) return PRESENTER_W_DEFAULT;
+    const v = Number(raw);
+    return Number.isFinite(v) ? Math.min(PRESENTER_W_MAX, Math.max(PRESENTER_W_MIN, v)) : PRESENTER_W_DEFAULT;
+  } catch {
+    return PRESENTER_W_DEFAULT;
   }
 }
 
@@ -74,6 +88,8 @@ export function PresentOverlay() {
   const [showNotes, setShowNotes] = useState(false);
   const [showOverview, setShowOverview] = useState(false);
   const [presenter, setPresenter] = useState(false);
+  const [blanked, setBlanked] = useState(false);
+  const [presenterW, setPresenterWState] = useState<number>(() => (typeof window === 'undefined' ? PRESENTER_W_DEFAULT : loadPresenterWidth()));
   const [isFull, setIsFull] = useState(false);
   const [scale, setScale] = useState(1);
   const [elapsed, setElapsed] = useState(0);
@@ -81,6 +97,7 @@ export function PresentOverlay() {
   const [speed, setSpeedState] = useState<number>(() => (typeof window === 'undefined' ? 10 : loadSpeed()));
   const [loop, setLoopState] = useState<boolean>(() => (typeof window === 'undefined' ? false : loadLoop()));
   const startedAt = useRef<number | null>(null);
+  const presenterDrag = useRef<{ startX: number; startW: number } | null>(null);
   const reduceMotion = useReducedMotion();
   const setSpeed = useCallback((v: number) => {
     setSpeedState(v);
@@ -89,6 +106,11 @@ export function PresentOverlay() {
   const setLoop = useCallback((v: boolean) => {
     setLoopState(v);
     try { window.localStorage.setItem(LS_LOOP, v ? '1' : '0'); } catch { /* private mode */ }
+  }, []);
+  const setPresenterW = useCallback((v: number) => {
+    const clamped = Math.min(PRESENTER_W_MAX, Math.max(PRESENTER_W_MIN, Math.round(v)));
+    setPresenterWState(clamped);
+    try { window.localStorage.setItem(LS_PRESENTER_W, String(clamped)); } catch { /* private mode */ }
   }, []);
 
   const slides = deck?.slides ?? [];
@@ -121,11 +143,12 @@ export function PresentOverlay() {
 
   const go = useCallback((delta: number) => stepTo(delta as 1 | -1), [stepTo]);
 
-  /** Exit presentation and reset transient state (autoplay, timer). */
+  /** Exit presentation and reset transient state (autoplay, timer, blank). */
   const exitPresent = useCallback(() => {
     setAutoplay(false);
     setElapsed(0);
     setPresenter(false);
+    setBlanked(false);
     setPresenting(false);
   }, [setPresenting]);
 
@@ -231,6 +254,11 @@ export function PresentOverlay() {
         case 'V':
           setPresenter((v) => !v);
           break;
+        case 'b':
+        case 'B':
+          e.preventDefault();
+          setBlanked((v) => !v);
+          break;
         case 'Escape': {
           // let Radix menus / popovers consume Escape first (don't exit the deck)
           if (document.querySelector('[role="menu"], [data-radix-popper-content-wrapper]')) break;
@@ -332,10 +360,36 @@ export function PresentOverlay() {
     <div className="fixed inset-0 z-[100] bg-black flex flex-col" role="dialog" aria-modal="true" aria-label="Presentation mode">
       {presenter ? (
         /* ------------------------------------------------ presenter view */
-        <div className="flex-1 min-h-0 flex flex-col lg:flex-row">
+        <div className="flex-1 min-h-0 flex flex-col lg:flex-row" style={{ '--pw': `${presenterW}px` } as React.CSSProperties}>
           {stage}
+          {/* drag handle — resize the presenter panel (desktop) */}
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize presenter panel (arrow keys adjust)"
+            tabIndex={0}
+            onPointerDown={(e) => {
+              e.currentTarget.setPointerCapture(e.pointerId);
+              presenterDrag.current = { startX: e.clientX, startW: presenterW };
+            }}
+            onPointerMove={(e) => {
+              const d = presenterDrag.current;
+              if (!d) return;
+              setPresenterW(d.startW - (e.clientX - d.startX));
+            }}
+            onPointerUp={() => { presenterDrag.current = null; }}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowLeft') { e.preventDefault(); setPresenterW(presenterW + 32); }
+              if (e.key === 'ArrowRight') { e.preventDefault(); setPresenterW(presenterW - 32); }
+            }}
+            className="hidden lg:block relative w-1.5 -mx-0.5 z-10 cursor-col-resize shrink-0 group/sep"
+            title="Drag to resize · arrow keys"
+          >
+            <span className="absolute inset-y-0 -left-1 -right-1" aria-hidden />
+            <span className="absolute inset-y-0 left-0 w-px bg-white/10 group-hover/sep:bg-white/40 group-focus-visible/sep:bg-white/60 transition-colors" aria-hidden />
+          </div>
           <aside
-            className="w-full lg:w-[24rem] xl:w-[26rem] shrink-0 border-t lg:border-t-0 lg:border-l border-white/10 bg-neutral-950/95 backdrop-blur p-4 lg:p-5 flex lg:flex-col gap-4 overflow-y-auto max-h-[46%] lg:max-h-none"
+            className="w-full lg:w-[var(--pw,26rem)] shrink-0 border-t lg:border-t-0 lg:border-l border-white/10 bg-neutral-950/95 backdrop-blur p-4 lg:p-5 flex lg:flex-col gap-4 overflow-y-auto max-h-[46%] lg:max-h-none"
             aria-label="Presenter view"
           >
             <div className="flex items-center justify-between lg:justify-start gap-4 shrink-0">
@@ -412,6 +466,20 @@ export function PresentOverlay() {
         />
       </div>
 
+      {/* blank screen (projector shutter) — B key or click to restore */}
+      {blanked && (
+        <div
+          className="absolute inset-0 z-[2] bg-black grid place-items-center cursor-pointer"
+          onClick={() => setBlanked(false)}
+          role="button"
+          aria-label="Screen hidden. Click or press B to show the slide"
+        >
+          <p className="text-white/30 text-sm">
+            Screen hidden — press <span className="font-mono text-white/50">B</span> or click to show
+          </p>
+        </div>
+      )}
+
       {/* transient keyboard hint (CSS-animated: fades out once per entry) */}
       {presenting && !showOverview && (
         <div
@@ -419,7 +487,7 @@ export function PresentOverlay() {
           className="df-present-hint absolute top-5 left-1/2 z-[2] rounded-full bg-black/70 backdrop-blur px-4 py-1.5 text-xs text-white/85 border border-white/10 shadow-lg"
           aria-hidden
         >
-          <span className="font-mono">← →</span> navigate · <span className="font-mono">N</span> notes · <span className="font-mono">V</span> presenter · <span className="font-mono">G</span> grid · <span className="font-mono">P</span> auto · <span className="font-mono">Esc</span> exit
+          <span className="font-mono">← →</span> navigate · <span className="font-mono">N</span> notes · <span className="font-mono">V</span> presenter · <span className="font-mono">G</span> grid · <span className="font-mono">P</span> auto · <span className="font-mono">B</span> blank · <span className="font-mono">Esc</span> exit
         </div>
       )}
 
@@ -504,6 +572,17 @@ export function PresentOverlay() {
           title="Presenter view — notes & next slide (V)"
         >
           <Projector className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn('h-8 w-8 text-white hover:bg-white/15', blanked && 'bg-white/15')}
+          onClick={() => setBlanked((v) => !v)}
+          aria-label="Toggle blank screen (B)"
+          aria-pressed={blanked}
+          title="Blank the screen — pause audience attention (B)"
+        >
+          <MonitorOff className="h-4 w-4" />
         </Button>
         <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/15" onClick={enterFull} aria-label="Toggle fullscreen">
           {isFull ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
