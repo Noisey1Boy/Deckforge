@@ -10,6 +10,7 @@ import {
   Type, Hash, List, Columns2, Image as ImageIcon, Quote, BarChart3, Workflow,
   Table2, Flag, Sigma, Play, Download, FileText, Globe, StickyNote, EyeOff,
   Copy, Trash2, Undo2, Redo2, Shuffle, Palette, NotebookPen, CornerDownLeft,
+  Sparkles, ArrowUp, ArrowDown,
 } from 'lucide-react';
 
 /** Add-slide menu entries — shared shape with the editor toolbar. */
@@ -42,6 +43,9 @@ interface CommandPaletteProps {
   onUndo: () => void;
   onRedo: () => void;
   onPresent: () => void;
+  /** dir: -1 moves the current slide one position earlier, +1 later. */
+  onMoveSlide: (dir: -1 | 1) => void;
+  onComposeSlide: () => void;
   onShuffleTheme: () => void;
   onStyle: () => void;
   onWriteNotes: () => void;
@@ -55,7 +59,7 @@ interface CommandPaletteProps {
 export function CommandPalette({
   open, onOpenChange, slides, currentSlideIndex,
   onJump, onInsert, onDuplicate, onToggleHidden, onDelete,
-  onUndo, onRedo, onPresent, onShuffleTheme, onStyle, onWriteNotes, onExport,
+  onUndo, onRedo, onPresent, onMoveSlide, onComposeSlide, onShuffleTheme, onStyle, onWriteNotes, onExport,
 }: CommandPaletteProps) {
   const slideItems = useMemo(
     () => slides.map((s, i) => ({ s, i })),
@@ -92,6 +96,14 @@ export function CommandPalette({
 
         <CommandSeparator />
         <CommandGroup heading="Insert slide">
+          <CommandItem
+            value="add generate compose new slide with ai from topic"
+            onSelect={() => run(onComposeSlide)}
+            className="gap-2 text-violet-700"
+          >
+            <Sparkles className="h-4 w-4 text-violet-500" />
+            <span>Generate slide with AI from a topic…</span>
+          </CommandItem>
           {LAYOUT_MENU_ITEMS.map((l) => (
             <CommandItem key={l.id} value={`add ${l.label} slide ${l.id}`} onSelect={() => run(() => onInsert(l.id))} className="gap-2">
               {l.icon}
@@ -104,6 +116,17 @@ export function CommandPalette({
         <CommandGroup heading="This slide">
           <CommandItem value="duplicate slide" onSelect={() => run(onDuplicate)} className="gap-2">
             <Copy className="h-4 w-4" /> Duplicate current slide <CommandShortcut>⌘D</CommandShortcut>
+          </CommandItem>
+          <CommandItem value="move slide earlier up reorder" disabled={currentSlideIndex === 0} onSelect={() => run(() => onMoveSlide(-1))} className="gap-2">
+            <ArrowUp className="h-4 w-4" /> Move slide earlier <CommandShortcut>⌥↑</CommandShortcut>
+          </CommandItem>
+          <CommandItem
+            value="move slide later down reorder"
+            disabled={currentSlideIndex >= slides.length - 1}
+            onSelect={() => run(() => onMoveSlide(1))}
+            className="gap-2"
+          >
+            <ArrowDown className="h-4 w-4" /> Move slide later <CommandShortcut>⌥↓</CommandShortcut>
           </CommandItem>
           <CommandItem value="hide show slide" onSelect={() => run(onToggleHidden)} className="gap-2">
             <EyeOff className="h-4 w-4" /> Hide / show current slide <CommandShortcut>H</CommandShortcut>

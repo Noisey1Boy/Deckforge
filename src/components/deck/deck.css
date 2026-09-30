@@ -36,7 +36,7 @@
   font-size: calc(var(--s-ts-caption) * var(--s-fit, 1));
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--s-primary);
+  color: var(--s-primary-text);
   font-weight: 600;
 }
 
@@ -90,7 +90,7 @@
 }
 
 .s-accent-text {
-  color: var(--s-primary);
+  color: var(--s-primary-text);
 }
 
 /* ----------------------------------------------------------- decor motifs */
@@ -167,7 +167,7 @@
 
 .slide-footer .page-no {
   font-weight: 600;
-  color: var(--s-primary);
+  color: var(--s-primary-text);
 }
 
 /* ------------------------------------------------------------- layouts */
@@ -276,7 +276,7 @@
 
 .col-list li::before {
   content: '→';
-  color: var(--s-primary);
+  color: var(--s-primary-text);
   font-weight: 700;
   flex: none;
 }
@@ -296,7 +296,7 @@
   font-family: var(--s-font-display);
   font-size: 130px;
   line-height: 0.6;
-  color: var(--s-primary);
+  color: var(--s-primary-text);
   opacity: 0.9;
   height: 0.42em;
 }
@@ -353,7 +353,7 @@
   font-size: calc(var(--s-ts-display) * 0.78 * var(--s-fit, 1));
   line-height: 1;
   font-weight: 700;
-  color: var(--s-primary);
+  color: var(--s-primary-text);
   letter-spacing: -0.02em;
   word-break: break-all;
 }
@@ -498,7 +498,7 @@
   background: transparent;
   border: none;
   font-weight: 700;
-  color: var(--s-primary);
+  color: var(--s-primary-text);
   font-family: var(--s-font-display);
 }
 
@@ -587,7 +587,7 @@
 }
 
 .closing-list svg {
-  color: var(--s-primary);
+  color: var(--s-primary-text);
 }
 
 /* section divider */
@@ -602,7 +602,7 @@
 .section-index {
   font-family: var(--s-font-mono);
   font-size: calc(var(--s-ts-h3) * 1.05);
-  color: var(--s-primary);
+  color: var(--s-primary-text);
   font-weight: 600;
   letter-spacing: 0.3em;
 }

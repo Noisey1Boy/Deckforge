@@ -55,16 +55,18 @@ export async function exportPptx(deck: Deck): Promise<void> {
     const slide = pptx.addSlide();
     slide.background = { color: c.bg.replace('#', '') };
     const primary = c.primary.replace('#', '');
+    // contrast-safe accent for TEXT on the slide background (kickers, labels)
+    const primaryText = (c.primaryText ?? c.primary).replace('#', '');
 
     switch (s.layout) {
       case 'title': {
-        if (s.subtitle) slide.addText(s.subtitle.toUpperCase(), { x: px2in(PAD), y: 2.0, w: W - 2 * px2in(PAD), h: 0.4, fontSize: pt(ts.caption), color: primary, fontFace: bodyFont, charSpacing: 4 });
+        if (s.subtitle) slide.addText(s.subtitle.toUpperCase(), { x: px2in(PAD), y: 2.0, w: W - 2 * px2in(PAD), h: 0.4, fontSize: pt(ts.caption), color: primaryText, fontFace: bodyFont, charSpacing: 4 });
         slide.addText(s.title ?? deck.title, { x: px2in(PAD), y: 2.5, w: W - 2 * px2in(PAD), h: 1.8, fontSize: pt(ts.display), bold: true, color: c.text.replace('#', ''), fontFace: displayFont });
         slide.addShape('rect', { x: px2in(PAD), y: 4.5, w: 1.0, h: 0.06, fill: { color: primary } });
         break;
       }
       case 'section': {
-        slide.addText(`SECTION ${String(i).padStart(2, '0')}`, { x: px2in(PAD), y: 2.3, w: 4, h: 0.4, fontSize: pt(ts.h3), color: primary, fontFace: bodyFont, charSpacing: 4 });
+        slide.addText(`SECTION ${String(i).padStart(2, '0')}`, { x: px2in(PAD), y: 2.3, w: 4, h: 0.4, fontSize: pt(ts.h3), color: primaryText, fontFace: bodyFont, charSpacing: 4 });
         slide.addText(s.title ?? '', { x: px2in(PAD), y: 2.8, w: W - 2 * px2in(PAD), h: 1.6, fontSize: pt(ts.display), bold: true, color: c.text.replace('#', ''), fontFace: displayFont });
         break;
       }
@@ -81,7 +83,7 @@ export async function exportPptx(deck: Deck): Promise<void> {
         const colW = (W - 2 * px2in(PAD) - 0.4) / 2;
         const mkCol = (x: number, t: string, items: string[]) => {
           slide.addShape('roundRect', { x, y: 2.1, w: colW, h: 4.4, rectRadius: 0.08, fill: { color: c.bgAlt.replace('#', '') }, line: { color: c.border.replace('#', ''), width: 1 } });
-          slide.addText(t, { x: x + 0.25, y: 2.3, w: colW - 0.5, h: 0.5, fontSize: pt(ts.h2), bold: true, color: primary, fontFace: displayFont });
+          slide.addText(t, { x: x + 0.25, y: 2.3, w: colW - 0.5, h: 0.5, fontSize: pt(ts.h2), bold: true, color: primaryText, fontFace: displayFont });
           slide.addText(items.map((txt) => ({ text: txt, options: { bullet: { code: '2192' }, breakLine: true } })), {
             x: x + 0.25, y: 2.9, w: colW - 0.5, h: 3.4, fontSize: pt(ts.body), color: c.text.replace('#', ''), fontFace: bodyFont, paraSpaceAfter: 8,
           });
@@ -101,7 +103,7 @@ export async function exportPptx(deck: Deck): Promise<void> {
         return; // skip default footer (white text zone)
       }
       case 'quote': {
-        slide.addText('\u201C', { x: px2in(PAD), y: 0.9, w: 1.6, h: 1.4, fontSize: 100, color: primary, fontFace: displayFont });
+        slide.addText('\u201C', { x: px2in(PAD), y: 0.9, w: 1.6, h: 1.4, fontSize: 100, color: primaryText, fontFace: displayFont });
         slide.addText(s.quote ?? '', { x: px2in(PAD + 30), y: 2.2, w: W - 2 * px2in(PAD) - 0.6, h: 2.8, fontSize: pt(ts.h1), color: c.text.replace('#', ''), fontFace: displayFont, italic: true });
         if (s.attribution) slide.addText(`— ${s.attribution}`, { x: px2in(PAD + 30), y: 5.2, w: 6, h: 0.5, fontSize: pt(ts.h3), color: c.textMuted.replace('#', ''), fontFace: bodyFont });
         break;
@@ -114,7 +116,7 @@ export async function exportPptx(deck: Deck): Promise<void> {
         stats.forEach((st, si) => {
           const x = px2in(PAD) + si * (cardW + gap);
           slide.addShape('roundRect', { x, y: 2.3, w: cardW, h: 3.6, rectRadius: 0.1, fill: { color: c.surface.replace('#', '') }, line: { color: c.border.replace('#', ''), width: 1 }, shadow: { type: 'outer', blur: 12, offset: 2, angle: 90, color: '000000', opacity: 0.12 } });
-          slide.addText(st.value, { x: x + 0.2, y: 2.7, w: cardW - 0.4, h: 1.1, fontSize: pt(ts.display * 0.72), bold: true, color: primary, fontFace: displayFont });
+          slide.addText(st.value, { x: x + 0.2, y: 2.7, w: cardW - 0.4, h: 1.1, fontSize: pt(ts.display * 0.72), bold: true, color: primaryText, fontFace: displayFont });
           slide.addText(st.label, { x: x + 0.2, y: 3.9, w: cardW - 0.4, h: 0.7, fontSize: pt(ts.body), bold: true, color: c.text.replace('#', ''), fontFace: bodyFont });
           if (st.context) slide.addText(st.context, { x: x + 0.2, y: 4.7, w: cardW - 0.4, h: 0.9, fontSize: pt(ts.caption + 2), color: c.textMuted.replace('#', ''), fontFace: bodyFont });
         });
@@ -137,7 +139,7 @@ export async function exportPptx(deck: Deck): Promise<void> {
           }
           // insight rail
           slide.addShape('roundRect', { x: 8.6, y: 2.1, w: 3.9, h: 4.6, rectRadius: 0.1, fill: { color: c.bgAlt.replace('#', '') } });
-          slide.addText('INSIGHT', { x: 8.85, y: 2.4, w: 3.4, h: 0.4, fontSize: pt(ts.caption), color: primary, fontFace: bodyFont, charSpacing: 3, bold: true });
+          slide.addText('INSIGHT', { x: 8.85, y: 2.4, w: 3.4, h: 0.4, fontSize: pt(ts.caption), color: primaryText, fontFace: bodyFont, charSpacing: 3, bold: true });
           if (s.chart.insight) slide.addText(s.chart.insight, { x: 8.85, y: 2.9, w: 3.4, h: 3.4, fontSize: pt(ts.h3), color: c.text.replace('#', ''), fontFace: bodyFont });
         }
         break;
@@ -170,7 +172,7 @@ export async function exportPptx(deck: Deck): Promise<void> {
               { text: s.comparison.headers[1], options: { bold: true, color: 'FFFFFF', fill: { color: primary }, fontFace: displayFont } },
             ],
             ...s.comparison.rows.map((r) => ([
-              { text: r.label, options: { bold: true, color: primary, fill: { color: c.bg.replace('#', '') } } },
+              { text: r.label, options: { bold: true, color: primaryText, fill: { color: c.bg.replace('#', '') } } },
               { text: r.left, options: { fill: { color: c.bgAlt.replace('#', '') } } },
               { text: r.right, options: { fill: { color: c.bgAlt.replace('#', '') } } },
             ] as PptxGenJS.TableRow)),

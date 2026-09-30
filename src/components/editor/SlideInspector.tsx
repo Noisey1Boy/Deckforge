@@ -118,22 +118,22 @@ export function SlideInspector({ slide }: { slide: Slide }) {
   return (
     <div className="space-y-5">
       {/* AI actions */}
-      <section className="space-y-2">
+      <section className="space-y-2 rounded-lg border border-violet-100 bg-gradient-to-b from-violet-50/70 to-transparent p-3 -m-1">
         <Label className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
           <Sparkles className="h-3 w-3 text-violet-500" aria-hidden /> AI actions
         </Label>
         <div className="flex flex-wrap gap-1.5">
           {AI_ACTIONS.map((a) => (
-            <Button key={a.id} variant="outline" size="sm" className="gap-1.5 h-8 hover:border-violet-300 hover:bg-violet-50/60 transition-colors" disabled={!!aiBusy} onClick={() => runAI(a.id)}>
+            <Button key={a.id} variant="outline" size="sm" className="gap-1.5 h-8 border-violet-200/70 bg-white/80 hover:border-violet-300 hover:bg-violet-50/60 transition-colors" disabled={!!aiBusy} onClick={() => runAI(a.id)}>
               {aiBusy === a.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : a.icon}
               {a.label}
             </Button>
           ))}
-          <Button variant="outline" size="sm" className="gap-1.5 h-8 hover:border-violet-300 hover:bg-violet-50/60 transition-colors" disabled={!!aiBusy} onClick={() => runAI('add_chart')}>
+          <Button variant="outline" size="sm" className="gap-1.5 h-8 border-violet-200/70 bg-white/80 hover:border-violet-300 hover:bg-violet-50/60 transition-colors" disabled={!!aiBusy} onClick={() => runAI('add_chart')}>
             {aiBusy === 'add_chart' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
             Add chart
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 h-8 hover:border-violet-300 hover:bg-violet-50/60 transition-colors" disabled={imgBusy} onClick={illustrate}>
+          <Button variant="outline" size="sm" className="gap-1.5 h-8 border-violet-200/70 bg-white/80 hover:border-violet-300 hover:bg-violet-50/60 transition-colors" disabled={imgBusy} onClick={illustrate}>
             {imgBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
             Illustrate
           </Button>

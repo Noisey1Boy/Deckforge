@@ -28,7 +28,6 @@ export const metadata: Metadata = {
   title: "DeckForge AI — Prompt to polished presentation",
   description:
     "Generate designed, on-brand presentations from a prompt or your own data. 8 curated design systems, live re-theming, charts, present mode and PPTX/PDF/HTML export.",
-  icons: { icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg" },
 };
 
 export default function RootLayout({

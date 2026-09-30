@@ -15,6 +15,8 @@ export function themeToCssVars(theme: ThemeManifest): CSSProperties {
     '--s-muted': t.colors.textMuted,
     '--s-primary': t.colors.primary,
     '--s-primary-contrast': t.colors.primaryContrast,
+    /** Contrast-safe accent-as-text variant (falls back to primary). */
+    '--s-primary-text': t.colors.primaryText ?? t.colors.primary,
     '--s-accent': t.colors.accent,
     '--s-border': t.colors.border,
     '--s-font-display': t.fonts.display,

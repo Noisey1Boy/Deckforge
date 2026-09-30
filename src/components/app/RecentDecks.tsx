@@ -264,6 +264,24 @@ export function RecentDecks({ onOpen }: { onOpen: (d: RecentDeck) => void }) {
                     <span className="truncate">{theme.name}</span>
                   </span>
                 </div>
+                {/* mini outline: first two slide titles (from the list API) */}
+                {(d.titles ?? []).length > 0 && (
+                  <div
+                    className="mt-2.5 space-y-1 border-t border-dashed border-neutral-100 pt-2"
+                    style={{ borderLeft: `2px solid ${theme.tokens.colors.primary}`, paddingLeft: 8, borderRadius: 1 }}
+                    aria-hidden
+                  >
+                    {(d.titles ?? []).slice(0, 2).map((t, i) => (
+                      <div key={i} className="flex items-center gap-1.5 text-[11px] leading-tight text-neutral-500 min-w-0">
+                        <span className="font-mono text-[9px] text-neutral-300 shrink-0">{String(i + 1).padStart(2, '0')}</span>
+                        <span className="truncate">{t || 'Untitled'}</span>
+                      </div>
+                    ))}
+                    {d.slideCount > 2 && (
+                      <div className="text-[10px] text-neutral-400 pl-4">+ {d.slideCount - 2} more…</div>
+                    )}
+                  </div>
+                )}
                 {/* relative time is intentionally computed client-side (Date.now()),
                     so suppress the SSR text mismatch warning */}
                 <div className="flex items-center gap-1 mt-1.5 text-[11px] text-muted-foreground" title={`Last edited ${new Date(d.updatedAt).toLocaleString()}`} suppressHydrationWarning>

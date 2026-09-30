@@ -25,7 +25,8 @@ import {
   Play, Plus, Trash2, Copy, Presentation, ChevronLeft, ChevronRight, Check, Cloud,
   Undo2, Redo2, Keyboard, Type, Hash, List, Columns2, Image as ImageIcon, Quote,
   BarChart3, Workflow, Table2, Flag, Sigma, Eye, EyeOff, Shuffle, Palette, X,
-  SquareStack, Clock3, Command as CommandIcon, NotebookPen, Loader2,
+  SquareStack, Clock3, Command as CommandIcon, NotebookPen, Loader2, Sparkles,
+  ArrowUp, ArrowDown,
 } from 'lucide-react';
 
 const LAYOUT_ICONS: Record<LayoutId, string> = {
@@ -159,6 +160,10 @@ export function EditorView() {
   const [showStyle, setShowStyle] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [notesProgress, setNotesProgress] = useState<{ done: number; total: number } | null>(null);
+  // AI slide composer: "give me a slide about …" → inserted after the current one
+  const [composeOpen, setComposeOpen] = useState(false);
+  const [composeTopic, setComposeTopic] = useState('');
+  const [composing, setComposing] = useState(false);
   // multi-selection (editor only): cmd/ctrl-click toggles, shift-click ranges
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const anchorRef = useRef<number | null>(null);
@@ -233,6 +238,13 @@ export function EditorView() {
       if (mod) return; // let other mod-combos through to the browser
       if (e.key === '?' || (e.shiftKey && e.key === '/')) {
         e.preventDefault(); setShowShortcuts((v) => !v); return;
+      }
+      if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+        // move the current slide up/down in the deck order
+        e.preventDefault();
+        const to = e.key === 'ArrowUp' ? idx - 1 : idx + 1;
+        if (to >= 0 && to < total) st.reorderSlides(idx, to);
+        return;
       }
       if (e.key === 'Escape') {
         if (selectedIdsRef.current.length > 0) {
@@ -315,6 +327,52 @@ export function EditorView() {
     else if (n) toast(`Speaker notes written for ${n} slide${n > 1 ? 's' : ''}`, { description: `${failures} could not be generated.` });
     else toast.error('Could not generate notes — please retry.');
   }, [patchSlides]);
+
+  // ---- AI: compose a brand-new slide from a one-line topic ---------------
+  const composeSlide = useCallback(async () => {
+    const d = useAppStore.getState().deck;
+    const topic = composeTopic.trim();
+    if (!d || !topic || composing) return;
+    setComposing(true);
+    try {
+      const meta = d.meta ?? {};
+      const context = [d.title, meta.audience ? `audience: ${meta.audience}` : '', meta.tone ? `tone: ${meta.tone}` : '']
+        .filter(Boolean)
+        .join(' — ');
+      const res = await fetch('/api/ai/slide', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'compose_slide', topic, context, language: meta.language ?? 'English' }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Could not compose the slide.');
+      const made = json.slide as Partial<Slide>;
+      if (!made || typeof made !== 'object') throw new Error('Unexpected AI response.');
+      const idx = useAppStore.getState().currentSlideIndex;
+      insertSlide(idx + 1, {
+        id: newSlideId(),
+        layout: (made.layout ?? 'bullets') as LayoutId,
+        title: made.title ?? topic.slice(0, 70),
+        body: made.body,
+        bullets: made.bullets,
+        leftTitle: made.leftTitle,
+        leftContent: made.leftContent,
+        rightTitle: made.rightTitle,
+        rightContent: made.rightContent,
+        quote: made.quote,
+        attribution: made.attribution,
+        stats: made.stats,
+        notes: made.notes,
+      } as Slide);
+      setComposeOpen(false);
+      setComposeTopic('');
+      toast.success(`Slide added: “${(made.title ?? topic).slice(0, 60)}”`, { description: `Layout: ${String(made.layout ?? 'bullets').replace('-', ' ')}` });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not compose the slide.');
+    } finally {
+      setComposing(false);
+    }
+  }, [composeTopic, composing, insertSlide]);
 
   if (!deck) return null;
 
@@ -409,6 +467,7 @@ export function EditorView() {
 
   const SHORTCUTS: Array<{ keys: string; label: string }> = [
     { keys: 'J / K · ↑ ↓', label: 'Previous / next slide' },
+    { keys: '⌥ ↑ / ⌥ ↓', label: 'Move slide earlier / later' },
     { keys: '⌘ K', label: 'Command palette' },
     { keys: '⌘ D', label: 'Duplicate current slide' },
     { keys: 'H', label: 'Hide / show slide in presentation' },
@@ -690,6 +749,14 @@ export function EditorView() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" side="top" className="w-52 max-h-80 overflow-y-auto">
+                <DropdownMenuItem
+                  onClick={() => { setComposeTopic(''); setComposeOpen(true); }}
+                  className="gap-2.5 text-violet-700 data-[highlighted]:text-violet-900"
+                >
+                  <Sparkles className="h-4 w-4 text-violet-500" />
+                  Generate with AI from a topic…
+                </DropdownMenuItem>
+                <div className="my-1 h-px bg-neutral-100" aria-hidden />
                 {LAYOUT_MENU_ITEMS.map((l) => (
                   <DropdownMenuItem key={l.id} onClick={() => addSlide(l.id)} className="gap-2.5">
                     <span className="text-neutral-400">{l.icon}</span>
@@ -831,6 +898,12 @@ export function EditorView() {
         onUndo={undo}
         onRedo={redo}
         onPresent={() => setPresenting(true)}
+        onMoveSlide={(dir) => {
+          const idx = useAppStore.getState().currentSlideIndex;
+          const to = idx + dir;
+          if (to >= 0 && to < total) reorderSlides(idx, to);
+        }}
+        onComposeSlide={() => { setComposeTopic(''); setComposeOpen(true); }}
         onShuffleTheme={() => {
           const others = THEMES.filter((t) => t.id !== deck.themeId);
           const pick = others[Math.floor(Math.random() * others.length)];
@@ -864,6 +937,44 @@ export function EditorView() {
               </li>
             ))}
           </ul>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI slide composer: topic → full slide, inserted after the current one */}
+      <Dialog open={composeOpen} onOpenChange={(o) => { if (!composing) setComposeOpen(o); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-violet-500" /> Compose a slide with AI
+            </DialogTitle>
+            <DialogDescription>
+              Describe a topic — the AI writes the slide (title, copy, layout and speaker notes) and inserts it after slide {currentSlideIndex + 1}.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => { e.preventDefault(); void composeSlide(); }}
+            className="space-y-3"
+          >
+            <Input
+              value={composeTopic}
+              onChange={(e) => setComposeTopic(e.target.value)}
+              placeholder='e.g. "How our pricing compares to competitors"'
+              maxLength={140}
+              aria-label="Slide topic"
+              autoFocus
+              disabled={composing}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              The deck's audience, tone and language are applied automatically. Chart, diagram and image layouts are skipped — add those with real data afterwards.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="ghost" onClick={() => setComposeOpen(false)} disabled={composing}>Cancel</Button>
+              <Button type="submit" disabled={!composeTopic.trim() || composing} className="gap-1.5 bg-neutral-900 hover:bg-neutral-800">
+                {composing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                {composing ? 'Writing…' : 'Generate slide'}
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

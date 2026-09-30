@@ -372,12 +372,45 @@ function readableOn(hex: string): string {
   return contrastWhite >= contrastBlack ? '#ffffff' : '#101010';
 }
 
+/** WCAG contrast ratio between two hex colors (1–21). */
+export function contrastRatio(a: string, b: string): number {
+  const la = relLuminance(a);
+  const lb = relLuminance(b);
+  const [hi, lo] = la >= lb ? [la, lb] : [lb, la];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+/** Linear-light mix of a hex color toward black; t=0 → original, t=1 → black. */
+function mixTowardBlack(hex: string, t: number): string {
+  const n = parseInt(expandHex(hex).slice(1), 16);
+  const ch = (v: number) => Math.round(v * (1 - t));
+  const r = ch((n >> 16) & 255);
+  const g = ch((n >> 8) & 255);
+  const b = ch(n & 255);
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+}
+
+/**
+ * Return a version of `hex` that reads as TEXT on `bg` (≥4.5:1, WCAG AA).
+ * Colors that already pass are returned untouched; light ones are stepped
+ * toward black until they pass. Used for accent-as-text (kickers, labels).
+ */
+function textSafeOn(hex: string, bg: string): string {
+  if (contrastRatio(hex, bg) >= 4.5) return expandHex(hex);
+  for (let i = 1; i <= 10; i++) {
+    const candidate = mixTowardBlack(hex, i / 10);
+    if (contrastRatio(candidate, bg) >= 4.5) return candidate;
+  }
+  return '#101010';
+}
+
 /**
  * Layer a user-chosen accent over a theme: the primary color (titles' rule,
  * bullets, stats values, chart series 1, decor) re-tints instantly while the
  * rest of the theme (fonts, layout, backgrounds, motion) stays intact.
  * `primaryContrast` is re-derived from the accent so on-primary text always
- * passes contrast, whatever lightness the user picks.
+ * passes contrast, whatever lightness the user picks, and `primaryText` is a
+ * darkened variant for accent-as-TEXT on light backgrounds (kickers, labels).
  * Returns the manifest untouched when no valid accent is given.
  */
 export function applyAccent(theme: ThemeManifest, accent?: string | null): ThemeManifest {
@@ -386,7 +419,13 @@ export function applyAccent(theme: ThemeManifest, accent?: string | null): Theme
     ...theme,
     tokens: {
       ...theme.tokens,
-      colors: { ...theme.tokens.colors, primary: accent, accent, primaryContrast: readableOn(accent) },
+      colors: {
+        ...theme.tokens.colors,
+        primary: accent,
+        accent,
+        primaryContrast: readableOn(accent),
+        primaryText: textSafeOn(accent, theme.tokens.colors.bg),
+      },
       chart: { ...theme.tokens.chart, palette: [accent, ...theme.tokens.chart.palette.slice(1)] },
     },
   };

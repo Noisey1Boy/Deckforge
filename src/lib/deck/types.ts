@@ -167,6 +167,13 @@ export interface ThemeColors {
   primaryContrast: string;
   accent: string;
   border: string;
+  /**
+   * Contrast-safe variant of `primary` for TEXT on the theme background.
+   * Derived when a custom accent is applied: very light accents (butter,
+   * mint) are darkened until they read on `bg`. Optional — falls back to
+   * `primary` for theme-designed palettes.
+   */
+  primaryText?: string;
 }
 
 export interface ThemeTokens {
