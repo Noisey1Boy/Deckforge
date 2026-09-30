@@ -15,7 +15,7 @@ import { TRANSITIONS, type TransitionKind } from '@/lib/deck/types';
 import {
   Loader2, Sparkles, Scissors, Expand, RefreshCcw, Wand2, ImageIcon,
   ImagePlus, Trash2, BarChart3, BarChartHorizontal, LineChart, AreaChart,
-  PieChart, Donut, Plus, Clapperboard,
+  PieChart, Donut, Plus, Clapperboard, Info,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -210,7 +210,23 @@ export function SlideInspector({ slide }: { slide: Slide }) {
 
         {slide.layout === 'stats' && (
           <div className="space-y-2">
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Stats (value · label · context)</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Stats (value · label · context)</Label>
+              <button
+                onClick={() => set({ illustrative: !slide.illustrative })}
+                className={cn(
+                  'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors',
+                  slide.illustrative
+                    ? 'border-amber-300 bg-amber-50 text-amber-800'
+                    : 'border-neutral-200 text-neutral-400 hover:border-amber-300 hover:text-amber-700'
+                )}
+                aria-pressed={!!slide.illustrative}
+                title="Adds an “Illustrative figures” footnote to the slide"
+              >
+                <Info className="h-3 w-3" />
+                Illustrative
+              </button>
+            </div>
             {(slide.stats ?? []).map((st, i) => (
               <div key={i} className="flex gap-1.5">
                 <Input value={st.value} onChange={(e) => { const stats = [...(slide.stats ?? [])]; stats[i] = { ...st, value: e.target.value }; set({ stats }); }} className="w-20 text-sm" maxLength={12} aria-label="Value" />

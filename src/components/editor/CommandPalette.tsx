@@ -10,7 +10,7 @@ import {
   Type, Hash, List, Columns2, Image as ImageIcon, Quote, BarChart3, Workflow,
   Table2, Flag, Sigma, Play, Download, FileText, Globe, StickyNote, EyeOff,
   Copy, Trash2, Undo2, Redo2, Shuffle, Palette, NotebookPen, CornerDownLeft,
-  Sparkles, ArrowUp, ArrowDown,
+  Sparkles, ArrowUp, ArrowDown, LayoutGrid, FileJson,
 } from 'lucide-react';
 
 /** Add-slide menu entries — shared shape with the editor toolbar. */
@@ -28,7 +28,7 @@ export const LAYOUT_MENU_ITEMS: Array<{ id: LayoutId; label: string; icon: React
   { id: 'closing', label: 'Closing', icon: <Flag className="h-4 w-4" /> },
 ];
 
-export type ExportKind = 'pptx' | 'pdf' | 'html' | 'notes';
+export type ExportKind = 'pptx' | 'pdf' | 'html' | 'notes' | 'deckjson';
 
 interface CommandPaletteProps {
   open: boolean;
@@ -49,6 +49,7 @@ interface CommandPaletteProps {
   onShuffleTheme: () => void;
   onStyle: () => void;
   onWriteNotes: () => void;
+  onToggleBoard: () => void;
   onExport: (kind: ExportKind) => void;
 }
 
@@ -59,7 +60,7 @@ interface CommandPaletteProps {
 export function CommandPalette({
   open, onOpenChange, slides, currentSlideIndex,
   onJump, onInsert, onDuplicate, onToggleHidden, onDelete,
-  onUndo, onRedo, onPresent, onMoveSlide, onComposeSlide, onShuffleTheme, onStyle, onWriteNotes, onExport,
+  onUndo, onRedo, onPresent, onMoveSlide, onComposeSlide, onShuffleTheme, onStyle, onWriteNotes, onToggleBoard, onExport,
 }: CommandPaletteProps) {
   const slideItems = useMemo(
     () => slides.map((s, i) => ({ s, i })),
@@ -141,6 +142,9 @@ export function CommandPalette({
           <CommandItem value="present fullscreen play" onSelect={() => run(onPresent)} className="gap-2">
             <Play className="h-4 w-4" /> Start presentation
           </CommandItem>
+          <CommandItem value="slide board grid overview sorter" onSelect={() => run(onToggleBoard)} className="gap-2">
+            <LayoutGrid className="h-4 w-4" /> Toggle slide board <CommandShortcut>G</CommandShortcut>
+          </CommandItem>
           <CommandItem value="shuffle theme random design" onSelect={() => run(onShuffleTheme)} className="gap-2">
             <Shuffle className="h-4 w-4" /> Shuffle design system
           </CommandItem>
@@ -171,6 +175,9 @@ export function CommandPalette({
           </CommandItem>
           <CommandItem value="export notes markdown speaker" onSelect={() => run(() => onExport('notes'))} className="gap-2">
             <StickyNote className="h-4 w-4" /> Export speaker notes (Markdown)
+          </CommandItem>
+          <CommandItem value="export deck file json backup import" onSelect={() => run(() => onExport('deckjson'))} className="gap-2">
+            <FileJson className="h-4 w-4" /> Export deck file (.json)
           </CommandItem>
         </CommandGroup>
       </CommandList>

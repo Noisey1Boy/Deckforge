@@ -199,6 +199,12 @@ function StatsLayout({ slide }: { slide: Slide }) {
           </div>
         ))}
       </div>
+      {slide.illustrative ? (
+        <p className="stat-note" style={{ marginTop: 14 }}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden style={{ display: 'inline', verticalAlign: '-1px', marginRight: 5 }}><circle cx="12" cy="12" r="9" /><path d="M12 8v5" /><circle cx="12" cy="16.6" r="0.4" fill="currentColor" /></svg>
+          Illustrative figures — replace with your own data
+        </p>
+      ) : null}
     </div>
   );
 }

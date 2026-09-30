@@ -1,0 +1,492 @@
+    62→   492→   492→          title="Back to all decks"
+    63→   493→   493→        >
+    64→   494→   494→          <ChevronLeft className="h-4.5 w-4.5" />
+    65→   495→   495→        </Button>
+    66→   496→   496→        <input
+    67→   497→   497→          value={deck.title}
+    68→   498→   498→          onChange={(e) => patchDeck({ title: e.target.value })}
+    69→   499→   499→          className="font-semibold text-lg bg-transparent outline-none focus:bg-neutral-100 rounded px-2 py-1 min-w-0 flex-1 sm:max-w-60 truncate"
+    70→   500→   500→          aria-label="Deck title"
+    71→   501→   501→          maxLength={120}
+    72→   502→   502→        />
+    73→   503→   503→        <span className="text-xs text-muted-foreground hidden sm:flex items-center gap-1 w-20">
+    74→   504→   504→          {saving === 'saving' ? (<><Cloud className="h-3.5 w-3.5 animate-pulse" /> Saving…</>) : saving === 'saved' ? (<><Check className="h-3.5 w-3.5 text-emerald-600" /> Saved</>) : null}
+    75→   505→   505→        </span>
+    76→   506→   506→        <span
+    77→   507→   507→          className="hidden xl:flex items-center gap-1.5 text-[11px] text-neutral-400 border border-neutral-200 rounded-full px-2.5 py-1 bg-neutral-50/70"
+    78→   508→   508→          title="Visible slides · estimated talk duration (words ÷ 110 wpm + pacing)"
+    79→   509→   509→        >
+    80→   510→   510→          <SquareStack className="h-3 w-3" /> {visibleCount} visible
+    81→   511→   511→          <span className="text-neutral-300">·</span>
+    82→   512→   512→          <Clock3 className="h-3 w-3" /> ~{estMinutes} min
+    83→   513→   513→        </span>
+    84→   514→   514→        <div className="flex items-center gap-1.5 ml-auto flex-wrap">
+    85→   515→   515→          <div className="flex items-center rounded-md border border-neutral-200 overflow-hidden" role="group" aria-label="History">
+    86→   516→   516→            <button
+    87→   517→   517→              onClick={undo}
+    88→   518→   518→              disabled={!canUndo}
+    89→   519→   519→              title="Undo (⌘Z)"
+    90→   520→   520→              aria-label="Undo"
+    91→   521→   521→              className="h-9 w-9 grid place-items-center hover:bg-neutral-100 disabled:opacity-35 disabled:hover:bg-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:z-10"
+    92→   522→   522→            >
+    93→   523→   523→              <Undo2 className="h-4 w-4" />
+    94→   524→   524→            </button>
+    95→   525→   525→            <span className="w-px h-5 bg-neutral-200" aria-hidden />
+    96→   526→   526→            <button
+    97→   527→   527→              onClick={redo}
+    98→   528→   528→              disabled={!canRedo}
+    99→   529→   529→              title="Redo (⇧⌘Z)"
+   100→   530→   530→              aria-label="Redo"
+   101→   531→   531→              className="h-9 w-9 grid place-items-center hover:bg-neutral-100 disabled:opacity-35 disabled:hover:bg-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:z-10"
+   102→   532→   532→            >
+   103→   533→   533→              <Redo2 className="h-4 w-4" />
+   104→   534→   534→            </button>
+   105→   535→   535→          </div>
+   106→   536→   536→          <span className="w-px h-6 bg-neutral-200 mx-1" aria-hidden />
+   107→   537→   537→          <Select value={deck.themeId} onValueChange={setDeckTheme}>
+   108→   538→   538→            <SelectTrigger className="w-44 h-9" aria-label="Switch design system"><SelectValue /></SelectTrigger>
+   109→   539→   539→            <SelectContent>
+   110→   540→   540→              {THEMES.map((t) => (
+   111→   541→   541→                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+   112→   542→   542→              ))}
+   113→   543→   543→            </SelectContent>
+   114→   544→   544→          </Select>
+   115→   545→   545→          <Button
+   116→   546→   546→            variant="ghost"
+   117→   547→   547→            size="icon"
+   118→   548→   548→            className="h-9 w-9 text-neutral-500 hover:text-neutral-900"
+   119→   549→   549→            onClick={() => {
+   120→   550→   550→              const others = THEMES.filter((t) => t.id !== deck.themeId);
+   121→   551→   551→              const pick = others[Math.floor(Math.random() * others.length)];
+   122→   552→   552→              setDeckTheme(pick.id);
+   123→   553→   553→              toast(`Theme: ${pick.name}`, { description: pick.tone });
+   124→   554→   554→            }}
+   125→   555→   555→            aria-label="Shuffle design system"
+   126→   556→   556→            title="Shuffle design system — instant re-theme"
+   127→   557→   557→          >
+   128→   558→   558→            <Shuffle className="h-4 w-4" />
+   129→   559→   559→          </Button>
+   130→   560→   560→          <Popover open={showStyle} onOpenChange={setShowStyle}>
+   131→   561→   561→            <PopoverTrigger asChild>
+   132→   562→   562→              <Button
+   133→   563→   563→                variant="ghost"
+   134→   564→   564→                size="icon"
+   135→   565→   565→                className="h-9 w-9 text-neutral-500 hover:text-neutral-900"
+   136→   566→   566→                aria-label="Deck style and branding"
+   137→   567→   567→                title="Accent color, footer text & page numbers"
+   138→   568→   568→              >
+   139→   569→   569→                <span
+   140→   570→   570→                  className="relative inline-flex h-4 w-4 rounded-full border border-black/10"
+   141→   571→   571→                  style={{ background: `conic-gradient(${activeAccent} 0 55%, #e5e5e5 55% 100%)` }}
+   142→   572→   572→                  aria-hidden
+   143→   573→   573→                />
+   144→   574→   574→              </Button>
+   145→   575→   575→            </PopoverTrigger>
+   146→   576→   576→            <PopoverContent align="start" className="w-72 space-y-4">
+   147→   577→   577→              <div className="space-y-2">
+   148→   578→   578→                <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Accent color</p>
+   149→   579→   579→                <div className="flex items-center gap-1.5 flex-wrap" role="radiogroup" aria-label="Accent color">
+   150→   580→   580→                  <button
+   151→   581→   581→                    onClick={() => patchMeta({ accent: undefined })}
+   152→   582→   582→                    className={cn(
+   153→   583→   583→                      'h-7 px-2 rounded-md border text-[11px] font-medium transition-colors',
+   154→   584→   584→                      !deck.meta?.accent ? 'border-neutral-900 bg-neutral-900 text-white' : 'border-neutral-200 hover:border-neutral-400 text-neutral-600'
+   155→   585→   585→                    )}
+   156→   586→   586→                    title="Use the theme's own accent"
+   157→   587→   587→                  >
+   158→   588→   588→                    Theme
+   159→   589→   589→                  </button>
+   160→   590→   590→                  {ACCENTS.map((c) => (
+   161→   591→   591→                    <button
+   162→   592→   592→                      key={c}
+   163→   593→   593→                      role="radio"
+   164→   594→   594→                      aria-checked={deck.meta?.accent === c}
+   165→   595→   595→                      onClick={() => patchMeta({ accent: c })}
+   166→   596→   596→                      className={cn(
+   167→   597→   597→                        'h-7 w-7 rounded-full border-2 transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-1',
+   168→   598→   598→                        deck.meta?.accent === c ? 'border-neutral-900 scale-110' : 'border-transparent'
+   169→   599→   599→                      )}
+   170→   600→   600→                      style={{ background: c }}
+   171→   601→   601→                      aria-label={`Accent ${c}`}
+   172→   602→   602→                      title={c}
+   173→   603→   603→                    />
+   174→   604→   604→                  ))}
+   175→   605→   605→                  <label
+   176→   606→   606→                    className="h-7 w-7 rounded-full border-2 border-dashed border-neutral-300 grid place-items-center cursor-pointer hover:border-neutral-500 transition-colors"
+   177→   607→   607→                    title="Custom color"
+   178→   608→   608→                  >
+   179→   609→   609→                    <Plus className="h-3.5 w-3.5 text-neutral-500" />
+   180→   610→   610→                    <input
+   181→   611→   611→                      type="color"
+   182→   612→   612→                      value={activeAccent}
+   183→   613→   613→                      onChange={(e) => patchMeta({ accent: e.target.value })}
+   184→   614→   614→                      className="sr-only"
+   185→   615→   615→                      aria-label="Custom accent color"
+   186→   616→   616→                    />
+   187→   617→   617→                  </label>
+   188→   618→   618→                </div>
+   189→   619→   619→                <p className="text-[11px] text-muted-foreground leading-snug">
+   190→   620→   620→                  Re-tints bullets, stats, rules and the first chart series — instantly, on every slide.
+   191→   621→   621→                </p>
+   192→   622→   622→              </div>
+   193→   623→   623→              <div className="space-y-2">
+   194→   624→   624→                <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Footer text</p>
+   195→   625→   625→                <Input
+   196→   626→   626→                  value={deck.meta?.footerText ?? ''}
+   197→   627→   627→                  onChange={(e) => patchMeta({ footerText: e.target.value.slice(0, 80) })}
+   198→   628→   628→                  placeholder={deck.title}
+   199→   629→   629→                  maxLength={80}
+   200→   630→   630→                  aria-label="Footer text on slides"
+   201→   631→   631→                />
+   202→   632→   632→                <p className="text-[11px] text-muted-foreground">Shown bottom-left of every slide. Defaults to the deck title.</p>
+   203→   633→   633→              </div>
+   204→   634→   634→              <label className="flex items-center justify-between gap-3 cursor-pointer">
+   205→   635→   635→                <span className="text-sm text-neutral-700">Show page numbers</span>
+   206→   636→   636→                <Switch checked={showPageNumbers} onCheckedChange={(v) => patchMeta({ showPageNumbers: v })} aria-label="Toggle page numbers in slide footers" />
+   207→   637→   637→              </label>
+   208→   638→   638→            </PopoverContent>
+   209→   639→   639→          </Popover>
+   210→   640→   640→          <Select value={current?.layout ?? 'bullets'} onValueChange={(v) => current && updateSlide(current.id, { layout: v as LayoutId })}>
+   211→   641→   641→            <SelectTrigger className="w-36 h-9 capitalize" aria-label="Current layout"><SelectValue /></SelectTrigger>
+   212→   642→   642→            <SelectContent>
+   213→   643→   643→              {LAYOUT_IDS.map((l) => (
+   214→   644→   644→                <SelectItem key={l} value={l} className="capitalize">{l.replace('-', ' ')}</SelectItem>
+   215→   645→   645→              ))}
+   216→   646→   646→            </SelectContent>
+   217→   647→   647→          </Select>
+   218→   648→   648→          <span className="w-px h-6 bg-neutral-200 mx-1" aria-hidden />
+   219→   649→   649→          <Button
+   220→   650→   650→            variant="ghost"
+   221→   651→   651→            size="sm"
+   222→   652→   652→            className="h-9 px-2.5 gap-1.5 text-neutral-500 hover:text-violet-700"
+   223→   653→   653→            onClick={writeAllNotes}
+   224→   654→   654→            disabled={!!notesProgress}
+   225→   655→   655→            aria-label="Write speaker notes for empty slides with AI"
+   226→   656→   656→            title="Write speaker notes for empty slides (AI)"
+   227→   657→   657→          >
+   228→   658→   658→            {notesProgress ? <Loader2 className="h-4 w-4 animate-spin" /> : <NotebookPen className="h-4 w-4" />}
+   229→   659→   659→            {notesProgress ? (
+   230→   660→   660→              <span className="text-xs tabular-nums">{notesProgress.done}/{notesProgress.total}</span>
+   231→   661→   661→            ) : (
+   232→   662→   662→              <span className="text-xs hidden lg:inline">Notes</span>
+   233→   663→   663→            )}
+   234→   664→   664→          </Button>
+   235→   665→   665→          <Button
+   236→   666→   666→            variant="ghost"
+   237→   667→   667→            size="icon"
+   238→   668→   668→            className="h-9 w-9 text-neutral-500 hover:text-neutral-900"
+   239→   669→   669→            onClick={() => setPaletteOpen(true)}
+   240→   670→   670→            aria-label="Open command palette"
+   241→   671→   671→            title="Command palette (⌘K)"
+   242→   672→   672→          >
+   243→   673→   673→            <CommandIcon className="h-4 w-4" />
+   244→   674→   674→          </Button>
+   245→   675→   675→          <Button
+   246→   676→   676→            variant="ghost"
+   247→   677→   677→            size="icon"
+   248→   678→   678→            className="h-9 w-9 text-neutral-500 hover:text-neutral-900"
+   249→   679→   679→            onClick={() => setShowShortcuts(true)}
+   250→   680→   680→            aria-label="Keyboard shortcuts"
+   251→   681→   681→            title="Keyboard shortcuts (?)"
+   252→   682→   682→          >
+   253→   683→   683→            <Keyboard className="h-4 w-4" />
+   254→   684→   684→          </Button>
+   255→   685→   685→          <span className="w-px h-6 bg-neutral-200 mx-1" aria-hidden />
+   256→   686→   686→          <ExportMenu />
+   257→   687→   687→          <Button onClick={() => setPresenting(true)} className="gap-1.5 bg-neutral-900 hover:bg-neutral-800 h-9">
+   258→   688→   688→            <Play className="h-4 w-4" /> Present
+   259→   689→   689→          </Button>
+   260→   690→   690→        </div>
+   261→   691→   691→      </div>
+   262→   692→   692→
+   263→   693→   693→      <div className="flex flex-1 min-h-0">
+   264→   694→   694→        {/* slide list */}
+   265→   695→   695→        <aside className="w-56 md:w-64 shrink-0 border-r bg-neutral-50 hidden md:flex md:flex-col">
+   266→   696→   696→          {/* batch selection action bar */}
+   267→   697→   697→          {selectedIds.length > 0 && (
+   268→   698→   698→            <div
+   269→   699→   699→              className="px-3 pt-3"
+   270→   700→   700→              role="toolbar"
+   271→   701→   701→              aria-label={`Batch actions for ${selectedIds.length} selected slides`}
+   272→   702→   702→              onKeyDown={(e) => {
+   273→   703→   703→                if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); batchDelete(); }
+   274→   704→   704→                if (e.key === 'Escape') { e.stopPropagation(); clearSelection(); }
+   275→   705→   705→              }}
+   276→   706→   706→            >
+   277→   707→   707→              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-2 flex items-center gap-1.5 flex-wrap shadow-sm">
+   278→   708→   708→                <span className="text-xs font-semibold text-emerald-900 tabular-nums w-full sm:w-auto">
+   279→   709→   709→                  {selectedIds.length} selected
+   280→   710→   710→                </span>
+   281→   711→   711→                <div className="flex items-center gap-1 ml-auto">
+   282→   712→   712→                  <button onClick={batchDuplicate} className="p-1.5 rounded hover:bg-emerald-100 text-emerald-900 transition-colors" title="Duplicate selected" aria-label="Duplicate selected slides"><Copy className="h-3.5 w-3.5" /></button>
+   283→   713→   713→                  <button onClick={() => batchHide(true)} className="p-1.5 rounded hover:bg-emerald-100 text-emerald-900 transition-colors" title="Hide selected from presentation" aria-label="Hide selected slides"><EyeOff className="h-3.5 w-3.5" /></button>
+   284→   714→   714→                  <button onClick={() => batchHide(false)} className="p-1.5 rounded hover:bg-emerald-100 text-emerald-900 transition-colors" title="Show selected in presentation" aria-label="Show selected slides"><Eye className="h-3.5 w-3.5" /></button>
+   285→   715→   715→                  <button onClick={batchDelete} className="p-1.5 rounded hover:bg-red-100 text-red-700 transition-colors" title="Delete selected" aria-label="Delete selected slides"><Trash2 className="h-3.5 w-3.5" /></button>
+   286→   716→   716→                  <button onClick={clearSelection} className="p-1.5 rounded hover:bg-emerald-100 text-emerald-900 transition-colors" title="Clear selection (Esc)" aria-label="Clear selection"><X className="h-3.5 w-3.5" /></button>
+   287→   717→   717→                </div>
+   288→   718→   718→              </div>
+   289→   719→   719→            </div>
+   290→   720→   720→          )}
+   291→   721→   721→          <ScrollArea className="flex-1 min-h-0">
+   292→   722→   722→            <div className="p-3 space-y-3">
+   293→   723→   723→              {slides.map((s, i) => (
+   294→   724→   724→                <SlideCard
+   295→   725→   725→                  key={s.id}
+   296→   726→   726→                  slide={s}
+   297→   727→   727→                  index={i}
+   298→   728→   728→                  active={i === currentSlideIndex}
+   299→   729→   729→                  pageCount={total}
+   300→   730→   730→                  selected={selectedIds.includes(s.id)}
+   301→   731→   731→                  dragging={dragIndex === i}
+   302→   732→   732→                  dropTarget={overIndex === i && dragIndex !== i}
+   303→   733→   733→                  onSelect={(e) => handleThumbSelect(i, e)}
+   304→   734→   734→                  onDuplicate={() => duplicateSlide(s.id)}
+   305→   735→   735→                  onDelete={() => removeSlide(s.id)}
+   306→   736→   736→                  onToggleHidden={() => updateSlide(s.id, { hidden: !s.hidden })}
+   307→   737→   737→                  onDragStart={() => setDragIndex(i)}
+   308→   738→   738→                  onDragOver={(e) => { e.preventDefault(); setOverIndex(i); }}
+   309→   739→   739→                  onDrop={() => { if (dragIndex != null && dragIndex !== i) reorderSlides(dragIndex, i); setDragIndex(null); setOverIndex(null); }}
+   310→   740→   740→                />
+   311→   741→   741→              ))}
+   312→   742→   742→            </div>
+   313→   743→   743→          </ScrollArea>
+   314→   744→   744→          <div className="p-3 border-t">
+   315→   745→   745→            <DropdownMenu>
+   316→   746→   746→              <DropdownMenuTrigger asChild>
+   317→   747→   747→                <Button variant="secondary" className="w-full gap-1.5">
+   318→   748→   748→                  <Plus className="h-4 w-4" /> Add slide
+   319→   749→   749→                </Button>
+   320→   750→   750→              </DropdownMenuTrigger>
+   321→   751→   751→              <DropdownMenuContent align="start" side="top" className="w-52 max-h-80 overflow-y-auto">
+   322→   752→   752→                <DropdownMenuItem
+   323→   753→   753→                  onClick={() => { setComposeTopic(''); setComposeOpen(true); }}
+   324→   754→   754→                  className="gap-2.5 text-violet-700 data-[highlighted]:text-violet-900"
+   325→   755→   755→                >
+   326→   756→   756→                  <Sparkles className="h-4 w-4 text-violet-500" />
+   327→   757→   757→                  Generate with AI from a topic…
+   328→   758→   758→                </DropdownMenuItem>
+   329→   759→   759→                <div className="my-1 h-px bg-neutral-100" aria-hidden />
+   330→   760→   760→                {LAYOUT_MENU_ITEMS.map((l) => (
+   331→   761→   761→                  <DropdownMenuItem key={l.id} onClick={() => addSlide(l.id)} className="gap-2.5">
+   332→   762→   762→                    <span className="text-neutral-400">{l.icon}</span>
+   333→   763→   763→                    {l.label}
+   334→   764→   764→                  </DropdownMenuItem>
+   335→   765→   765→                ))}
+   336→   766→   766→              </DropdownMenuContent>
+   337→   767→   767→            </DropdownMenu>
+   338→   768→   768→          </div>
+   339→   769→   769→        </aside>
+   340→   770→   770→
+   341→   771→   771→        {/* canvas */}
+   342→   772→   772→        <main
+   343→   773→   773→          className="relative flex-1 min-w-0 flex flex-col bg-neutral-100"
+   344→   774→   774→          style={{
+   345→   775→   775→            backgroundImage: 'radial-gradient(#d8d8d8 1px, transparent 1.4px)',
+   346→   776→   776→            backgroundSize: '22px 22px',
+   347→   777→   777→          }}
+   348→   778→   778→          onDragOver={(e) => {
+   349→   779→   779→            if (!e.dataTransfer.types.includes('Files')) return;
+   350→   780→   780→            e.preventDefault();
+   351→   781→   781→            setDroppingImage(true);
+   352→   782→   782→          }}
+   353→   783→   783→          onDragLeave={(e) => {
+   354→   784→   784→            if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+   355→   785→   785→            setDroppingImage(false);
+   356→   786→   786→          }}
+   357→   787→   787→          onDrop={handleCanvasDrop}
+   358→   788→   788→        >
+   359→   789→   789→          {droppingImage && (
+   360→   790→   790→            <div className="absolute inset-2 z-20 grid place-items-center rounded-xl border-2 border-dashed border-neutral-900 bg-neutral-50/85 backdrop-blur-sm pointer-events-none" aria-hidden>
+   361→   791→   791→              <div className="text-center">
+   362→   792→   792→                <ImageIcon className="h-7 w-7 mx-auto text-neutral-700" />
+   363→   793→   793→                <p className="mt-2 text-sm font-semibold text-neutral-900">Drop to fill this slide</p>
+   364→   794→   794→                <p className="text-xs text-muted-foreground mt-0.5">PNG · JPG · WebP · GIF</p>
+   365→   795→   795→              </div>
+   366→   796→   796→            </div>
+   367→   797→   797→          )}
+   368→   798→   798→          <div className="flex-1 min-h-0 p-4 sm:p-8 flex items-center justify-center overflow-hidden">
+   369→   799→   799→            {current && (
+   370→   800→   800→              <div className="w-full max-w-4xl rounded-xl overflow-hidden shadow-2xl shadow-neutral-900/25 ring-1 ring-black/10">
+   371→   801→   801→                <ScaledSlide
+   372→   802→   802→                  slide={current}
+   373→   803→   803→                  theme={theme}
+   374→   804→   804→                  deckTitle={footerText}
+   375→   805→   805→                  index={currentSlideIndex}
+   376→   806→   806→                  pageCount={total}
+   377→   807→   807→                  showPageNumbers={showPageNumbers}
+   378→   808→   808→                  interactive
+   379→   809→   809→                />
+   380→   810→   810→              </div>
+   381→   811→   811→            )}
+   382→   812→   812→          </div>
+   383→   813→   813→          <div className="flex items-center justify-center gap-3 pb-3 px-4">
+   384→   814→   814→            {current?.hidden && (
+   385→   815→   815→              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 px-3 py-1 text-xs font-medium" title="This slide is skipped in present mode and exports">
+   386→   816→   816→                <EyeOff className="h-3 w-3" /> Hidden from presentation — press H to show
+   387→   817→   817→              </span>
+   388→   818→   818→            )}
+   389→   819→   819→            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentSlide(currentSlideIndex - 1)} disabled={currentSlideIndex === 0} aria-label="Previous slide">
+   390→   820→   820→              <ChevronLeft className="h-4 w-4" />
+   391→   821→   821→            </Button>
+   392→   822→   822→            <span className="text-sm text-muted-foreground font-mono">{currentSlideIndex + 1} / {total}</span>
+   393→   823→   823→            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentSlide(currentSlideIndex + 1)} disabled={currentSlideIndex >= total - 1} aria-label="Next slide">
+   394→   824→   824→              <ChevronRight className="h-4 w-4" />
+   395→   825→   825→            </Button>
+   396→   826→   826→          </div>
+   397→   827→   827→          {/* mobile add/list strip */}
+   398→   828→   828→          <div className="md:hidden flex gap-2 overflow-x-auto px-3 pb-3" aria-label="Slides">
+   399→   829→   829→            {slides.map((s, i) => (
+   400→   830→   830→              <button
+   401→   831→   831→                key={s.id}
+   402→   832→   832→                onClick={() => setCurrentSlide(i)}
+   403→   833→   833→                className={cn('shrink-0 w-24 rounded-md overflow-hidden border-2', i === currentSlideIndex ? 'border-neutral-900' : 'border-transparent')}
+   404→   834→   834→                aria-label={`Go to slide ${i + 1}`}
+   405→   835→   835→              >
+   406→   836→   836→                <span className="text-xs font-mono">{LAYOUT_ICONS[s.layout]} {i + 1}</span>
+   407→   837→   837→              </button>
+   408→   838→   838→            ))}
+   409→   839→   839→            <Button variant="secondary" size="sm" className="shrink-0 h-auto" onClick={() => addSlide('bullets')}><Plus className="h-3.5 w-3.5" /></Button>
+   410→   840→   840→          </div>
+   411→   841→   841→        </main>
+   412→   842→   842→
+   413→   843→   843→        {/* inspector */}
+   414→   844→   844→        <aside className="w-80 shrink-0 border-l hidden lg:block">
+   415→   845→   845→          <ScrollArea className="h-full">
+   416→   846→   846→            <div className="p-4">
+   417→   847→   847→              {current && <SlideInspector slide={current} />}
+   418→   848→   848→            </div>
+   419→   849→   849→          </ScrollArea>
+   420→   850→   850→        </aside>
+   421→   851→   851→      </div>
+   422→   852→   852→
+   423→   853→   853→      {/* mobile inspector: below canvas */}
+   424→   854→   854→      <div className="lg:hidden border-t max-h-64 overflow-y-auto">
+   425→   855→   855→        {current && (
+   426→   856→   856→          <details className="p-3">
+   427→   857→   857→            <summary className="text-sm font-medium cursor-pointer">Edit slide {currentSlideIndex + 1}</summary>
+   428→   858→   858→            <div className="pt-3">
+   429→   859→   859→              <SlideInspector slide={current} />
+   430→   860→   860→            </div>
+   431→   861→   861→          </details>
+   432→   862→   862→        )}
+   433→   863→   863→      </div>
+   434→   864→   864→
+   435→   865→   865→      {/* floating present hint */}
+   436→   866→   866→      <button
+   437→   867→   867→        onClick={() => setPresenting(true)}
+   438→   868→   868→        className="fixed bottom-4 right-4 lg:hidden bg-neutral-900 text-white rounded-full p-3 shadow-lg"
+   439→   869→   869→        aria-label="Start presenting"
+   440→   870→   870→      >
+   441→   871→   871→        <Presentation className="h-5 w-5" />
+   442→   872→   872→      </button>
+   443→   873→   873→
+   444→   874→   874→      {/* ⌘K command palette */}
+   445→   875→   875→      <CommandPalette
+   446→   876→   876→        open={paletteOpen}
+   447→   877→   877→        onOpenChange={setPaletteOpen}
+   448→   878→   878→        slides={slides}
+   449→   879→   879→        currentSlideIndex={currentSlideIndex}
+   450→   880→   880→        onJump={(i) => setCurrentSlide(i)}
+   451→   881→   881→        onInsert={(layout) => insertSlide(currentSlideIndex + 1, {
+   452→   882→   882→          id: newSlideId(),
+   453→   883→   883→          layout,
+   454→   884→   884→          title: layout === 'title' ? 'New title' : `New ${layout.replace('-', ' ')}`,
+   455→   885→   885→        } as Slide)}
+   456→   886→   886→        onDuplicate={() => current && duplicateSlide(current.id)}
+   457→   887→   887→        onToggleHidden={() => current && updateSlide(current.id, { hidden: !current.hidden })}
+   458→   888→   888→        onDelete={() => {
+   459→   889→   889→          if (total <= 1) {
+   460→   890→   890→            toast.error('A deck needs at least one slide.');
+   461→   891→   891→            return;
+   462→   892→   892→          }
+   463→   893→   893→          if (current) {
+   464→   894→   894→            removeSlide(current.id);
+   465→   895→   895→            toast('Slide deleted', { description: 'Press ⌘Z to undo.' });
+   466→   896→   896→          }
+   467→   897→   897→        }}
+   468→   898→   898→        onUndo={undo}
+   469→   899→   899→        onRedo={redo}
+   470→   900→   900→        onPresent={() => setPresenting(true)}
+   471→   901→   901→        onMoveSlide={(dir) => {
+   472→   902→   902→          const idx = useAppStore.getState().currentSlideIndex;
+   473→   903→   903→          const to = idx + dir;
+   474→   904→   904→          if (to >= 0 && to < total) reorderSlides(idx, to);
+   475→   905→   905→        }}
+   476→   906→   906→        onComposeSlide={() => { setComposeTopic(''); setComposeOpen(true); }}
+   477→   907→   907→        onShuffleTheme={() => {
+   478→   908→   908→          const others = THEMES.filter((t) => t.id !== deck.themeId);
+   479→   909→   909→          const pick = others[Math.floor(Math.random() * others.length)];
+   480→   910→   910→          setDeckTheme(pick.id);
+   481→   911→   911→          toast(`Theme: ${pick.name}`, { description: pick.tone });
+   482→   912→   912→        }}
+   483→   913→   913→        onStyle={() => setShowStyle(true)}
+   484→   914→   914→        onWriteNotes={writeAllNotes}
+   485→   915→   915→        onExport={(kind: ExportKind) => {
+   486→   916→   916→          if (kind === 'pptx') void pptx();
+   487→   917→   917→          else if (kind === 'pdf') pdf();
+   488→   918→   918→          else if (kind === 'html') void html();
+   489→   919→   919→          else exportNotes();
+   490→   920→   920→        }}
+   491→   921→   921→      />
+   492→   922→   922→
+   493→   923→   923→      {/* keyboard shortcuts cheat-sheet */}
+   494→   924→   924→      <Dialog open={showShortcuts} onOpenChange={setShowShortcuts}>
+   495→   925→   925→        <DialogContent className="sm:max-w-md">
+   496→   926→   926→          <DialogHeader>
+   497→   927→   927→            <DialogTitle className="flex items-center gap-2"><Keyboard className="h-5 w-5" /> Keyboard shortcuts</DialogTitle>
+   498→   928→   928→            <DialogDescription>
+   499→   929→   929→              Work faster in the editor. Shortcuts are ignored while typing in a field.
+   500→   930→   930→            </DialogDescription>
+   501→   931→   931→          </DialogHeader>
+   502→   932→   932→          <ul className="divide-y divide-neutral-100">
+   503→   933→   933→            {SHORTCUTS.map((s) => (
+   504→   934→   934→              <li key={s.keys} className="flex items-center justify-between py-2.5 text-sm">
+   505→   935→   935→                <span className="text-neutral-600">{s.label}</span>
+   506→   936→   936→                <kbd className="rounded border border-neutral-200 bg-neutral-50 px-2 py-0.5 text-xs font-mono text-neutral-700 shadow-sm">{s.keys}</kbd>
+   507→   937→   937→              </li>
+   508→   938→   938→            ))}
+   509→   939→   939→          </ul>
+   510→   940→   940→        </DialogContent>
+   511→   941→   941→      </Dialog>
+   512→   942→   942→
+   513→   943→   943→      {/* AI slide composer: topic → full slide, inserted after the current one */}
+   514→   944→   944→      <Dialog open={composeOpen} onOpenChange={(o) => { if (!composing) setComposeOpen(o); }}>
+   515→   945→   945→        <DialogContent className="sm:max-w-md">
+   516→   946→   946→          <DialogHeader>
+   517→   947→   947→            <DialogTitle className="flex items-center gap-2">
+   518→   948→   948→              <Sparkles className="h-5 w-5 text-violet-500" /> Compose a slide with AI
+   519→   949→   949→            </DialogTitle>
+   520→   950→   950→            <DialogDescription>
+   521→   951→   951→              Describe a topic — the AI writes the slide (title, copy, layout and speaker notes) and inserts it after slide {currentSlideIndex + 1}.
+   522→   952→   952→            </DialogDescription>
+   523→   953→   953→          </DialogHeader>
+   524→   954→   954→          <form
+   525→   955→   955→            onSubmit={(e) => { e.preventDefault(); void composeSlide(); }}
+   526→   956→   956→            className="space-y-3"
+   527→   957→   957→          >
+   528→   958→   958→            <Input
+   529→   959→   959→              value={composeTopic}
+   530→   960→   960→              onChange={(e) => setComposeTopic(e.target.value)}
+   531→   961→   961→              placeholder='e.g. "How our pricing compares to competitors"'
+   532→   962→   962→              maxLength={140}
+   533→   963→   963→              aria-label="Slide topic"
+   534→   964→   964→              autoFocus
+   535→   965→   965→              disabled={composing}
+   536→   966→   966→            />
+   537→   967→   967→            <p className="text-[11px] text-muted-foreground">
+   538→   968→   968→              The deck's audience, tone and language are applied automatically. Chart, diagram and image layouts are skipped — add those with real data afterwards.
+   539→   969→   969→            </p>
+   540→   970→   970→            <div className="flex justify-end gap-2">
+   541→   971→   971→              <Button type="button" variant="ghost" onClick={() => setComposeOpen(false)} disabled={composing}>Cancel</Button>
+   542→   972→   972→              <Button type="submit" disabled={!composeTopic.trim() || composing} className="gap-1.5 bg-neutral-900 hover:bg-neutral-800">
+   543→   973→   973→                {composing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+   544→   974→   974→                {composing ? 'Writing…' : 'Generate slide'}
+   545→   975→   975→              </Button>
+   546→   976→   976→            </div>
+   547→   977→   977→          </form>
+   548→   978→   978→        </DialogContent>
+   549→   979→   979→      </Dialog>
+   550→   980→   980→    </div>
+   551→   981→   981→  );
+   552→   982→   982→}
+   553→   983→   983→

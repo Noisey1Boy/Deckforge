@@ -305,8 +305,16 @@ export function PresentOverlay() {
   const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
   const ss = String(elapsed % 60).padStart(2, '0');
 
-  // per-slide transition override: slide.transition → theme motion style
-  const preset = motionFor(slide?.transition, theme.tokens.motion.style, !!reduceMotion);
+  // transition resolution: per-slide override → deck default → theme motion style
+  const slideT = slide?.transition;
+  const deckDefault = deck.meta?.defaultTransition;
+  const effectiveT: TransitionKind | undefined =
+    slideT && slideT !== 'inherit'
+      ? slideT
+      : deckDefault && deckDefault !== 'inherit'
+        ? deckDefault
+        : undefined;
+  const preset = motionFor(effectiveT, theme.tokens.motion.style, !!reduceMotion);
   const cut = !preset; // 'none' — hard cut, no enter animation
 
   // stage (shared between standard and presenter layout)

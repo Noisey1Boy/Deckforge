@@ -370,6 +370,15 @@
   line-height: 1.35;
 }
 
+/* illustrative-data footnote (AI-composed stats) */
+.stat-note {
+  color: var(--s-muted);
+  font-size: calc(var(--s-ts-caption) * 0.94 * var(--s-fit, 1));
+  font-family: var(--s-font-mono);
+  letter-spacing: 0.01em;
+  opacity: 0.85;
+}
+
 /* chart */
 .chart-area {
   flex: 1;

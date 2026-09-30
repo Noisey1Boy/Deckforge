@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { fileToDeckImage } from '@/lib/media/image';
-import type { LayoutId, Slide } from '@/lib/deck/types';
+import type { LayoutId, Slide, TransitionKind } from '@/lib/deck/types';
 import { LAYOUT_IDS } from '@/lib/deck/types';
 import { cn } from '@/lib/utils';
 import {
@@ -26,7 +26,7 @@ import {
   Undo2, Redo2, Keyboard, Type, Hash, List, Columns2, Image as ImageIcon, Quote,
   BarChart3, Workflow, Table2, Flag, Sigma, Eye, EyeOff, Shuffle, Palette, X,
   SquareStack, Clock3, Command as CommandIcon, NotebookPen, Loader2, Sparkles,
-  ArrowUp, ArrowDown,
+  ArrowUp, ArrowDown, LayoutGrid, Info,
 } from 'lucide-react';
 
 const LAYOUT_ICONS: Record<LayoutId, string> = {
@@ -44,7 +44,7 @@ function isTypingTarget(t: EventTarget | null): boolean {
 function SlideCard({
   slide, index, active, pageCount,
   onSelect, onDuplicate, onDelete, onToggleHidden, onDragStart, onDragOver, onDrop,
-  dragging, dropTarget, selected,
+  dragging, dropTarget, selected, onOpen, showCaption,
 }: {
   slide: Slide;
   index: number;
@@ -60,6 +60,10 @@ function SlideCard({
   dragging: boolean;
   dropTarget: boolean;
   selected: boolean;
+  /** Board view: double-click returns to the canvas. */
+  onOpen?: () => void;
+  /** Board view: caption row under the thumbnail. */
+  showCaption?: boolean;
 }) {
   const deck = useAppStore((s) => s.deck);
   const themeManifest = deck ? deckTheme(deck) : getTheme(deck?.themeId ?? 'corporate-clean');
@@ -79,6 +83,7 @@ function SlideCard({
       )}
       style={active ? { borderColor: themeManifest.tokens.colors.primary } : undefined}
       onClick={onSelect}
+      onDoubleClick={onOpen}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onSelect(e as unknown as React.MouseEvent)}
@@ -88,6 +93,17 @@ function SlideCard({
       <div className="pointer-events-none">
         <ScaledSlide slide={slide} theme={themeManifest} index={index} pageCount={pageCount} showPageNumbers={false} />
       </div>
+      {showCaption && (
+        <div className="flex items-center gap-2 px-2.5 py-1.5 bg-card border-t border-neutral-100">
+          <span className="text-[10px] font-mono text-neutral-400 shrink-0">{String(index + 1).padStart(2, '0')}</span>
+          <span className="text-[11px] text-neutral-600 truncate">{slide.title || 'Untitled'}</span>
+          {slide.illustrative && (
+            <span className="ml-auto shrink-0 inline-flex items-center gap-0.5 text-[9px] font-medium text-amber-600" title="Illustrative figures">
+              <Info className="h-3 w-3" /> AI
+            </span>
+          )}
+        </div>
+      )}
       <div className="absolute top-1 left-1 flex items-center gap-1">
         <span className="bg-black/60 text-white text-[10px] rounded px-1.5 py-0.5 font-mono">{index + 1}</span>
         <span className="bg-black/45 text-white/90 text-[10px] rounded px-1 py-0.5" title={`Layout: ${slide.layout.replace('-', ' ')}`}>
@@ -159,6 +175,12 @@ export function EditorView() {
   const [droppingImage, setDroppingImage] = useState(false);
   const [showStyle, setShowStyle] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  // slide board (G): sortable grid of all slides replacing the canvas
+  const [boardOpen, setBoardOpen] = useState(false);
+  const boardOpenRef = useRef(false);
+  useEffect(() => {
+    boardOpenRef.current = boardOpen;
+  }, [boardOpen]);
   const [notesProgress, setNotesProgress] = useState<{ done: number; total: number } | null>(null);
   // AI slide composer: "give me a slide about …" → inserted after the current one
   const [composeOpen, setComposeOpen] = useState(false);
@@ -176,7 +198,7 @@ export function EditorView() {
   const canUndo = useAppStore((s) => s.past.length > 0);
   const canRedo = useAppStore((s) => s.future.length > 0);
   const patchSlides = useAppStore((s) => s.patchSlides);
-  const { pptx, pdf, html, notes: exportNotes } = useExportActions();
+  const { pptx, pdf, html, notes: exportNotes, deckJson } = useExportActions();
 
   // ------------------------------------------------------------ autosave
   const save = useCallback(async () => {
@@ -236,8 +258,13 @@ export function EditorView() {
         return;
       }
       if (mod) return; // let other mod-combos through to the browser
-      if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+      if (e.key === '?') {
         e.preventDefault(); setShowShortcuts((v) => !v); return;
+      }
+      if (e.key === 'g' || e.key === 'G') {
+        e.preventDefault();
+        setBoardOpen((v) => !v);
+        return;
       }
       if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
         // move the current slide up/down in the deck order
@@ -247,6 +274,9 @@ export function EditorView() {
         return;
       }
       if (e.key === 'Escape') {
+        if (boardOpenRef.current) {
+          setBoardOpen(false);
+        }
         if (selectedIdsRef.current.length > 0) {
           setSelectedIds([]);
           anchorRef.current = null;
@@ -304,22 +334,32 @@ export function EditorView() {
     const patches: Record<string, { notes: string }> = {};
     const language = d.meta?.language ?? 'English';
     let failures = 0;
-    for (const s of targets) {
-      try {
-        const res = await fetch('/api/ai/slide', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'speaker_notes', slide: s, language }),
-        });
-        const json = await res.json();
-        if (res.ok && typeof json.patch?.notes === 'string' && json.patch.notes.trim()) {
-          patches[s.id] = { notes: json.patch.notes };
-        } else failures++;
-      } catch {
-        failures++;
+    // two-way parallel pool: ~2× faster than sequential, order-independent
+    const total = targets.length;
+    let completed = 0;
+    const queue = [...targets];
+    const worker = async () => {
+      while (queue.length) {
+        const s = queue.shift();
+        if (!s) break;
+        try {
+          const res = await fetch('/api/ai/slide', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'speaker_notes', slide: s, language }),
+          });
+          const json = await res.json();
+          if (res.ok && typeof json.patch?.notes === 'string' && json.patch.notes.trim()) {
+            patches[s.id] = { notes: json.patch.notes };
+          } else failures++;
+        } catch {
+          failures++;
+        }
+        completed++;
+        setNotesProgress({ done: completed, total });
       }
-      setNotesProgress((p) => (p ? { ...p, done: p.done + 1 } : p));
-    }
+    };
+    await Promise.all([worker(), worker()]);
     const n = Object.keys(patches).length;
     if (n) patchSlides(patches); // one undo snapshot for the whole batch
     setNotesProgress(null);
@@ -363,6 +403,7 @@ export function EditorView() {
         attribution: made.attribution,
         stats: made.stats,
         notes: made.notes,
+        illustrative: made.layout === 'stats',
       } as Slide);
       setComposeOpen(false);
       setComposeTopic('');
@@ -455,6 +496,7 @@ export function EditorView() {
 
   const total = slides.length;
   const visibleCount = slides.filter((s) => !s.hidden).length;
+  const hiddenCount = total - visibleCount;
   const words = slides.reduce(
     (acc, s) =>
       acc +
@@ -467,6 +509,7 @@ export function EditorView() {
 
   const SHORTCUTS: Array<{ keys: string; label: string }> = [
     { keys: 'J / K · ↑ ↓', label: 'Previous / next slide' },
+    { keys: 'G', label: 'Toggle slide board' },
     { keys: '⌥ ↑ / ⌥ ↓', label: 'Move slide earlier / later' },
     { keys: '⌘ K', label: 'Command palette' },
     { keys: '⌘ D', label: 'Duplicate current slide' },
@@ -635,6 +678,24 @@ export function EditorView() {
                 <span className="text-sm text-neutral-700">Show page numbers</span>
                 <Switch checked={showPageNumbers} onCheckedChange={(v) => patchMeta({ showPageNumbers: v })} aria-label="Toggle page numbers in slide footers" />
               </label>
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Slide transition</p>
+                <Select
+                  value={deck.meta?.defaultTransition ?? 'inherit'}
+                  onValueChange={(v) => patchMeta({ defaultTransition: v === 'inherit' ? undefined : (v as TransitionKind) })}
+                >
+                  <SelectTrigger className="h-9" aria-label="Default slide transition"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="inherit">Theme default</SelectItem>
+                    <SelectItem value="none">None (hard cut)</SelectItem>
+                    <SelectItem value="fade">Fade</SelectItem>
+                    <SelectItem value="rise">Rise</SelectItem>
+                    <SelectItem value="zoom">Zoom</SelectItem>
+                    <SelectItem value="slide">Slide</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">Deck-wide default in present mode. Per-slide overrides in the inspector still win.</p>
+              </div>
             </PopoverContent>
           </Popover>
           <Select value={current?.layout ?? 'bullets'} onValueChange={(v) => current && updateSlide(current.id, { layout: v as LayoutId })}>
@@ -646,6 +707,18 @@ export function EditorView() {
             </SelectContent>
           </Select>
           <span className="w-px h-6 bg-neutral-200 mx-1" aria-hidden />
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn('h-9 px-2.5 gap-1.5', boardOpen ? 'text-neutral-900 bg-neutral-100' : 'text-neutral-500 hover:text-neutral-900')}
+            onClick={() => setBoardOpen((v) => !v)}
+            aria-pressed={boardOpen}
+            aria-label="Toggle slide board"
+            title="Slide board (G) — reorder and overview all slides"
+          >
+            <LayoutGrid className="h-4 w-4" />
+            <span className="text-xs hidden lg:inline">Board</span>
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -795,6 +868,54 @@ export function EditorView() {
               </div>
             </div>
           )}
+          {boardOpen ? (
+            <div className="flex-1 min-h-0 flex flex-col" data-board>
+              <div className="flex items-center gap-2 px-4 sm:px-6 pt-3 pb-2">
+                <LayoutGrid className="h-4 w-4 text-neutral-500" aria-hidden />
+                <h2 className="text-sm font-semibold text-neutral-800">Slide board</h2>
+                <span className="text-[11px] text-neutral-400 tabular-nums">
+                  {total} slide{total === 1 ? '' : 's'}{hiddenCount > 0 ? ` · ${hiddenCount} hidden` : ''}
+                </span>
+                <span className="ml-auto text-[11px] text-neutral-400 hidden md:block">
+                  Drag to reorder · click to select · double-click to open
+                </span>
+                <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setBoardOpen(false)}>
+                  Close
+                </Button>
+              </div>
+              <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 pb-4">
+                <div
+                  className="grid gap-4"
+                  style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))' }}
+                  role="list"
+                  aria-label="All slides"
+                >
+                  {slides.map((s, i) => (
+                    <SlideCard
+                      key={s.id}
+                      slide={s}
+                      index={i}
+                      active={i === currentSlideIndex}
+                      pageCount={total}
+                      selected={selectedIds.includes(s.id)}
+                      dragging={dragIndex === i}
+                      dropTarget={overIndex === i && dragIndex !== i}
+                      showCaption
+                      onOpen={() => setBoardOpen(false)}
+                      onSelect={(e) => handleThumbSelect(i, e)}
+                      onDuplicate={() => duplicateSlide(s.id)}
+                      onDelete={() => removeSlide(s.id)}
+                      onToggleHidden={() => updateSlide(s.id, { hidden: !s.hidden })}
+                      onDragStart={() => setDragIndex(i)}
+                      onDragOver={(e) => { e.preventDefault(); setOverIndex(i); }}
+                      onDrop={() => { if (dragIndex != null && dragIndex !== i) reorderSlides(dragIndex, i); setDragIndex(null); setOverIndex(null); }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
           <div className="flex-1 min-h-0 p-4 sm:p-8 flex items-center justify-center overflow-hidden">
             {current && (
               <div className="w-full max-w-4xl rounded-xl overflow-hidden shadow-2xl shadow-neutral-900/25 ring-1 ring-black/10">
@@ -824,6 +945,8 @@ export function EditorView() {
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
+            </>
+          )}
           {/* mobile add/list strip */}
           <div className="md:hidden flex gap-2 overflow-x-auto px-3 pb-3" aria-label="Slides">
             {slides.map((s, i) => (
@@ -904,6 +1027,7 @@ export function EditorView() {
           if (to >= 0 && to < total) reorderSlides(idx, to);
         }}
         onComposeSlide={() => { setComposeTopic(''); setComposeOpen(true); }}
+        onToggleBoard={() => setBoardOpen((v) => !v)}
         onShuffleTheme={() => {
           const others = THEMES.filter((t) => t.id !== deck.themeId);
           const pick = others[Math.floor(Math.random() * others.length)];
@@ -916,6 +1040,7 @@ export function EditorView() {
           if (kind === 'pptx') void pptx();
           else if (kind === 'pdf') pdf();
           else if (kind === 'html') void html();
+          else if (kind === 'deckjson') deckJson();
           else exportNotes();
         }}
       />
@@ -965,7 +1090,7 @@ export function EditorView() {
               disabled={composing}
             />
             <p className="text-[11px] text-muted-foreground">
-              The deck's audience, tone and language are applied automatically. Chart, diagram and image layouts are skipped — add those with real data afterwards.
+              The deck's audience, tone and language are applied automatically. Stats slides use round illustrative figures and are flagged with an “Illustrative figures” footnote. Chart, diagram and image layouts are skipped — add those with real data afterwards.
             </p>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="ghost" onClick={() => setComposeOpen(false)} disabled={composing}>Cancel</Button>

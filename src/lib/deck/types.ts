@@ -99,6 +99,8 @@ export interface Slide {
   notes?: string;
   /** Hidden slides stay editable but are skipped in present mode and exports. */
   hidden?: boolean;
+  /** Marks stats composed by the AI as illustrative (rendered as a footnote). */
+  illustrative?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -116,6 +118,11 @@ export interface DeckMeta {
   footerText?: string;
   /** Show "01 / 10" page numbers in the slide footer (default true). */
   showPageNumbers?: boolean;
+  /**
+   * Deck-wide default slide transition. Per-slide overrides win; slides set
+   * to "inherit" (the default) fall back to this, then to the theme motion.
+   */
+  defaultTransition?: TransitionKind;
 }
 
 export interface Deck {

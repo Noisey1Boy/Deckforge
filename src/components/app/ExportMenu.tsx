@@ -5,12 +5,13 @@ import { useAppStore } from '@/lib/store/deck-store';
 import { exportPptx } from '@/lib/export/pptx';
 import { exportStandaloneHtml } from '@/lib/export/html';
 import { exportNotesMarkdown } from '@/lib/export/notes';
+import { exportDeckJson } from '@/lib/export/deckjson';
 import { SlideView } from '@/components/deck/SlideView';
 import { deckTheme } from '@/lib/design/themes';
 import { deckFooterText, visibleSlides } from '@/lib/deck/types';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
-import { Download, FileText, Globe, Presentation, Loader2, StickyNote } from 'lucide-react';
+import { Download, FileText, Globe, Presentation, Loader2, StickyNote, FileJson } from 'lucide-react';
 
 /**
  * PPTX → PptxGenJS (client), PDF → print CSS (@page 1280x720), HTML →
@@ -68,11 +69,22 @@ export function useExportActions() {
     }
   };
 
-  return { deck, busy, pptx, pdf, html, notes };
+  const deckJson = () => {
+    if (!deck) return;
+    try {
+      exportDeckJson(deck);
+      toast.success('Deck file downloaded — re-import it from the landing page.');
+    } catch (e) {
+      console.error(e);
+      toast.error('Deck file export failed.');
+    }
+  };
+
+  return { deck, busy, pptx, pdf, html, notes, deckJson };
 }
 
 export function ExportMenu() {
-  const { busy, pptx, pdf, html, notes } = useExportActions();
+  const { busy, pptx, pdf, html, notes, deckJson } = useExportActions();
 
   return (
     <DropdownMenu>
@@ -85,7 +97,8 @@ export function ExportMenu() {
           Export
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-52">
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-neutral-400">Present &amp; share</DropdownMenuLabel>
         <DropdownMenuItem onClick={pptx} className="gap-2">
           <Presentation className="h-4 w-4 text-neutral-500" /> PPTX (editable)
         </DropdownMenuItem>
@@ -96,8 +109,12 @@ export function ExportMenu() {
           <Globe className="h-4 w-4 text-neutral-500" /> Standalone HTML
         </DropdownMenuItem>
         <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-neutral-400">Handouts &amp; data</DropdownMenuLabel>
         <DropdownMenuItem onClick={notes} className="gap-2">
           <StickyNote className="h-4 w-4 text-neutral-500" /> Speaker notes (Markdown)
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={deckJson} className="gap-2">
+          <FileJson className="h-4 w-4 text-neutral-500" /> Deck file (.json)
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
