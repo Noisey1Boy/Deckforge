@@ -11,10 +11,11 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { fileToDeckImage } from '@/lib/media/image';
+import { TRANSITIONS, type TransitionKind } from '@/lib/deck/types';
 import {
   Loader2, Sparkles, Scissors, Expand, RefreshCcw, Wand2, ImageIcon,
   ImagePlus, Trash2, BarChart3, BarChartHorizontal, LineChart, AreaChart,
-  PieChart, Donut,
+  PieChart, Donut, Plus, Clapperboard,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -267,20 +268,105 @@ export function SlideInspector({ slide }: { slide: Slide }) {
               </div>
             </div>
             <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Data — edit cells directly</Label>
+              <div className="rounded-lg border border-neutral-200 overflow-hidden" role="table" aria-label="Chart data">
+                <div className="grid grid-cols-[1fr_5.5rem_2rem] gap-1.5 bg-neutral-50 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground" role="row">
+                  <span>Label</span>
+                  <span>Value</span>
+                  <span className="sr-only">Remove</span>
+                </div>
+                <div className="divide-y divide-neutral-100 max-h-52 overflow-y-auto">
+                  {slide.chart.data.map((d, i) => (
+                    <div key={i} className="grid grid-cols-[1fr_5.5rem_2rem] gap-1.5 items-center px-2 py-1" role="row">
+                      <Input
+                        value={d.label}
+                        onChange={(e) => {
+                          const data = [...slide.chart!.data];
+                          data[i] = { ...d, label: e.target.value };
+                          set({ chart: { ...slide.chart!, data } });
+                        }}
+                        className="h-8 text-sm border-transparent bg-transparent px-1.5 hover:border-neutral-200 focus-visible:bg-white"
+                        maxLength={32}
+                        aria-label={`Row ${i + 1} label`}
+                      />
+                      <Input
+                        value={String(d.value)}
+                        inputMode="decimal"
+                        onChange={(e) => {
+                          const data = [...slide.chart!.data];
+                          const v = parseFloat(e.target.value.replace(',', '.'));
+                          data[i] = { ...d, value: Number.isFinite(v) ? v : 0 };
+                          set({ chart: { ...slide.chart!, data } });
+                        }}
+                        className="h-8 text-sm font-mono border-transparent bg-transparent px-1.5 text-right hover:border-neutral-200 focus-visible:bg-white"
+                        aria-label={`Row ${i + 1} value`}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-neutral-300 hover:text-red-600"
+                        onClick={() => set({ chart: { ...slide.chart!, data: slide.chart!.data.filter((_, j) => j !== i) } })}
+                        disabled={slide.chart!.data.length <= 1}
+                        aria-label={`Remove row ${i + 1}`}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="h-8 gap-1"
+                disabled={slide.chart.data.length >= 12}
+                onClick={() => set({ chart: { ...slide.chart!, data: [...slide.chart.data, { label: `Item ${slide.chart!.data.length + 1}`, value: 0 }] } })}
+              >
+                <Plus className="h-3.5 w-3.5" /> Add row
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Unit</Label>
+                <Input
+                  value={slide.chart.unit ?? ''}
+                  onChange={(e) => set({ chart: { ...slide.chart!, unit: e.target.value || undefined } })}
+                  placeholder="%, M…"
+                  maxLength={10}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Source</Label>
+                <Input
+                  value={slide.chart.source ?? ''}
+                  onChange={(e) => set({ chart: { ...slide.chart!, source: e.target.value || undefined } })}
+                  placeholder="FY2025 report"
+                  maxLength={60}
+                />
+              </div>
+            </div>
+            {(slide.chart.series?.length ?? 0) > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Series (advanced)</Label>
+                <Textarea
+                  value={(slide.chart.series ?? []).map((sr) => `${sr.name}: ${sr.points.join(', ')}`).join('\n')}
+                  onChange={(e) => {
+                    const series = e.target.value.split('\n').filter(Boolean).slice(0, 4).map((line) => {
+                      const [name = 'Series', rest = ''] = line.split(':');
+                      const points = rest.split(',').map((p) => parseFloat(p.trim()) || 0);
+                      return { name: name.trim(), points };
+                    });
+                    set({ chart: { ...slide.chart!, series: series.length ? series : undefined } });
+                  }}
+                  className="min-h-20 text-xs font-mono"
+                  placeholder="2024: 1.2, 3.4, 5.6"
+                />
+                <p className="text-[11px] text-muted-foreground">One series per line — “name: p1, p2, …”. Values map to the data labels above.</p>
+              </div>
+            )}
+            <div className="space-y-1.5">
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">Chart insight</Label>
-            <Textarea value={slide.chart.insight ?? ''} onChange={(e) => set({ chart: { ...slide.chart!, insight: e.target.value } })} className="min-h-16 text-sm" maxLength={140} />
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Data (label = value per line)</Label>
-            <Textarea
-              value={slide.chart.data.map((d) => `${d.label} = ${d.value}`).join('\n')}
-              onChange={(e) => {
-                const data = e.target.value.split('\n').filter(Boolean).slice(0, 12).map((line) => {
-                  const [label = '', value = '0'] = line.split('=').map((s) => s.trim());
-                  return { label, value: parseFloat(value) || 0 };
-                });
-                set({ chart: { ...slide.chart!, data } });
-              }}
-              className="min-h-24 text-xs font-mono"
-            />
+              <Textarea value={slide.chart.insight ?? ''} onChange={(e) => set({ chart: { ...slide.chart!, insight: e.target.value } })} className="min-h-16 text-sm" maxLength={140} />
             </div>
           </div>
         )}
@@ -370,6 +456,27 @@ export function SlideInspector({ slide }: { slide: Slide }) {
       <section className="space-y-1.5">
         <Label htmlFor="insp-notes" className="text-xs uppercase tracking-wide text-muted-foreground">Speaker notes</Label>
         <Textarea id="insp-notes" value={slide.notes ?? ''} onChange={(e) => set({ notes: e.target.value })} className="min-h-24 text-sm" placeholder="What you'll say when this slide is up…" />
+      </section>
+
+      {/* Motion — per-slide transition override */}
+      <section className="space-y-1.5">
+        <Label className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+          <Clapperboard className="h-3 w-3" /> Transition
+        </Label>
+        <Select
+          value={slide.transition ?? 'inherit'}
+          onValueChange={(v) => set({ transition: (v === 'inherit' ? undefined : v) as TransitionKind | undefined })}
+        >
+          <SelectTrigger aria-label="Slide transition"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {TRANSITIONS.map((t) => (
+              <SelectItem key={t} value={t} className="capitalize">
+                {t === 'inherit' ? 'Inherit from theme' : t === 'none' ? 'None (cut)' : t}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-[11px] text-muted-foreground">Overrides the design system's motion for this slide only.</p>
       </section>
     </div>
   );

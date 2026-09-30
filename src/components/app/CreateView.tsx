@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import type { ChartSpec, DeckOutline } from '@/lib/deck/types';
 import type { ChartPlan, MermaidPlan } from '@/lib/data/plans';
@@ -73,7 +72,14 @@ export function CreateView() {
   const [slideCount, setSlideCount] = useState(10);
   const [language, setLanguage] = useState('English');
   const [busy, setBusy] = useState<string | null>(null);
-  const [ideaSeed, setIdeaSeed] = useState(() => Math.floor(Math.random() * 3));
+  const [dataTab, setDataTab] = useState<'files' | 'image' | 'mermaid'>('files');
+  // Start with a deterministic seed so SSR and the first client render match
+  // (avoids a hydration mismatch); deal a random set right after mount.
+  const [ideaSeed, setIdeaSeed] = useState(0);
+  useEffect(() => {
+    const t = window.setTimeout(() => setIdeaSeed(Math.floor(Math.random() * 3)), 0);
+    return () => window.clearTimeout(t);
+  }, []);
 
   // data inputs
   const [tables, setTables] = useState<ParsedTable[]>([]);
@@ -379,13 +385,36 @@ export function CreateView() {
           </div>
           <Card>
             <CardContent className="p-4">
-              <Tabs defaultValue="files">
-                <TabsList className="grid grid-cols-3 mb-3">
-                  <TabsTrigger value="files" className="gap-1.5 text-xs"><FileSpreadsheet className="h-3.5 w-3.5" /> Files</TabsTrigger>
-                  <TabsTrigger value="image" className="gap-1.5 text-xs"><ImageIcon className="h-3.5 w-3.5" /> Chart img</TabsTrigger>
-                  <TabsTrigger value="mermaid" className="gap-1.5 text-xs"><Workflow className="h-3.5 w-3.5" /> Mermaid</TabsTrigger>
-                </TabsList>
-                <TabsContent value="files" className="space-y-3">
+              {/* Static-button tabs (no Radix id generation — keeps SSR/hydration
+                  ids fully deterministic) */}
+              <div role="tablist" aria-label="Data input type" className="grid grid-cols-3 mb-3">
+                {([
+                  { id: 'files', label: 'Files', icon: <FileSpreadsheet className="h-3.5 w-3.5" /> },
+                  { id: 'image', label: 'Chart img', icon: <ImageIcon className="h-3.5 w-3.5" /> },
+                  { id: 'mermaid', label: 'Mermaid', icon: <Workflow className="h-3.5 w-3.5" /> },
+                ] as const).map((t) => (
+                  <button
+                    key={t.id}
+                    role="tab"
+                    id={`data-tab-${t.id}`}
+                    aria-selected={dataTab === t.id}
+                    aria-controls={`data-panel-${t.id}`}
+                    tabIndex={dataTab === t.id ? 0 : -1}
+                    onClick={() => setDataTab(t.id)}
+                    className={cn(
+                      'inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-xs font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 disabled:pointer-events-none disabled:opacity-50',
+                      dataTab === t.id
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    {t.icon} {t.label}
+                  </button>
+                ))}
+              </div>
+
+              {dataTab === 'files' && (
+              <div role="tabpanel" id="data-panel-files" aria-labelledby="data-tab-files" className="space-y-3">
                   <button
                     onClick={() => fileRef.current?.click()}
                     className="w-full rounded-lg border-2 border-dashed border-neutral-300 hover:border-neutral-900 transition-colors p-6 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900"
@@ -415,8 +444,11 @@ export function CreateView() {
                       ))}
                     </ul>
                   )}
-                </TabsContent>
-                <TabsContent value="image" className="space-y-3">
+              </div>
+              )}
+
+              {dataTab === 'image' && (
+              <div role="tabpanel" id="data-panel-image" aria-labelledby="data-tab-image" className="space-y-3">
                   <button
                     onClick={() => imgRef.current?.click()}
                     className="w-full rounded-lg border-2 border-dashed border-neutral-300 hover:border-neutral-900 transition-colors p-6 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900"
@@ -441,8 +473,11 @@ export function CreateView() {
                       ))}
                     </ul>
                   )}
-                </TabsContent>
-                <TabsContent value="mermaid" className="space-y-3">
+              </div>
+              )}
+
+              {dataTab === 'mermaid' && (
+              <div role="tabpanel" id="data-panel-mermaid" aria-labelledby="data-tab-mermaid" className="space-y-3">
                   <Textarea
                     value={mermaid}
                     onChange={(e) => setMermaid(e.target.value)}
@@ -459,8 +494,8 @@ export function CreateView() {
                       Convert diagram
                     </Button>
                   )}
-                </TabsContent>
-              </Tabs>
+              </div>
+              )}
             </CardContent>
           </Card>
         </motion.section>

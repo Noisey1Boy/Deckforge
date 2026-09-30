@@ -65,6 +65,13 @@ export interface ImageSpec {
   credit?: string;
 }
 
+/**
+ * Per-slide transition override. "inherit" (default) follows the theme's
+ * motion style; "none" cuts instantly; the rest force a specific transition.
+ */
+export const TRANSITIONS = ['inherit', 'none', 'fade', 'rise', 'zoom', 'slide'] as const;
+export type TransitionKind = (typeof TRANSITIONS)[number];
+
 export interface Slide {
   id: string;
   layout: LayoutId;
@@ -73,6 +80,8 @@ export interface Slide {
   /** Short supporting paragraph. */
   body?: string;
   bullets?: string[];
+  /** How this slide enters in present mode (defaults to the theme's motion). */
+  transition?: TransitionKind;
   // two-column
   leftTitle?: string;
   leftContent?: string[];

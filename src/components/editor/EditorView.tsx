@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 import {
   Play, Plus, Trash2, Copy, Presentation, ChevronLeft, ChevronRight, Check, Cloud,
   Undo2, Redo2, Keyboard, Type, Hash, List, Columns2, Image as ImageIcon, Quote,
-  BarChart3, Workflow, Table2, Flag, Sigma, Eye, EyeOff,
+  BarChart3, Workflow, Table2, Flag, Sigma, Eye, EyeOff, Shuffle,
 } from 'lucide-react';
 
 const LAYOUT_ICONS: Record<LayoutId, string> = {
@@ -68,6 +68,7 @@ function SlideCard({
   dropTarget: boolean;
 }) {
   const theme = useAppStore((s) => s.deck?.themeId);
+  const themeManifest = getTheme(theme);
   return (
     <div
       draggable
@@ -76,11 +77,12 @@ function SlideCard({
       onDrop={onDrop}
       className={cn(
         'group relative rounded-lg overflow-hidden border-2 transition-all cursor-grab active:cursor-grabbing bg-card',
-        active ? 'border-neutral-900 shadow-md' : 'border-transparent hover:border-neutral-300',
+        active ? 'shadow-md' : 'border-transparent hover:border-neutral-300',
         dragging && 'opacity-40',
         dropTarget && 'ring-2 ring-neutral-900/60',
         slide.hidden && !dragging && 'opacity-55 border-dashed'
       )}
+      style={active ? { borderColor: themeManifest.tokens.colors.primary } : undefined}
       onClick={onSelect}
       role="button"
       tabIndex={0}
@@ -89,7 +91,7 @@ function SlideCard({
       aria-current={active}
     >
       <div className="pointer-events-none">
-        <ScaledSlide slide={slide} theme={getTheme(theme)} index={index} pageCount={pageCount} />
+        <ScaledSlide slide={slide} theme={themeManifest} index={index} pageCount={pageCount} />
       </div>
       <div className="absolute top-1 left-1 flex items-center gap-1">
         <span className="bg-black/60 text-white text-[10px] rounded px-1.5 py-0.5 font-mono">{index + 1}</span>
@@ -280,6 +282,16 @@ export function EditorView() {
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       {/* toolbar */}
       <div className="flex items-center gap-2 px-3 py-2 border-b bg-background/95 backdrop-blur flex-wrap">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 shrink-0 text-neutral-500 hover:text-neutral-900"
+          onClick={() => setView('create')}
+          aria-label="Back to all decks"
+          title="Back to all decks"
+        >
+          <ChevronLeft className="h-4.5 w-4.5" />
+        </Button>
         <input
           value={deck.title}
           onChange={(e) => patchDeck({ title: e.target.value })}
@@ -321,6 +333,21 @@ export function EditorView() {
               ))}
             </SelectContent>
           </Select>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 text-neutral-500 hover:text-neutral-900"
+            onClick={() => {
+              const others = THEMES.filter((t) => t.id !== deck.themeId);
+              const pick = others[Math.floor(Math.random() * others.length)];
+              setDeckTheme(pick.id);
+              toast(`Theme: ${pick.name}`, { description: pick.tone });
+            }}
+            aria-label="Shuffle design system"
+            title="Shuffle design system — instant re-theme"
+          >
+            <Shuffle className="h-4 w-4" />
+          </Button>
           <Select value={current?.layout ?? 'bullets'} onValueChange={(v) => current && updateSlide(current.id, { layout: v as LayoutId })}>
             <SelectTrigger className="w-36 h-9 capitalize" aria-label="Current layout"><SelectValue /></SelectTrigger>
             <SelectContent>

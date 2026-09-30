@@ -133,3 +133,28 @@ Stage Summary:
 - New: autoplay speed + loop, click-to-seek progress bar, canvas image drop, hidden-slide editor chip, 12-prompt "More ideas" pool, deck search, gallery badge redesign.
 - All verified in browser; bun run lint clean; dev.log clean; page healthy with no console errors.
 - Risks/next: data-URL images still grow deck JSON (mitigated by downscale); JSON import UI still untested via automation (hidden file input); per-slide transition override and multi-select reorder remain open ideas; consider autoplay speed persisted to localStorage; PPTX diagram linearization unchanged.
+
+---
+Task ID: r6 (cron review round 6)
+Agent: webDevReview agent
+Task: Status assessment + agent-browser QA, bug fixes, then feature + styling round
+
+Work Log:
+- Status assessment: lint clean, page 200, dev.log noise historical. QA via agent-browser found 2 REAL bugs (below). Phase then shifted to features per round mandate.
+- BUG FIXED (hydration #1 — text): landing starter-prompt chips caused "Hydration failed — server text didn't match client". Root cause: ideaSeed initialized with Math.random() during SSR. Fix: deterministic seed 0 for SSR + first client render; random deal deferred to a 0ms timeout after mount (avoids react-hooks/set-state-in-effect). Verified badge gone.
+- BUG FIXED (hydration #2 — attributes, intermittent): ~3/8 reloads fired "attributes didn't match" — Radix Tabs useId (aria-controls/id) differed between SSR and hydration (dev-mode Turbopack flake; SSR itself was deterministic over 12 curls; root cause external to app logic). Fix: replaced shadcn Tabs in CreateView data section with static-button tabs (role=tablist/tab/tabpanel, static ids data-tab-*/data-panel-*, full a11y attrs, identical styling). Result: 8/8 reloads clean. No more useId consumers on the landing.
+- BUG FIXED (UX/navigation): there was NO way back to the create view from the editor (logo not clickable, no back control). Fix: header logo is now a real button (aria-label "DeckForge AI home") + new toolbar back button (ChevronLeft, aria-label "Back to all decks"). Both verified.
+- F1 Chart data editor (SlideInspector): replaced the raw "label = value" textarea with a bordered cell-grid table — per-row label Input + right-aligned mono value Input + remove button (disabled at 1 row), scrollable max-h-52, header row, "Add row" (cap 12), plus Unit and Source fields, multi-series editor (only shown when series exist) and insight textarea. Verified live: editing row 1 value re-renders the chart instantly; undo restores.
+- F2 Per-slide transition override: Slide type gains transition?: TransitionKind (inherit/none/fade/rise/zoom/slide, TRANSITIONS const in types.ts); inspector gets a "Transition" select (Clapperboard icon) defaulting to Inherit; PresentOverlay motionFor() honors the override, "none" renders a hard cut (initial=false, 0.08s exit). Verified select writes value + present mode renders without errors.
+- F3 Presenter view (V key or Projector button in controls): dedicated sidebar layout — NOW SHOWING x/y, ELAPSED timer, full speaker notes (scrollable), UP NEXT next-visible-slide preview (click-to-jump, skips hidden), auto-play status chip; stage + click zones preserved; standard-layout notes toggle suppressed while presenter is open; exit resets presenter state. Verified in browser with notes + next preview + navigation.
+- F4 Autoplay persistence: speed + loop stored in localStorage (deckforge.autoplay.speed / .loop) via lazy useState initializers with SSR guards (lint-safe); DropdownMenu writes through. Verified: 15s + loop survive full reload with menu showing checks.
+- F5 Shuffle design system: toolbar Shuffle button (between theme select and layout select) applies a random other theme + toast with name/tone. Verified Corporate Clean → Warm Earth → Editorial Serif instant re-themes.
+- S1 Editor thumbnails: active slide border now uses the deck theme's primary color (was fixed neutral-900) — visible in Warm Earth screenshot (rust ring).
+- F6/S2 JSON import verified end-to-end (flagged untested since r2): crafted .deck.json → hidden input upload → deck in library → opens in editor with Minimal Mono theme rendered. Exactly 1 deck per import event (an earlier double was the automation tool re-firing, not an app bug; test decks deleted afterwards).
+- Transient dev.log "dataTab is not defined" was mid-refactor Fast Refresh noise; confirmed NO new errors on fresh loads after final state. Final lint clean; landing/editor/present/console all healthy.
+
+Stage Summary:
+- Bugs fixed: 2 hydration mismatches (random seed SSR; Radix useId dev flake → static tabs), 1 navigation gap (no back-to-library).
+- New: chart data cell-grid editor (+unit/source/series), per-slide transition override, presenter view (V), autoplay speed+loop persistence, shuffle theme button, theme-colored active thumbnail, clickable logo + toolbar back button.
+- All verified in browser; bun run lint clean; README features updated.
+- Risks/next: presenter view sidebar is fixed-width on desktop (could get a resize handle); data-URL images still grow deck JSON (downscale mitigates); consider per-deck export/import including transition field (already serializes automatically); a production build (next build) should be verified once outside sandbox constraints to confirm the dev-only useId flake disappears with it; multi-select slide operations remain open ideas.

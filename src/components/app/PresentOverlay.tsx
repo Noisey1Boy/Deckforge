@@ -8,15 +8,61 @@ import { SlideView } from '@/components/deck/SlideView';
 import { ScaledSlide } from '@/components/deck/ScaledSlide';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { X, ChevronLeft, ChevronRight, StickyNote, Maximize2, Minimize2, LayoutGrid, Timer, Play, Pause, ChevronsUpDown, Repeat } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, StickyNote, Maximize2, Minimize2, LayoutGrid, Timer, Play, Pause, ChevronsUpDown, Repeat, Projector } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { TransitionKind } from '@/lib/deck/types';
 
 const AUTOPLAY_SPEEDS = [5, 10, 15, 20] as const;
+const LS_SPEED = 'deckforge.autoplay.speed';
+const LS_LOOP = 'deckforge.autoplay.loop';
+
+function loadSpeed(): number {
+  try {
+    const v = Number(window.localStorage.getItem(LS_SPEED));
+    return (AUTOPLAY_SPEEDS as readonly number[]).includes(v) ? v : 10;
+  } catch {
+    return 10;
+  }
+}
+function loadLoop(): boolean {
+  try {
+    return window.localStorage.getItem(LS_LOOP) === '1';
+  } catch {
+    return false;
+  }
+}
+
+interface MotionPreset {
+  initial: Record<string, unknown>;
+  animate: Record<string, unknown>;
+  exit: Record<string, unknown>;
+}
+
+/** Framer Motion preset for a transition kind ("inherit" follows the theme). */
+function motionFor(kind: TransitionKind | undefined, themeStyle: string, reduceMotion: boolean): MotionPreset | null {
+  if (reduceMotion) {
+    return { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } };
+  }
+  const style = !kind || kind === 'inherit' ? themeStyle : kind;
+  switch (style) {
+    case 'none':
+      return null; // hard cut — handled by the caller
+    case 'rise':
+      return { initial: { opacity: 0, y: 42 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -28 } };
+    case 'zoom':
+      return { initial: { opacity: 0, scale: 0.92 }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0, scale: 1.05 } };
+    case 'slide':
+      return { initial: { opacity: 0, x: 120 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -90 } };
+    default:
+      return { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } };
+  }
+}
 
 /**
- * Fullscreen present mode: keyboard navigation, progress bar, speaker notes,
- * theme-driven Framer Motion transitions (disabled under
- * prefers-reduced-motion).
+ * Fullscreen present mode: keyboard navigation, click-to-seek progress bar,
+ * speaker notes, slide overview, auto-play with loop, a dedicated presenter
+ * view (notes + next-slide preview) and per-slide transition overrides —
+ * all transitions disabled under prefers-reduced-motion.
  */
 export function PresentOverlay() {
   const presenting = useAppStore((s) => s.presenting);
@@ -26,20 +72,39 @@ export function PresentOverlay() {
   const setCurrent = useAppStore((s) => s.setCurrentSlide);
   const [showNotes, setShowNotes] = useState(false);
   const [showOverview, setShowOverview] = useState(false);
+  const [presenter, setPresenter] = useState(false);
   const [isFull, setIsFull] = useState(false);
   const [scale, setScale] = useState(1);
   const [elapsed, setElapsed] = useState(0);
   const [autoplay, setAutoplay] = useState(false);
-  const [speed, setSpeed] = useState<number>(10);
-  const [loop, setLoop] = useState(false);
+  const [speed, setSpeedState] = useState<number>(() => (typeof window === 'undefined' ? 10 : loadSpeed()));
+  const [loop, setLoopState] = useState<boolean>(() => (typeof window === 'undefined' ? false : loadLoop()));
   const startedAt = useRef<number | null>(null);
   const reduceMotion = useReducedMotion();
+  const setSpeed = useCallback((v: number) => {
+    setSpeedState(v);
+    try { window.localStorage.setItem(LS_SPEED, String(v)); } catch { /* private mode */ }
+  }, []);
+  const setLoop = useCallback((v: boolean) => {
+    setLoopState(v);
+    try { window.localStorage.setItem(LS_LOOP, v ? '1' : '0'); } catch { /* private mode */ }
+  }, []);
 
   const slides = deck?.slides ?? [];
   const theme = useMemo(() => getTheme(deck?.themeId), [deck?.themeId]);
   const slide = slides[index];
   const visibleCount = useMemo(() => slides.filter((s) => !s.hidden).length, [slides]);
   const visiblePos = useMemo(() => slides.slice(0, index).filter((s) => !s.hidden).length, [slides, index]);
+  const nextSlide = useMemo(() => {
+    let j = index + 1;
+    while (j < slides.length && slides[j]?.hidden) j++;
+    return j < slides.length ? slides[j] : null;
+  }, [slides, index]);
+  const nextIndex = useMemo(() => {
+    let j = index + 1;
+    while (j < slides.length && slides[j]?.hidden) j++;
+    return j < slides.length ? j : null;
+  }, [slides, index]);
 
   /** Move one slide in a direction, skipping hidden slides. */
   const stepTo = useCallback(
@@ -57,6 +122,7 @@ export function PresentOverlay() {
   const exitPresent = useCallback(() => {
     setAutoplay(false);
     setElapsed(0);
+    setPresenter(false);
     setPresenting(false);
   }, [setPresenting]);
 
@@ -158,6 +224,10 @@ export function PresentOverlay() {
         case 'P':
           setAutoplay((v) => !v);
           break;
+        case 'v':
+        case 'V':
+          setPresenter((v) => !v);
+          break;
         case 'Escape': {
           // let Radix menus / popovers consume Escape first (don't exit the deck)
           if (document.querySelector('[role="menu"], [data-radix-popper-content-wrapper]')) break;
@@ -201,69 +271,119 @@ export function PresentOverlay() {
 
   if (!presenting || !deck) return null;
 
-  const motionPreset = (() => {
-    if (reduceMotion) return { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } };
-    switch (theme.tokens.motion.style) {
-      case 'rise':
-        return { initial: { opacity: 0, y: 42 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -28 } };
-      case 'zoom':
-        return { initial: { opacity: 0, scale: 0.92 }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0, scale: 1.05 } };
-      case 'slide':
-        return { initial: { opacity: 0, x: 120 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -90 } };
-      default:
-        return { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } };
-    }
-  })();
-
   const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
   const ss = String(elapsed % 60).padStart(2, '0');
 
+  // per-slide transition override: slide.transition → theme motion style
+  const preset = motionFor(slide?.transition, theme.tokens.motion.style, !!reduceMotion);
+  const cut = !preset; // 'none' — hard cut, no enter animation
+
+  // stage (shared between standard and presenter layout)
+  const stage = (
+    <div className="flex-1 min-h-0 grid place-items-center relative overflow-hidden">
+      {/* subtle spotlight vignette behind the slide */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse 62% 58% at 50% 46%, rgba(255,255,255,0.055), transparent 68%)' }}
+        aria-hidden
+      />
+      {/* split click zones: left 28% back, rest forward (keyboard/arrows also work) */}
+      <button
+        className="absolute inset-y-0 left-0 w-[28%] z-[1] cursor-w-resize"
+        onClick={() => go(-1)}
+        disabled={index === 0}
+        tabIndex={-1}
+        aria-hidden
+      />
+      <button
+        className="absolute inset-y-0 right-0 w-[72%] z-[1] cursor-e-resize"
+        onClick={() => go(1)}
+        disabled={index >= slides.length - 1}
+        tabIndex={-1}
+        aria-hidden
+      />
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={index}
+          initial={cut ? false : preset!.initial}
+          animate={cut ? { opacity: 1 } : { ...preset!.animate, transition: { duration: theme.tokens.motion.duration, ease: [0.22, 0.61, 0.36, 1] } }}
+          exit={cut ? { opacity: 0, transition: { duration: 0.08 } } : { ...preset!.exit, transition: { duration: 0.18 } }}
+          style={{
+            width: 1280 * scale,
+            height: 720 * scale,
+            boxShadow: '0 24px 96px rgba(0,0,0,.5)',
+          }}
+          className="overflow-hidden rounded-sm"
+        >
+          <div style={{ width: 1280, height: 720, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+            {slide ? (
+              <SlideView slide={slide} theme={theme} deckTitle={deck.title} index={index} pageCount={slides.length} />
+            ) : null}
+          </div>
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+
   return (
     <div className="fixed inset-0 z-[100] bg-black flex flex-col" role="dialog" aria-modal="true" aria-label="Presentation mode">
-      {/* stage */}
-      <div className="flex-1 min-h-0 grid place-items-center relative overflow-hidden">
-        {/* subtle spotlight vignette behind the slide */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse 62% 58% at 50% 46%, rgba(255,255,255,0.055), transparent 68%)' }}
-          aria-hidden
-        />
-        {/* split click zones: left 28% back, rest forward (keyboard/arrows also work) */}
-        <button
-          className="absolute inset-y-0 left-0 w-[28%] z-[1] cursor-w-resize"
-          onClick={() => go(-1)}
-          disabled={index === 0}
-          tabIndex={-1}
-          aria-hidden
-        />
-        <button
-          className="absolute inset-y-0 right-0 w-[72%] z-[1] cursor-e-resize"
-          onClick={() => go(1)}
-          disabled={index >= slides.length - 1}
-          tabIndex={-1}
-          aria-hidden
-        />
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={index}
-            initial={motionPreset.initial}
-            animate={{ ...motionPreset.animate, transition: { duration: theme.tokens.motion.duration, ease: [0.22, 0.61, 0.36, 1] } }}
-            exit={{ ...motionPreset.exit, transition: { duration: 0.18 } }}
-            style={{
-              width: 1280 * scale,
-              height: 720 * scale,
-              boxShadow: '0 24px 96px rgba(0,0,0,.5)',
-            }}
-            className="overflow-hidden rounded-sm"
+      {presenter ? (
+        /* ------------------------------------------------ presenter view */
+        <div className="flex-1 min-h-0 flex flex-col lg:flex-row">
+          {stage}
+          <aside
+            className="w-full lg:w-[24rem] xl:w-[26rem] shrink-0 border-t lg:border-t-0 lg:border-l border-white/10 bg-neutral-950/95 backdrop-blur p-4 lg:p-5 flex lg:flex-col gap-4 overflow-y-auto max-h-[46%] lg:max-h-none"
+            aria-label="Presenter view"
           >
-            <div style={{ width: 1280, height: 720, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
-              {slide ? (
-                <SlideView slide={slide} theme={theme} deckTitle={deck.title} index={index} pageCount={slides.length} />
-              ) : null}
+            <div className="flex items-center justify-between lg:justify-start gap-4 shrink-0">
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-white/40">Now showing</div>
+                <div className="text-white/90 text-sm font-mono tabular-nums mt-0.5">
+                  {Math.min(visiblePos + 1, visibleCount)} <span className="text-white/40">/ {visibleCount}</span>
+                </div>
+              </div>
+              <div className="lg:mt-2">
+                <div className="text-[10px] uppercase tracking-widest text-white/40 flex items-center gap-1"><Timer className="h-3 w-3" /> Elapsed</div>
+                <div className="text-white/90 text-sm font-mono tabular-nums mt-0.5">{mm}:{ss}</div>
+              </div>
+              {autoplay && (
+                <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-400/30 px-2 py-0.5 self-start lg:mt-2">
+                  <Play className="h-2.5 w-2.5" /> Auto {speed}s
+                </span>
+              )}
             </div>
-          </motion.div>
-        </AnimatePresence>
-      </div>
+
+            <div className="flex-1 min-h-20 lg:min-h-0 lg:overflow-y-auto">
+              <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1.5">Speaker notes</div>
+              {slide?.notes ? (
+                <p className="text-white/90 text-sm lg:text-base leading-relaxed whitespace-pre-wrap">{slide.notes}</p>
+              ) : (
+                <p className="text-white/35 text-sm italic">No notes for this slide — add them in the editor inspector.</p>
+              )}
+            </div>
+
+            <div className="shrink-0 lg:mt-auto">
+              <div className="text-[10px] uppercase tracking-widest text-white/40 mb-1.5">Up next</div>
+              {nextSlide ? (
+                <button
+                  onClick={() => nextIndex != null && setCurrent(nextIndex)}
+                  className="block w-full rounded-md overflow-hidden border border-white/15 hover:border-white/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white text-left"
+                  aria-label={`Preview next slide: ${nextSlide.title || nextSlide.layout}`}
+                >
+                  <ScaledSlide slide={nextSlide} theme={theme} index={nextIndex ?? undefined} pageCount={slides.length} />
+                </button>
+              ) : (
+                <div className="h-24 grid place-items-center rounded-md border border-dashed border-white/15 text-white/35 text-xs">
+                  End of deck
+                </div>
+              )}
+            </div>
+          </aside>
+        </div>
+      ) : (
+        /* ---------------------------------------------- standard layout */
+        stage
+      )}
 
       {/* progress — paced over visible slides; click / drag to seek */}
       <div
@@ -296,7 +416,7 @@ export function PresentOverlay() {
           className="df-present-hint absolute top-5 left-1/2 z-[2] rounded-full bg-black/70 backdrop-blur px-4 py-1.5 text-xs text-white/85 border border-white/10 shadow-lg"
           aria-hidden
         >
-          <span className="font-mono">← →</span> navigate · <span className="font-mono">N</span> notes · <span className="font-mono">G</span> grid · <span className="font-mono">P</span> auto · <span className="font-mono">Esc</span> exit
+          <span className="font-mono">← →</span> navigate · <span className="font-mono">N</span> notes · <span className="font-mono">V</span> presenter · <span className="font-mono">G</span> grid · <span className="font-mono">P</span> auto · <span className="font-mono">Esc</span> exit
         </div>
       )}
 
@@ -371,6 +491,17 @@ export function PresentOverlay() {
         <Button variant="ghost" size="icon" className={cn('h-8 w-8 text-white hover:bg-white/15', showNotes && 'bg-white/15')} onClick={() => setShowNotes((v) => !v)} aria-label="Toggle speaker notes (N)">
           <StickyNote className="h-4 w-4" />
         </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn('h-8 w-8 text-white hover:bg-white/15', presenter && 'bg-white/15')}
+          onClick={() => setPresenter((v) => !v)}
+          aria-label="Presenter view (V)"
+          aria-pressed={presenter}
+          title="Presenter view — notes & next slide (V)"
+        >
+          <Projector className="h-4 w-4" />
+        </Button>
         <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/15" onClick={enterFull} aria-label="Toggle fullscreen">
           {isFull ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
         </Button>
@@ -379,9 +510,9 @@ export function PresentOverlay() {
         </Button>
       </div>
 
-      {/* speaker notes */}
+      {/* speaker notes (standard layout only) */}
       <AnimatePresence>
-        {showNotes && slide?.notes && (
+        {showNotes && !presenter && slide?.notes && (
           <motion.aside
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}

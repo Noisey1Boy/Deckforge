@@ -12,6 +12,7 @@ import { Presentation } from 'lucide-react';
 
 export function HomePage() {
   const view = useAppStore((s) => s.view);
+  const setView = useAppStore((s) => s.setView);
   const reduceMotion = useReducedMotion();
 
   return (
@@ -19,12 +20,16 @@ export function HomePage() {
       {/* header */}
       <header className="sticky top-0 z-40 h-16 border-b bg-background/90 backdrop-blur">
         <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 flex items-center gap-3">
-          <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => setView('create')}
+            className="flex items-center gap-2.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
+            aria-label="DeckForge AI home"
+          >
             <span className="grid place-items-center h-8 w-8 rounded-lg bg-neutral-900 text-white shadow-md shadow-neutral-900/20">
               <Presentation className="h-4.5 w-4.5" />
             </span>
             <span className="font-bold text-lg tracking-tight">DeckForge<span className="text-neutral-400"> AI</span></span>
-          </div>
+          </button>
           <nav className="ml-auto text-sm text-muted-foreground hidden sm:block" aria-label="About">
             Prompt → outline → designed slides → present &amp; export
           </nav>
