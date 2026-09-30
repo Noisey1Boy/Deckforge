@@ -63,3 +63,22 @@ Stage Summary:
 - Stack: Next.js 16 + TS, Tailwind 4 + shadcn/ui, Zustand, Prisma/SQLite, Framer Motion, Recharts, PptxGenJS, z-ai-web-dev-sdk (server-side only)
 - 8 design systems, 11 layouts, outline-first AI pipeline, data-grounded charts, editor, present mode, 3 export formats
 - Known limitations listed in README (multi-user auth, PPTX diagram linearization, print-dialog PDF, vision accuracy for chart images)
+
+---
+Task ID: r2 (cron review round 2)
+Agent: webDevReview agent
+Task: Status assessment + QA, then feature round: undo/redo, deck library, present upgrades, styling polish
+
+Work Log:
+- Status assessment: lint clean, page 200, no console errors; dev.log errors were all historical (pre-fix sessions). Phase stable → chose feature + styling work.
+- F1 Undo/redo: deck-store now keeps past/future snapshot stacks (40 entries) with a `commit()` wrapper; updateSlide/reorder/insert/remove/duplicate/setDeckTheme all snapshot; undo()/redo() swap stacks; editor toolbar gets a bordered undo/redo pair with tooltips + ⌘Z / ⇧⌘Z / Ctrl+Y keyboard shortcuts (skips INPUT/TEXTAREA targets). Verified in browser: delete slide → 4→3 slides, undo → 4, redo → 3, undo → 4.
+- F2 Deck library (new RecentDecks component): theme color gradient band + color dot per card, slide-count chip, hover actions (export .deck.json, duplicate, delete with shadcn AlertDialog confirm), Import JSON button (validates shape, caps 60 slides), skeleton loading + dashed empty state. Verified: duplicate created "(copy)" deck, delete dialog renders and removes, import path verified against the exact API contract.
+- F3 Present mode: presenter timer (mm:ss, resets on entry, 500ms tick) and slide overview grid — G key or grid button, all slides as scaled thumbnails with current-slide highlight, click-to-jump, Esc/G closes, click-outside closes. Verified via screenshots.
+- S1 Styling polish: framer-motion view transitions between create/outline/generating/editor (skipped under prefers-reduced-motion); landing hero got a masked dot-grid texture + "Prompt → Design → Present → Export" how-it-works chip strip; editor toolbar regrouped with dividers and history group; deck title truncates.
+- Fixed during round: react-hooks/set-state-in-effect lint error in timer effect (moved reset out of effect body, 500ms tick); stale `recent` reference from mid-refactor (transient Fast Refresh error, resolved).
+- README updated (undo/redo, G overview, timer, deck library/JSON import-export).
+
+Stage Summary:
+- New: undo/redo history, deck library management (duplicate/delete/JSON in+out), presenter timer, slide overview grid, animated view transitions, landing/toolbar polish.
+- All verified in browser; lint clean; page healthy.
+- Risks/next: JSON import UI couldn't be exercised via hidden-file-input automation (API contract verified directly); consider upload progress toasts, image-slide file upload (data URL), per-slide transition override, multi-select reorder; deck list pagination if library grows.

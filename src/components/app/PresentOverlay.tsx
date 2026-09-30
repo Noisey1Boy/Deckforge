@@ -1,12 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useAppStore } from '@/lib/store/deck-store';
 import { getTheme } from '@/lib/design/themes';
 import { SlideView } from '@/components/deck/SlideView';
+import { ScaledSlide } from '@/components/deck/ScaledSlide';
 import { Button } from '@/components/ui/button';
-import { X, ChevronLeft, ChevronRight, StickyNote, Maximize2, Minimize2 } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, StickyNote, Maximize2, Minimize2, LayoutGrid, Timer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -21,8 +22,11 @@ export function PresentOverlay() {
   const index = useAppStore((s) => s.currentSlideIndex);
   const setCurrent = useAppStore((s) => s.setCurrentSlide);
   const [showNotes, setShowNotes] = useState(false);
+  const [showOverview, setShowOverview] = useState(false);
   const [isFull, setIsFull] = useState(false);
   const [scale, setScale] = useState(1);
+  const [elapsed, setElapsed] = useState(0);
+  const startedAt = useRef<number | null>(null);
   const reduceMotion = useReducedMotion();
 
   const slides = deck?.slides ?? [];
@@ -49,6 +53,19 @@ export function PresentOverlay() {
     return () => window.removeEventListener('resize', update);
   }, [presenting]);
 
+  // presenter timer (resets on entry)
+  useEffect(() => {
+    if (!presenting) {
+      startedAt.current = null;
+      return;
+    }
+    startedAt.current = Date.now();
+    const t = setInterval(() => {
+      if (startedAt.current) setElapsed(Math.floor((Date.now() - startedAt.current) / 1000));
+    }, 500);
+    return () => clearInterval(t);
+  }, [presenting]);
+
   // keyboard nav
   useEffect(() => {
     if (!presenting) return;
@@ -72,17 +89,22 @@ export function PresentOverlay() {
           setCurrent(slides.length - 1);
           break;
         case 'Escape':
-          setPresenting(false);
+          if (showOverview) setShowOverview(false);
+          else setPresenting(false);
           break;
         case 'n':
         case 'N':
           setShowNotes((v) => !v);
           break;
+        case 'g':
+        case 'G':
+          setShowOverview((v) => !v);
+          break;
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [presenting, go, setCurrent, setPresenting, slides.length]);
+  }, [presenting, go, setCurrent, setPresenting, slides.length, showOverview]);
 
   const enterFull = useCallback(async () => {
     try {
@@ -119,6 +141,9 @@ export function PresentOverlay() {
         return { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } };
     }
   })();
+
+  const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
+  const ss = String(elapsed % 60).padStart(2, '0');
 
   return (
     <div className="fixed inset-0 z-[100] bg-black flex flex-col" role="dialog" aria-modal="true" aria-label="Presentation mode">
@@ -161,6 +186,13 @@ export function PresentOverlay() {
           <ChevronRight className="h-4 w-4" />
         </Button>
         <span className="w-px h-5 bg-white/20 mx-1" />
+        <span className="text-white/70 text-sm font-mono tabular-nums inline-flex items-center gap-1.5" title="Elapsed time">
+          <Timer className="h-3.5 w-3.5" /> {mm}:{ss}
+        </span>
+        <span className="w-px h-5 bg-white/20 mx-1" />
+        <Button variant="ghost" size="icon" className={cn('h-8 w-8 text-white hover:bg-white/15', showOverview && 'bg-white/15')} onClick={() => setShowOverview((v) => !v)} aria-label="Slide overview (G)">
+          <LayoutGrid className="h-4 w-4" />
+        </Button>
         <Button variant="ghost" size="icon" className={cn('h-8 w-8 text-white hover:bg-white/15', showNotes && 'bg-white/15')} onClick={() => setShowNotes((v) => !v)} aria-label="Toggle speaker notes (N)">
           <StickyNote className="h-4 w-4" />
         </Button>
@@ -185,6 +217,48 @@ export function PresentOverlay() {
             <div className="text-[10px] uppercase tracking-widest text-white/50 mb-1.5">Speaker notes · N to toggle</div>
             {slide.notes}
           </motion.aside>
+        )}
+      </AnimatePresence>
+
+      {/* slide overview grid */}
+      <AnimatePresence>
+        {showOverview && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            data-ui
+            className="absolute inset-0 bg-black/85 backdrop-blur-sm overflow-y-auto p-6 sm:p-10"
+            role="dialog"
+            aria-label="Slide overview"
+            onClick={() => setShowOverview(false)}
+          >
+            <div className="max-w-6xl mx-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-white/90 text-sm font-semibold uppercase tracking-widest">All slides · G to close</h2>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/15" onClick={() => setShowOverview(false)} aria-label="Close overview">
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {slides.map((s, i) => (
+                  <button
+                    key={s.id}
+                    onClick={() => { setCurrent(i); setShowOverview(false); }}
+                    className={cn(
+                      'relative rounded-lg overflow-hidden border-2 transition-all text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white',
+                      i === index ? 'border-white shadow-xl scale-[1.02]' : 'border-white/15 hover:border-white/60'
+                    )}
+                    aria-label={`Go to slide ${i + 1}: ${s.title || s.layout}`}
+                    aria-current={i === index}
+                  >
+                    <ScaledSlide slide={s} theme={theme} index={i} pageCount={slides.length} />
+                    <span className="absolute top-1.5 left-1.5 bg-black/70 text-white text-[10px] rounded px-1.5 py-0.5 font-mono">{i + 1}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

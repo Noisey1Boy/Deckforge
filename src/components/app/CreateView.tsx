@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAppStore } from '@/lib/store/deck-store';
 import { TemplateGallery } from './TemplateGallery';
+import { RecentDecks, type RecentDeck } from './RecentDecks';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -16,8 +17,9 @@ import type { ChartPlan, MermaidPlan } from '@/lib/data/plans';
 import { buildChartSpec, parseFileToTables, tableToMeta, type ParsedTable } from '@/lib/data/parse';
 import { cn } from '@/lib/utils';
 import {
-  FileSpreadsheet, FileJson2, ImageIcon, Loader2, Sparkles, Wand2, Clock,
-  BarChart3, Workflow, AlertTriangle, X, FileUp,
+  FileSpreadsheet, FileJson2, ImageIcon, Loader2, Sparkles, Wand2,
+  BarChart3, Workflow, AlertTriangle, X, FileUp, PenLine, LayoutTemplate,
+  MonitorPlay, Share2,
 } from 'lucide-react';
 
 const EXAMPLES = [
@@ -27,13 +29,9 @@ const EXAMPLES = [
   'Onboarding deck for new engineers: our stack, rituals and how we ship',
 ];
 
-interface RecentDeck {
+interface RecentDeckRef {
   id: string;
   title: string;
-  subtitle?: string | null;
-  themeId: string;
-  slideCount: number;
-  updatedAt: string;
 }
 
 export function CreateView() {
@@ -58,24 +56,6 @@ export function CreateView() {
   const [dataError, setDataError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLInputElement>(null);
-
-  const [recent, setRecent] = useState<RecentDeck[]>([]);
-
-  const loadRecent = useCallback(async () => {
-    try {
-      const res = await fetch('/api/decks');
-      if (res.ok) {
-        const json = await res.json();
-        setRecent(json.decks ?? []);
-      }
-    } catch {
-      /* non-fatal */
-    }
-  }, []);
-
-  useEffect(() => {
-    loadRecent();
-  }, [loadRecent]);
 
   // ---------------------------------------------------------------- data
   const handleFiles = async (files: FileList | null) => {
@@ -232,7 +212,7 @@ export function CreateView() {
     }
   };
 
-  const openDeck = async (d: RecentDeck) => {
+  const openDeck = async (d: { id: string; title: string }) => {
     try {
       setBusy('Opening deck…');
       const res = await fetch(`/api/decks/${d.id}`);
@@ -250,10 +230,20 @@ export function CreateView() {
   const hasData = tables.length > 0 || chartSpecs.length > 0 || diagram;
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-10">
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-12">
       {/* Hero */}
-      <header className="text-center space-y-4 max-w-3xl mx-auto">
-        <Badge variant="outline" className="gap-1.5 px-3 py-1 text-xs">
+      <header className="text-center space-y-5 max-w-3xl mx-auto relative">
+        <div
+          className="absolute inset-x-0 -top-6 h-64 -z-10 opacity-60"
+          style={{
+            backgroundImage: 'radial-gradient(#d4d4d4 1.2px, transparent 1.6px)',
+            backgroundSize: '22px 22px',
+            maskImage: 'radial-gradient(ellipse 60% 60% at 50% 35%, black 30%, transparent 75%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 60% 60% at 50% 35%, black 30%, transparent 75%)',
+          }}
+          aria-hidden
+        />
+        <Badge variant="outline" className="gap-1.5 px-3 py-1 text-xs bg-white/70">
           <Sparkles className="h-3.5 w-3.5 text-amber-500" /> AI presentation studio
         </Badge>
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-neutral-900">
@@ -263,6 +253,21 @@ export function CreateView() {
           Describe your topic or drop your data. DeckForge writes, structures and designs the
           whole presentation — then lets you edit, present and export it.
         </p>
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 pt-1" aria-label="How it works">
+          {[
+            { icon: <PenLine className="h-3.5 w-3.5" />, label: 'Prompt' },
+            { icon: <LayoutTemplate className="h-3.5 w-3.5" />, label: 'Design' },
+            { icon: <MonitorPlay className="h-3.5 w-3.5" />, label: 'Present' },
+            { icon: <Share2 className="h-3.5 w-3.5" />, label: 'Export' },
+          ].map((step, i, arr) => (
+            <span key={step.label} className="flex items-center gap-2 sm:gap-3">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 shadow-sm">
+                {step.icon} {step.label}
+              </span>
+              {i < arr.length - 1 && <span className="h-px w-4 sm:w-6 bg-neutral-300" aria-hidden />}
+            </span>
+          ))}
+        </div>
       </header>
 
       {/* Prompt card */}
@@ -427,26 +432,8 @@ export function CreateView() {
         </section>
       </div>
 
-      {/* Recent decks */}
-      {recent.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold flex items-center gap-2"><Clock className="h-4 w-4 text-muted-foreground" /> Recent decks</h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {recent.map((d) => (
-              <button
-                key={d.id}
-                onClick={() => openDeck(d)}
-                className={cn(
-                  'text-left rounded-lg border border-neutral-200 p-3 hover:border-neutral-900 transition-colors bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900'
-                )}
-              >
-                <div className="font-medium text-sm truncate">{d.title}</div>
-                <div className="text-xs text-muted-foreground mt-1">{d.slideCount} slides · {new Date(d.updatedAt).toLocaleDateString()}</div>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
+      {/* Deck library */}
+      <RecentDecks onOpen={(d) => openDeck(d)} />
     </div>
   );
 }

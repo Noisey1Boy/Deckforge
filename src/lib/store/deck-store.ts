@@ -43,6 +43,12 @@ interface AppState {
   progress: GenProgress;
   dirty: boolean;
   dataAssets: DataAssets;
+  /** Undo/redo stacks of deck snapshots (structural slide ops only). */
+  past: Deck[];
+  future: Deck[];
+
+  undo: () => void;
+  redo: () => void;
 
   setDataAssets: (d: DataAssets) => void;
   setView: (v: AppView) => void;
@@ -68,7 +74,21 @@ export function newSlideId(): string {
   return `s_${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36).slice(-4)}`;
 }
 
-export const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>((set, get) => {
+  /** Apply a deck mutation with an undo snapshot. */
+  const commit = (fn: (deck: Deck) => Deck) =>
+    set((s) => {
+      if (!s.deck) return s;
+      const next = fn(s.deck);
+      return {
+        deck: next,
+        past: [...s.past.slice(-39), s.deck],
+        future: [],
+        dirty: true,
+      };
+    });
+
+  return {
   view: 'create',
   deck: null,
   outline: null,
@@ -78,23 +98,47 @@ export const useAppStore = create<AppState>((set) => ({
   progress: { done: 0, total: 0, currentTitle: '' },
   dirty: false,
   dataAssets: EMPTY_DATA_ASSETS,
+  past: [],
+  future: [],
+
+  undo: () =>
+    set((s) => {
+      if (!s.past.length || !s.deck) return s;
+      const prev = s.past[s.past.length - 1];
+      return {
+        deck: prev,
+        past: s.past.slice(0, -1),
+        future: [s.deck, ...s.future.slice(0, 39)],
+        dirty: true,
+      };
+    }),
+  redo: () =>
+    set((s) => {
+      if (!s.future.length || !s.deck) return s;
+      const next = s.future[0];
+      return {
+        deck: next,
+        past: [...s.past.slice(-39), s.deck],
+        future: s.future.slice(1),
+        dirty: true,
+      };
+    }),
 
   setDataAssets: (dataAssets) => set({ dataAssets }),
   setView: (view) => set({ view }),
   setThemeChoice: (themeChoice) => set({ themeChoice }),
   setOutline: (outline) => set({ outline }),
-  setDeck: (deck) => set({ deck, currentSlideIndex: 0, dirty: false }),
+  setDeck: (deck) => set({ deck, currentSlideIndex: 0, dirty: false, past: [], future: [] }),
   patchDeck: (p) => set((s) => ({ deck: s.deck ? { ...s.deck, ...p } : s.deck, dirty: true })),
   setCurrentSlide: (i) => set({ currentSlideIndex: Math.max(0, i) }),
   setPresenting: (presenting) => set({ presenting }),
   setProgress: (progress) => set({ progress }),
 
   updateSlide: (id, patch) =>
-    set((s) => {
-      if (!s.deck) return s;
-      const slides = s.deck.slides.map((sl) => (sl.id === id ? { ...sl, ...patch } : sl));
-      return { deck: { ...s.deck, slides }, dirty: true };
-    }),
+    commit((d) => ({
+      ...d,
+      slides: d.slides.map((sl) => (sl.id === id ? { ...sl, ...patch } : sl)),
+    })),
 
   reorderSlides: (from, to) =>
     set((s) => {
@@ -102,7 +146,13 @@ export const useAppStore = create<AppState>((set) => ({
       const slides = [...s.deck.slides];
       const [moved] = slides.splice(from, 1);
       slides.splice(to, 0, moved);
-      return { deck: { ...s.deck, slides }, currentSlideIndex: to, dirty: true };
+      return {
+        deck: { ...s.deck, slides },
+        past: [...s.past.slice(-39), s.deck],
+        future: [],
+        currentSlideIndex: to,
+        dirty: true,
+      };
     }),
 
   insertSlide: (index, slide) =>
@@ -110,7 +160,13 @@ export const useAppStore = create<AppState>((set) => ({
       if (!s.deck) return s;
       const slides = [...s.deck.slides];
       slides.splice(index, 0, slide);
-      return { deck: { ...s.deck, slides }, currentSlideIndex: index, dirty: true };
+      return {
+        deck: { ...s.deck, slides },
+        past: [...s.past.slice(-39), s.deck],
+        future: [],
+        currentSlideIndex: index,
+        dirty: true,
+      };
     }),
 
   removeSlide: (id) =>
@@ -121,6 +177,8 @@ export const useAppStore = create<AppState>((set) => ({
       const slides = s.deck.slides.filter((sl) => sl.id !== id);
       return {
         deck: { ...s.deck, slides },
+        past: [...s.past.slice(-39), s.deck],
+        future: [],
         currentSlideIndex: Math.min(Math.max(0, idx - 1), Math.max(0, slides.length - 1)),
         dirty: true,
       };
@@ -134,17 +192,23 @@ export const useAppStore = create<AppState>((set) => ({
       const copy: Slide = { ...s.deck.slides[idx], id: newSlideId() };
       const slides = [...s.deck.slides];
       slides.splice(idx + 1, 0, copy);
-      return { deck: { ...s.deck, slides }, currentSlideIndex: idx + 1, dirty: true };
+      return {
+        deck: { ...s.deck, slides },
+        past: [...s.past.slice(-39), s.deck],
+        future: [],
+        currentSlideIndex: idx + 1,
+        dirty: true,
+      };
     }),
 
-  setDeckTheme: (themeId) =>
-    set((s) => {
-      if (!s.deck) return s;
-      return { deck: { ...s.deck, themeId }, themeChoice: themeId, dirty: true };
-    }),
+  setDeckTheme: (themeId) => {
+    set((s) => ({ themeChoice: themeId }));
+    commit((d) => ({ ...d, themeId }));
+  },
 
   markSaved: () => set({ dirty: false }),
-}));
+  } as AppState;
+})
 
 /** Convenience: active theme of the current deck (or the gallery choice). */
 export function useActiveTheme() {

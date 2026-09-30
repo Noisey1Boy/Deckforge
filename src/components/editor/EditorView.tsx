@@ -15,6 +15,7 @@ import { LAYOUT_IDS } from '@/lib/deck/types';
 import { cn } from '@/lib/utils';
 import {
   Play, Plus, Trash2, Copy, Presentation, ChevronLeft, ChevronRight, Check, Cloud,
+  Undo2, Redo2,
 } from 'lucide-react';
 
 const LAYOUT_ICONS: Record<LayoutId, string> = {
@@ -103,6 +104,10 @@ export function EditorView() {
   const [saving, setSaving] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+  const undo = useAppStore((s) => s.undo);
+  const redo = useAppStore((s) => s.redo);
+  const canUndo = useAppStore((s) => s.past.length > 0);
+  const canRedo = useAppStore((s) => s.future.length > 0);
 
   // ------------------------------------------------------------ autosave
   const save = useCallback(async () => {
@@ -128,6 +133,25 @@ export function EditorView() {
     return () => clearTimeout(t);
   }, [dirty, deck, save]);
 
+  // Undo/redo keyboard shortcuts (⌘Z / ⌘⇧Z / Ctrl+Z / Ctrl+Y)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement | null)?.isContentEditable) return;
+      const mod = e.metaKey || e.ctrlKey;
+      if (!mod) return;
+      if (e.key.toLowerCase() === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        useAppStore.getState().undo();
+      } else if ((e.key.toLowerCase() === 'z' && e.shiftKey) || e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        useAppStore.getState().redo();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   if (!deck) {
     setView('create');
     return null;
@@ -151,14 +175,36 @@ export function EditorView() {
         <input
           value={deck.title}
           onChange={(e) => patchDeck({ title: e.target.value })}
-          className="font-semibold text-lg bg-transparent outline-none focus:bg-neutral-100 rounded px-2 py-1 min-w-0 flex-1 sm:max-w-xs"
+          className="font-semibold text-lg bg-transparent outline-none focus:bg-neutral-100 rounded px-2 py-1 min-w-0 flex-1 sm:max-w-60 truncate"
           aria-label="Deck title"
           maxLength={120}
         />
         <span className="text-xs text-muted-foreground hidden sm:flex items-center gap-1 w-20">
           {saving === 'saving' ? (<><Cloud className="h-3.5 w-3.5 animate-pulse" /> Saving…</>) : saving === 'saved' ? (<><Check className="h-3.5 w-3.5 text-emerald-600" /> Saved</>) : null}
         </span>
-        <div className="flex items-center gap-2 ml-auto flex-wrap">
+        <div className="flex items-center gap-1.5 ml-auto flex-wrap">
+          <div className="flex items-center rounded-md border border-neutral-200 overflow-hidden" role="group" aria-label="History">
+            <button
+              onClick={undo}
+              disabled={!canUndo}
+              title="Undo (⌘Z)"
+              aria-label="Undo"
+              className="h-9 w-9 grid place-items-center hover:bg-neutral-100 disabled:opacity-35 disabled:hover:bg-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:z-10"
+            >
+              <Undo2 className="h-4 w-4" />
+            </button>
+            <span className="w-px h-5 bg-neutral-200" aria-hidden />
+            <button
+              onClick={redo}
+              disabled={!canRedo}
+              title="Redo (⇧⌘Z)"
+              aria-label="Redo"
+              className="h-9 w-9 grid place-items-center hover:bg-neutral-100 disabled:opacity-35 disabled:hover:bg-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:z-10"
+            >
+              <Redo2 className="h-4 w-4" />
+            </button>
+          </div>
+          <span className="w-px h-6 bg-neutral-200 mx-1" aria-hidden />
           <Select value={deck.themeId} onValueChange={setDeckTheme}>
             <SelectTrigger className="w-44 h-9" aria-label="Switch design system"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -175,6 +221,7 @@ export function EditorView() {
               ))}
             </SelectContent>
           </Select>
+          <span className="w-px h-6 bg-neutral-200 mx-1" aria-hidden />
           <ExportMenu />
           <Button onClick={() => setPresenting(true)} className="gap-1.5 bg-neutral-900 hover:bg-neutral-800 h-9">
             <Play className="h-4 w-4" /> Present

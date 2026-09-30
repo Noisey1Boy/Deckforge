@@ -1,5 +1,6 @@
 'use client';
 
+import { motion, useReducedMotion } from 'framer-motion';
 import { useAppStore } from '@/lib/store/deck-store';
 import { CreateView } from '@/components/app/CreateView';
 import { OutlineView } from '@/components/app/OutlineView';
@@ -11,6 +12,7 @@ import { Presentation } from 'lucide-react';
 
 export function HomePage() {
   const view = useAppStore((s) => s.view);
+  const reduceMotion = useReducedMotion();
 
   return (
     <div className="min-h-screen flex flex-col bg-neutral-50">
@@ -18,7 +20,7 @@ export function HomePage() {
       <header className="sticky top-0 z-40 h-16 border-b bg-background/90 backdrop-blur">
         <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 flex items-center gap-3">
           <div className="flex items-center gap-2.5">
-            <span className="grid place-items-center h-8 w-8 rounded-lg bg-neutral-900 text-white">
+            <span className="grid place-items-center h-8 w-8 rounded-lg bg-neutral-900 text-white shadow-md shadow-neutral-900/20">
               <Presentation className="h-4.5 w-4.5" />
             </span>
             <span className="font-bold text-lg tracking-tight">DeckForge<span className="text-neutral-400"> AI</span></span>
@@ -30,10 +32,26 @@ export function HomePage() {
       </header>
 
       <main className="flex-1">
-        {view === 'create' && <CreateView />}
-        {view === 'outline' && <OutlineView />}
-        {view === 'generating' && <GeneratingView />}
-        {view === 'editor' && <EditorView />}
+        {reduceMotion ? (
+          <>
+            {view === 'create' && <CreateView />}
+            {view === 'outline' && <OutlineView />}
+            {view === 'generating' && <GeneratingView />}
+            {view === 'editor' && <EditorView />}
+          </>
+        ) : (
+          <motion.div
+            key={view}
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.28, ease: [0.22, 0.61, 0.36, 1] }}
+          >
+            {view === 'create' && <CreateView />}
+            {view === 'outline' && <OutlineView />}
+            {view === 'generating' && <GeneratingView />}
+            {view === 'editor' && <EditorView />}
+          </motion.div>
+        )}
       </main>
 
       {/* sticky footer — mt-auto keeps it at the bottom on short pages */}
