@@ -284,3 +284,24 @@ Work Log (completed):
 Stage Summary:
 - 5 features (slide board, deck-file export with round-trip, deck default transition, 2-way parallel AI notes, illustrative badge) + styling details, all verified in browser end-to-end.
 - Risks/next: RecentDecks list doesn't refetch after delete until reload (could invalidate on focus); board grid is DOM-order only (no spatial drag preview — acceptable for 60-slide cap); deck JSON export is client-side only (server-side share-links would be a bigger feature); palette's board item toggles even when board opened via toolbar (consistent by design); consider per-slide transition select showing the deck default as "(deck default)" suffix.
+
+---
+Task ID: r4-landing-redesign
+Agent: main-agent (Z.ai Code)
+Task: Redesign the landing page (user: "the landing page is a generic AI website") using obra/superpowers as brand reference and the project's installed web-design skills (ui-ux-pro-max, visual-design-foundations, impeccable)
+
+Work Log:
+- Analyzed obra/superpowers (cloned repo, README + assets): pure-black monochrome logo, opinionated personality-driven copy, numbered methodology ("The Basic Workflow"), Philosophy section, honest/technical voice → extracted these as the redesign's design pillars.
+- Read skills/ui-ux-pro-max/SKILL.md + skills/visual-design-foundations/SKILL.md: type scale, 8-pt spacing, semantic tokens, "always cover empty/loading/error, keyboard nav, focus states, contrast" rules applied below.
+- Direction: "print shop / foundry" system — ink (neutral-950) + paper (neutral-50) alternating bands, ONE amber accent, NO gradients/orbs/sparkle badges; product's own loaded typefaces (Inter Tight display, Fraunces italic for the one editorial flourish, IBM Plex Mono for annotations) tie landing typography to the app's theme tokens.
+- NEW src/components/app/landing/HeroSpecimen.tsx: live specimen lightbox — 8 REAL slides (stats/section/chart/quote/title/bullets/comparison) rendered by the actual ScaledSlide+SlideView+theme-token pipeline, auto-cycling 3.4s across all 8 design systems; window-chrome frame, FIG. n/08 mono caption, theme dots + prev/pause/next controls; pause on hover + document.hidden; aria-current/labels.
+- Rewrote CreateView.tsx (all logic/handlers preserved verbatim): ink hero (dot grid via mask, eyebrow mono rule, "Presentations that look like *someone cared.*", amber CTA + ghost CTA), CSS marquee spec strip (pause on hover, reduced-motion safe), 01 THE METHOD numbered 4-step strip (hairline gap-px grid + registration-mark hover accents), 02 THE WORKBENCH (A·Brief card: 2px ink border + 6px hard offset shadow, mono example chips, mono setting labels, "Forge the outline" CTA + approval caption; B·Materials: pill tab bar, dot-grid dropzones; C·Design systems: "Eight systems. Zero templates."), 03 HOUSE RULES ink band (4 opinion cards: numbers sacred / systems not templates / outline before pixels / file is yours), 04 THE ARCHIVE deck library.
+- HomePage.tsx: header restyled (ink mark, amber AI tag, mono anchor nav METHOD/WORKBENCH/SYSTEMS/DECKS with underline-sweep hover, NEW DECK mono button); footer rebuilt as ink colophon (brand + tagline, spec line "8 SYSTEMS · 11 LAYOUTS · 3 EXPORT FORMATS", server-side-AI status, bottom spec row).
+- RecentDecks: added hideHeading prop (section heading moved to CreateView's "The archive." block, search/import toolbar retained).
+- globals.css: removed df-orb/df-gradient-text (old generic hero), added .df-mono/.df-display/.df-serif-it, .df-dots-dark/.df-dots-paper, .df-reg registration marks, df-marquee keyframes, .df-link underline sweep, amber ::selection, smooth scroll (both guarded by prefers-reduced-motion).
+- Verified with agent-browser: anchor scroll (WORKBENCH → y=1037), specimen dot jump (Dark Elegant quote renders), example chip → textarea fill, data-tab switching, markdown live-parse badges (3 slides/4 bullets), desktop + 390px mobile full-page screenshots, footer pushed naturally, console clean; E2E "Forge the outline" → POST /api/generate/outline 200 (6.9s) → editable outline view loads. Lint clean.
+
+Stage Summary:
+- Landing no longer generic-AI: monochrome editorial system with one accent, opinionated copy, numbered method + house rules (superpowers-style), and the hero's proof is the product itself (live token-rendered slides cycling all 8 systems).
+- All previous functionality intact (brief, 4 data input modes, template picker, deck library, full pipeline); no API/store changes.
+- Files: src/components/app/landing/HeroSpecimen.tsx (new), CreateView.tsx (rewritten JSX), HomePage.tsx, RecentDecks.tsx (hideHeading prop), globals.css (landing utilities swap).

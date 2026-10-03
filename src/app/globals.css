@@ -183,34 +183,103 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Landing hero: drifting gradient orbs (pure CSS, GPU-cheap) + gradient text.
- * Disabled entirely under prefers-reduced-motion.
+ * Landing utilities — "print shop" system.
+ * Monochrome foundation, one amber accent, real product typefaces (the same
+ * families the slide themes load). No gradients, no glow — ink on paper.
  * ------------------------------------------------------------------------- */
-@keyframes df-orb-drift {
-  0%   { transform: translate3d(0, 0, 0) scale(1); }
-  33%  { transform: translate3d(4%, -6%, 0) scale(1.08); }
-  66%  { transform: translate3d(-5%, 4%, 0) scale(0.94); }
-  100% { transform: translate3d(0, 0, 0) scale(1); }
+.df-mono {
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
-.df-orb {
-  position: absolute;
-  border-radius: 9999px;
-  filter: blur(70px);
-  opacity: 0.75;
-  pointer-events: none;
-  will-change: transform;
-  animation: df-orb-drift 22s ease-in-out infinite;
+.df-display {
+  font-family: 'Inter Tight', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  letter-spacing: -0.03em;
 }
-.df-orb-2 { animation-duration: 28s; animation-delay: -8s; }
-.df-orb-3 { animation-duration: 34s; animation-delay: -16s; }
+.df-serif-it {
+  font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  letter-spacing: -0.015em;
+}
 
-.df-gradient-text {
-  background: linear-gradient(92deg, #0f766e 0%, #b45309 48%, #7c3aed 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+/* Dot grids — hero (light dots on ink) + paper (ink dots on paper) */
+.df-dots-dark {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.13) 1px, transparent 1.4px);
+  background-size: 22px 22px;
+}
+.df-dots-paper {
+  background-image: radial-gradient(rgba(23, 23, 23, 0.10) 1px, transparent 1.4px);
+  background-size: 22px 22px;
+}
+
+/* Registration mark — the little crosshair used by print shops */
+.df-reg {
+  position: relative;
+}
+.df-reg::before,
+.df-reg::after {
+  content: '';
+  position: absolute;
+  background: currentColor;
+  opacity: 0.5;
+}
+.df-reg::before {
+  width: 9px;
+  height: 1px;
+  left: -4.5px;
+  top: 50%;
+}
+.df-reg::after {
+  width: 1px;
+  height: 9px;
+  left: 50%;
+  top: -4.5px;
+}
+
+/* Marquee strip */
+@keyframes df-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.df-marquee-track {
+  animation: df-marquee 38s linear infinite;
+  will-change: transform;
+}
+.df-marquee:hover .df-marquee-track {
+  animation-play-state: paused;
+}
+
+/* Underline sweep for anchor links */
+.df-link {
+  position: relative;
+}
+.df-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  height: 1px;
+  width: 100%;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.25s ease;
+}
+.df-link:hover::after,
+.df-link:focus-visible::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+::selection {
+  background: #fbbf24;
+  color: #171717;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .df-orb { animation: none; }
+  .df-marquee-track { animation: none; }
+  html { scroll-behavior: auto; }
+  .df-link::after { transition: none; }
 }

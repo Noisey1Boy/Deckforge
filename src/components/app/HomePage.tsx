@@ -18,26 +18,40 @@ export function HomePage() {
 
   return (
     <div className={cn('flex flex-col bg-neutral-50', view === 'editor' ? 'h-screen overflow-hidden' : 'min-h-screen')}>
-      {/* header */}
+      {/* header — ink mark, mono anchors */}
       <header className="sticky top-0 z-40 h-16 border-b bg-background/90 backdrop-blur">
-        <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 flex items-center gap-3">
+        <div className="mx-auto flex h-full max-w-7xl items-center gap-3 px-4 sm:px-6">
           <button
             onClick={() => setView('create')}
             className="flex items-center gap-2.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
             aria-label="DeckForge AI home"
           >
-            <span className="grid place-items-center h-8 w-8 rounded-lg bg-neutral-900 text-white shadow-md shadow-neutral-900/20">
-              <Presentation className="h-4.5 w-4.5" />
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-neutral-950 text-white shadow-md shadow-neutral-950/25">
+              <Presentation className="h-4.5 w-4.5" aria-hidden />
             </span>
-            <span className="font-bold text-lg tracking-tight">DeckForge<span className="text-neutral-400"> AI</span></span>
+            <span className="df-display text-lg font-bold tracking-tight">
+              DeckForge
+              <span className="df-mono ml-1.5 align-middle text-[10px] font-medium tracking-[0.2em] text-amber-600">AI</span>
+            </span>
           </button>
-          <nav className="ml-auto text-sm text-muted-foreground hidden sm:block" aria-label="About">
-            Prompt → outline → designed slides → present &amp; export
+
+          <nav className="df-mono ml-auto hidden items-center gap-6 text-[11px] tracking-[0.18em] text-neutral-500 md:flex" aria-label="Page sections">
+            <a href="#method" className="df-link transition-colors hover:text-neutral-950">METHOD</a>
+            <a href="#brief" className="df-link transition-colors hover:text-neutral-950">WORKBENCH</a>
+            <a href="#systems" className="df-link transition-colors hover:text-neutral-950">SYSTEMS</a>
+            <a href="#decks" className="df-link transition-colors hover:text-neutral-950">DECKS</a>
           </nav>
+
+          <a
+            href="#brief"
+            className="df-mono ml-auto inline-flex h-9 items-center rounded-md bg-neutral-950 px-3.5 text-[11px] font-medium tracking-[0.18em] text-white transition-colors hover:bg-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2 md:ml-6"
+          >
+            NEW DECK
+          </a>
         </div>
       </header>
 
-      <main className="flex-1 min-h-0 flex flex-col">
+      <main className="flex min-h-0 flex-1 flex-col">
         {reduceMotion ? (
           <>
             {view === 'create' && <CreateView />}
@@ -61,14 +75,34 @@ export function HomePage() {
         )}
       </main>
 
-      {/* sticky footer — mt-auto keeps it at the bottom on short pages */}
-      <footer className="mt-auto border-t bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
-          <p>DeckForge AI — 8 curated design systems · charts from your own data · PPTX / PDF / HTML export</p>
-          <p className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
-            AI runs server-side · your data stays yours
-          </p>
+      {/* footer — ink colophon, sticks to the bottom on short pages */}
+      <footer className="mt-auto bg-neutral-950 text-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-10">
+          <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+            <div>
+              <div className="flex items-center gap-2.5">
+                <span className="grid h-7 w-7 place-items-center rounded-md bg-white text-neutral-950">
+                  <Presentation className="h-4 w-4" aria-hidden />
+                </span>
+                <span className="df-display text-base font-bold tracking-tight">DeckForge AI</span>
+              </div>
+              <p className="mt-3 max-w-sm text-sm leading-relaxed text-neutral-400">
+                A presentation design studio that runs on your prompt. Built for people
+                with something to say and no time to fight a slide editor.
+              </p>
+            </div>
+            <div className="df-mono space-y-2 text-[11px] tracking-[0.18em] text-neutral-400">
+              <p>8 SYSTEMS · 11 LAYOUTS · 3 EXPORT FORMATS</p>
+              <p className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
+                AI RUNS SERVER-SIDE — YOUR DATA STAYS YOURS
+              </p>
+            </div>
+          </div>
+          <div className="df-mono mt-8 flex flex-col gap-2 border-t border-white/10 pt-4 text-[10px] tracking-[0.18em] text-neutral-600 sm:flex-row sm:items-center sm:justify-between">
+            <span>PROMPT → OUTLINE → DESIGN → PRESENT → EXPORT</span>
+            <span>1280×720 · TOKEN-RENDERED · NO TEMPLATES</span>
+          </div>
         </div>
       </footer>
 

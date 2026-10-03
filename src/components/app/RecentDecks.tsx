@@ -40,7 +40,7 @@ function timeAgo(iso: string): string {
 }
 
 /** Landing-page deck library: open, duplicate, export JSON, delete, import. */
-export function RecentDecks({ onOpen }: { onOpen: (d: RecentDeck) => void }) {
+export function RecentDecks({ onOpen, hideHeading = false }: { onOpen: (d: RecentDeck) => void; hideHeading?: boolean }) {
   const [decks, setDecks] = useState<RecentDeck[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
@@ -200,10 +200,12 @@ export function RecentDecks({ onOpen }: { onOpen: (d: RecentDeck) => void }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <Clock className="h-4 w-4 text-muted-foreground" /> Your decks
-          <span className="text-xs font-normal text-muted-foreground">({decks.length})</span>
-        </h2>
+        {!hideHeading && (
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Clock className="h-4 w-4 text-muted-foreground" /> Your decks
+            <span className="text-xs font-normal text-muted-foreground">({decks.length})</span>
+          </h2>
+        )}
         <div className="relative ml-auto">
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" aria-hidden />
           <input

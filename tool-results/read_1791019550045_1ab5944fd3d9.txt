@@ -1,0 +1,647 @@
+     1→     1→'use client';
+     2→     2→
+     3→     3→import { useCallback, useEffect, useRef, useState } from 'react';
+     4→     4→import { motion, useReducedMotion } from 'framer-motion';
+     5→     5→import { useAppStore } from '@/lib/store/deck-store';
+     6→     6→import { TemplateGallery } from './TemplateGallery';
+     7→     7→import { RecentDecks, type RecentDeck } from './RecentDecks';
+     8→     8→import { Button } from '@/components/ui/button';
+     9→     9→import { Textarea } from '@/components/ui/textarea';
+    10→    10→import { Input } from '@/components/ui/input';
+    11→    11→import { Slider } from '@/components/ui/slider';
+    12→    12→import { Card, CardContent } from '@/components/ui/card';
+    13→    13→import { Badge } from '@/components/ui/badge';
+    14→    14→import { toast } from 'sonner';
+    15→    15→import type { ChartSpec, DeckOutline, OutlineItem } from '@/lib/deck/types';
+    16→    16→import type { ChartPlan, MermaidPlan } from '@/lib/data/plans';
+    17→    17→import { buildChartSpec, parseFileToTables, tableToMeta, type ParsedTable } from '@/lib/data/parse';
+    18→    18→import { parseMarkdownOutline, suggestThemeId } from '@/lib/data/markdown-outline';
+    19→    19→import { cn } from '@/lib/utils';
+    20→    20→import {
+    21→    21→  FileSpreadsheet, FileJson2, ImageIcon, Loader2, Sparkles, Wand2,
+    22→    22→  BarChart3, Workflow, AlertTriangle, X, FileUp, PenLine, LayoutTemplate,
+    23→    23→  MonitorPlay, Share2, Dices, FileText, ListTree,
+    24→    24→} from 'lucide-react';
+    25→    25→
+    26→    26→const EXAMPLES = [
+    27→    27→  'Q3 business review for a fintech startup: metrics, wins, risks and next quarter roadmap',
+    28→    28→  'Teach beginners the basics of photography in 10 minutes',
+    29→    29→  'Pitch an AI-powered recycling assistant to a city council',
+    30→    30→  'Onboarding deck for new engineers: our stack, rituals and how we ship',
+    31→    31→  '2026 sustainability strategy for a mid-size apparel brand, for investors',
+    32→    32→  'Market landscape of electric scooters in Southeast Asia',
+    33→    33→  'Introduce our new design system to the whole company',
+    34→    34→  'Quarterly OKR planning offsite: retro, focus areas, owners',
+    35→    35→  'Health benefits of sleep, backed by recent research, for a general audience',
+    36→    36→  'Launch plan for a mobile budgeting app: positioning, channels, milestones',
+    37→    37→  'A history of jazz in five eras, for a school audience',
+    38→    38→  'State of our customer support: SLAs, ticket trends, hiring plan',
+    39→    39→];
+    40→    40→
+    41→    41→/** Pick `count` example prompts starting from a rotating seed. */
+    42→    42→function dealExamples(seed: number, count = 4): string[] {
+    43→    43→  const start = (seed * count) % EXAMPLES.length;
+    44→    44→  return Array.from({ length: Math.min(count, EXAMPLES.length) }, (_, i) => EXAMPLES[(start + i) % EXAMPLES.length]);
+    45→    45→}
+    46→    46→
+    47→    47→interface RecentDeckRef {
+    48→    48→  id: string;
+    49→    49→  title: string;
+    50→    50→}
+    51→    51→
+    52→    52→export function CreateView() {
+    53→    53→  const setOutline = useAppStore((s) => s.setOutline);
+    54→    54→  const setView = useAppStore((s) => s.setView);
+    55→    55→  const setDataAssets = useAppStore((s) => s.setDataAssets);
+    56→    56→  const setGenSettings = useAppStore((s) => s.setGenSettings);
+    57→    57→  const themeChoice = useAppStore((s) => s.themeChoice);
+    58→    58→  const setDeck = useAppStore((s) => s.setDeck);
+    59→    59→  const reduceMotion = useReducedMotion();
+    60→    60→
+    61→    61→  const enter = (delay: number) =>
+    62→    62→    reduceMotion
+    63→    63→      ? {}
+    64→    64→      : {
+    65→    65→          initial: { opacity: 0, y: 18 },
+    66→    66→          animate: { opacity: 1, y: 0 },
+    67→    67→          transition: { duration: 0.5, delay, ease: [0.22, 0.61, 0.36, 1] as const },
+    68→    68→        };
+    69→    69→
+    70→    70→  const [prompt, setPrompt] = useState('');
+    71→    71→  const [audience, setAudience] = useState('');
+    72→    72→  const [tone, setTone] = useState('professional');
+    73→    73→  const [slideCount, setSlideCount] = useState(10);
+    74→    74→  const [language, setLanguage] = useState('English');
+    75→    75→  const [busy, setBusy] = useState<string | null>(null);
+    76→    76→  const [dataTab, setDataTab] = useState<'files' | 'image' | 'mermaid' | 'markdown'>('files');
+    77→    77→  // Start with a deterministic seed so SSR and the first client render match
+    78→    78→  // (avoids a hydration mismatch); deal a random set right after mount.
+    79→    79→  const [ideaSeed, setIdeaSeed] = useState(0);
+    80→    80→  useEffect(() => {
+    81→    81→    const t = window.setTimeout(() => setIdeaSeed(Math.floor(Math.random() * 3)), 0);
+    82→    82→    return () => window.clearTimeout(t);
+    83→    83→  }, []);
+    84→    84→
+    85→    85→  // data inputs
+    86→    86→  const [tables, setTables] = useState<ParsedTable[]>([]);
+    87→    87→  const [chartSpecs, setChartSpecs] = useState<ChartSpec[]>([]);
+    88→    88→  const [diagram, setDiagram] = useState<MermaidPlan | null>(null);
+    89→    89→  const [mermaid, setMermaid] = useState('');
+    90→    90→  const [markdown, setMarkdown] = useState('');
+    91→    91→  const [dataError, setDataError] = useState<string | null>(null);
+    92→    92→  const fileRef = useRef<HTMLInputElement>(null);
+    93→    93→  const imgRef = useRef<HTMLInputElement>(null);
+    94→    94→
+    95→    95→  // ---------------------------------------------------------------- data
+    96→    96→  const handleFiles = async (files: FileList | null) => {
+    97→    97→    if (!files?.length) return;
+    98→    98→    setDataError(null);
+    99→    99→    setBusy('Reading data…');
+   100→   100→    const newTables: ParsedTable[] = [...tables];
+   101→   101→    for (const file of Array.from(files).slice(0, 3)) {
+   102→   102→      const { tables: ts, error } = await parseFileToTables(file);
+   103→   103→      if (error) {
+   104→   104→        setDataError(error);
+   105→   105→        toast.error(error);
+   106→   106→      }
+   107→   107→      newTables.push(...ts);
+   108→   108→    }
+   109→   109→    setTables(newTables.slice(0, 3));
+   110→   110→    setChartSpecs([]); // re-plan after new data
+   111→   111→    setBusy(null);
+   112→   112→  };
+   113→   113→
+   114→   114→  const handleChartImage = async (files: FileList | null) => {
+   115→   115→    const file = files?.[0];
+   116→   116→    if (!file) return;
+   117→   117→    if (!/^image\/(png|jpe?g|webp)$/.test(file.type)) {
+   118→   118→      toast.error('Use a PNG, JPG or WebP screenshot of your chart.');
+   119→   119→      return;
+   120→   120→    }
+   121→   121→    if (file.size > 6_000_000) {
+   122→   122→      toast.error('Image must be under 6 MB.');
+   123→   123→      return;
+   124→   124→    }
+   125→   125→    setBusy('Reading chart from image…');
+   126→   126→    try {
+   127→   127→      const dataUrl = await new Promise<string>((resolve, reject) => {
+   128→   128→        const r = new FileReader();
+   129→   129→        r.onload = () => resolve(String(r.result));
+   130→   130→        r.onerror = reject;
+   131→   131→        r.readAsDataURL(file);
+   132→   132→      });
+   133→   133→      const res = await fetch('/api/data/chart-image', {
+   134→   134→        method: 'POST',
+   135→   135→        headers: { 'Content-Type': 'application/json' },
+   136→   136→        body: JSON.stringify({ image: dataUrl, language }),
+   137→   137→      });
+   138→   138→      const json = await res.json();
+   139→   139→      if (!res.ok) throw new Error(json.error || 'Extraction failed');
+   140→   140→      setChartSpecs((prev) => [...prev, json.chart as ChartSpec]);
+   141→   141→      toast.success('Chart extracted from image.');
+   142→   142→    } catch (e) {
+   143→   143→      toast.error(e instanceof Error ? e.message : 'Image analysis failed');
+   144→   144→    } finally {
+   145→   145→      setBusy(null);
+   146→   146→      if (imgRef.current) imgRef.current.value = '';
+   147→   147→    }
+   148→   148→  };
+   149→   149→
+   150→   150→  const analyzeMermaid = async () => {
+   151→   151→    if (mermaid.trim().length < 10) {
+   152→   152→      toast.error('Paste a Mermaid diagram first (e.g. "graph LR; A-->B;").');
+   153→   153→      return;
+   154→   154→    }
+   155→   155→    setBusy('Converting diagram…');
+   156→   156→    try {
+   157→   157→      const res = await fetch('/api/data/analyze', {
+   158→   158→        method: 'POST',
+   159→   159→        headers: { 'Content-Type': 'application/json' },
+   160→   160→        body: JSON.stringify({ mermaid, language }),
+   161→   161→      });
+   162→   162→      const json = await res.json();
+   163→   163→      if (!res.ok) throw new Error(json.error || 'Conversion failed');
+   164→   164→      if (json.diagram) {
+   165→   165→        setDiagram(json.diagram as MermaidPlan);
+   166→   166→        toast.success('Diagram ready to include.');
+   167→   167→      } else throw new Error('Could not parse the diagram');
+   168→   168→    } catch (e) {
+   169→   169→      toast.error(e instanceof Error ? e.message : 'Conversion failed');
+   170→   170→    } finally {
+   171→   171→      setBusy(null);
+   172→   172→    }
+   173→   173→  };
+   174→   174→
+   175→   175→  // ------------------------------------------------------------- generate
+   176→   176→  const generateOutline = async () => {
+   177→   177→    if (prompt.trim().length < 3) {
+   178→   178→      toast.error('Describe what the presentation should be about.');
+   179→   179→      return;
+   180→   180→    }
+   181→   181→    setBusy('Designing the outline…');
+   182→   182→    try {
+   183→   183→      // Persist generation controls so the slide pipeline uses the same settings.
+   184→   184→      setGenSettings({ audience, tone, language, slideCount });
+   185→   185→      let charts: ChartSpec[] = [...chartSpecs];
+   186→   186→      let diagramPlan: MermaidPlan | undefined = diagram ?? undefined;
+   187→   187→      let dataContext: string | undefined;
+   188→   188→
+   189→   189→      const wantsAnalysis = tables.length > 0;
+   190→   190→      if (wantsAnalysis) {
+   191→   191→        setBusy('Analyzing your data…');
+   192→   192→        const res = await fetch('/api/data/analyze', {
+   193→   193→          method: 'POST',
+   194→   194→          headers: { 'Content-Type': 'application/json' },
+   195→   195→          body: JSON.stringify({ tables: tables.map(tableToMeta), language }),
+   196→   196→        });
+   197→   197→        const json = await res.json();
+   198→   198→        if (!res.ok) throw new Error(json.error || 'Analysis failed');
+   199→   199→        const plans = (json.charts ?? []) as ChartPlan[];
+   200→   200→        const specs = plans
+   201→   201→          .map((p) => {
+   202→   202→            const t = tables[p.tableIndex];
+   203→   203→            return t ? buildChartSpec(t, p) : null;
+   204→   204→          })
+   205→   205→          .filter((c): c is ChartSpec => !!c);
+   206→   206→        charts = [...charts, ...specs];
+   207→   207→        dataContext = json.dataContext;
+   208→   208→      }
+   209→   209→      if (diagramPlan) {
+   210→   210→        dataContext = `${dataContext ?? ''}\nA Mermaid flow diagram "${diagramPlan.title}" with ${diagramPlan.nodes.length} steps is available for a "diagram" slide.`;
+   211→   211→      }
+   212→   212→
+   213→   213→      setBusy('Writing the outline…');
+   214→   214→      const res = await fetch('/api/generate/outline', {
+   215→   215→        method: 'POST',
+   216→   216→        headers: { 'Content-Type': 'application/json' },
+   217→   217→        body: JSON.stringify({
+   218→   218→          prompt, audience, tone, slideCount, language, themeChoice, dataContext,
+   219→   219→        }),
+   220→   220→      });
+   221→   221→      const json = await res.json();
+   222→   222→      if (!res.ok) throw new Error(json.error || 'Outline failed');
+   223→   223→      const outline = json.outline as DeckOutline;
+   224→   224→
+   225→   225→      // attach data: first N chart slides in the outline get real chart specs
+   226→   226→      const chartAssignments: Record<string, ChartSpec> = {};
+   227→   227→      const pool = [...charts];
+   228→   228→      let remainingDiagram = diagramPlan;
+   229→   229→      outline.slides.forEach((s, i) => {
+   230→   230→        if (s.layout === 'chart' && pool.length) {
+   231→   231→          chartAssignments[String(i)] = pool.shift()!;
+   232→   232→        }
+   233→   233→      });
+   234→   234→      // if diagram exists but no diagram slide planned, convert the last chart-less content slide? Keep: AI was told about it.
+   235→   235→
+   236→   236→      setDataAssets({
+   237→   237→        tables,
+   238→   238→        charts,
+   239→   239→        diagram: remainingDiagram ? { ...remainingDiagram } : undefined,
+   240→   240→        dataContext,
+   241→   241→        chartAssignments,
+   242→   242→      });
+   243→   243→      setOutline(outline);
+   244→   244→      setView('outline');
+   245→   245→    } catch (e) {
+   246→   246→      toast.error(e instanceof Error ? e.message : 'Generation failed');
+   247→   247→    } finally {
+   248→   248→      setBusy(null);
+   249→   249→    }
+   250→   250→  };
+   251→   251→
+   252→   252→  // ------------------------------------------------- markdown → outline
+   253→   253→  const buildFromMarkdown = () => {
+   254→   254→    if (markdown.trim().length < 10) {
+   255→   255→      toast.error('Paste some markdown first — headings become slides.');
+   256→   256→      return;
+   257→   257→    }
+   258→   258→    try {
+   259→   259→      const parsed = parseMarkdownOutline(markdown);
+   260→   260→      if (parsed.slides.length < 1) throw new Error('No headings found');
+   261→   261→      // persist generation controls so the slide pipeline uses the same settings
+   262→   262→      setGenSettings({ audience, tone, language, slideCount });
+   263→   263→      const outline: DeckOutline = {
+   264→   264→        title: parsed.title,
+   265→   265→        subtitle: parsed.subtitle || prompt.trim().slice(0, 110),
+   266→   266→        slides: parsed.slides,
+   267→   267→      };
+   268→   268→      // deterministic theme suggestion when Auto is selected
+   269→   269→      if (themeChoice === 'auto') {
+   270→   270→        outline.recommendedThemeId = suggestThemeId(markdown);
+   271→   271→        outline.themeRationale = 'Matched to your markdown content.';
+   272→   272→      }
+   273→   273→      // attach user charts to slides tagged [chart], in order
+   274→   274→      const chartAssignments: Record<string, ChartSpec> = {};
+   275→   275→      const pool = [...chartSpecs];
+   276→   276→      outline.slides.forEach((s: OutlineItem, i: number) => {
+   277→   277→        if (s.layout === 'chart' && pool.length) {
+   278→   278→          chartAssignments[String(i)] = pool.shift()!;
+   279→   279→        }
+   280→   280→      });
+   281→   281→      setDataAssets({
+   282→   282→        tables, charts: chartSpecs,
+   283→   283→        diagram: diagram ?? undefined,
+   284→   284→        dataContext: undefined,
+   285→   285→        chartAssignments,
+   286→   286→      });
+   287→   287→      setOutline(outline);
+   288→   288→      setView('outline');
+   289→   289→      toast.success(`Outline built — ${outline.slides.length} slides from your markdown.`);
+   290→   290→    } catch (e) {
+   291→   291→      toast.error(e instanceof Error ? e.message : 'Could not parse markdown');
+   292→   292→    }
+   293→   293→  };
+   294→   294→
+   295→   295→  const openDeck = async (d: { id: string; title: string }) => {
+   296→   296→    try {
+   297→   297→      setBusy('Opening deck…');
+   298→   298→      const res = await fetch(`/api/decks/${d.id}`);
+   299→   299→      const json = await res.json();
+   300→   300→      if (!res.ok) throw new Error(json.error || 'Failed to open');
+   301→   301→      setDeck(json.deck);
+   302→   302→      setView('editor');
+   303→   303→    } catch (e) {
+   304→   304→      toast.error(e instanceof Error ? e.message : 'Failed to open deck');
+   305→   305→    } finally {
+   306→   306→      setBusy(null);
+   307→   307→    }
+   308→   308→  };
+   309→   309→
+   310→   310→  const hasData = tables.length > 0 || chartSpecs.length > 0 || diagram;
+   311→   311→
+   312→   312→  // ---- drop a data file anywhere on the page to attach it ---------------
+   313→   313→  const [droppingData, setDroppingData] = useState(false);
+   314→   314→  const pageDrag = (e: React.DragEvent) => {
+   315→   315→    if (!e.dataTransfer.types.includes('Files')) return;
+   316→   316→    e.preventDefault();
+   317→   317→    setDroppingData(true);
+   318→   318→  };
+   319→   319→  const pageDragLeave = (e: React.DragEvent) => {
+   320→   320→    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+   321→   321→    setDroppingData(false);
+   322→   322→  };
+   323→   323→  const pageDrop = (e: React.DragEvent) => {
+   324→   324→    if (!e.dataTransfer.types.includes('Files')) return;
+   325→   325→    e.preventDefault();
+   326→   326→    setDroppingData(false);
+   327→   327→    const files = Array.from(e.dataTransfer.files);
+   328→   328→    const images = files.filter((f) => f.type.startsWith('image/'));
+   329→   329→    const data = files.filter((f) => !f.type.startsWith('image/'));
+   330→   330→    if (data.length > 0) {
+   331→   331→      setDataTab('files');
+   332→   332→      const dt = new DataTransfer();
+   333→   333→      data.forEach((f) => dt.items.add(f));
+   334→   334→      void handleFiles(dt.files);
+   335→   335→    }
+   336→   336→    if (images.length > 0) {
+   337→   337→      setDataTab('image');
+   338→   338→      const dt = new DataTransfer();
+   339→   339→      images.forEach((f) => dt.items.add(f));
+   340→   340→      void handleChartImage(dt.files);
+   341→   341→    }
+   342→   342→  };
+   343→   343→
+   344→   344→  return (
+   345→   345→    <div
+   346→   346→      className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-12"
+   347→   347→      onDragOver={pageDrag}
+   348→   348→      onDragLeave={pageDragLeave}
+   349→   349→      onDrop={pageDrop}
+   350→   350→    >
+   351→   351→      {droppingData && (
+   352→   352→        <div className="fixed inset-2 z-40 grid place-items-center rounded-2xl border-2 border-dashed border-neutral-900 bg-white/80 backdrop-blur-sm pointer-events-none" aria-hidden>
+   353→   353→          <div className="text-center">
+   354→   354→            <FileUp className="h-8 w-8 mx-auto text-neutral-700" />
+   355→   355→            <p className="mt-2 text-base font-semibold text-neutral-900">Drop your data</p>
+   356→   356→            <p className="text-xs text-muted-foreground mt-0.5">CSV · XLSX · JSON attach as data — images attach as chart screenshots</p>
+   357→   357→          </div>
+   358→   358→        </div>
+   359→   359→      )}
+   360→   360→      {/* Hero */}
+   361→   361→      <motion.header {...enter(0)} className="text-center space-y-5 max-w-3xl mx-auto relative">
+   362→   362→        {/* drifting gradient orbs */}
+   363→   363→        <div className="absolute -top-16 left-1/2 -translate-x-1/2 -z-10 w-[42rem] max-w-none h-72 overflow-visible" aria-hidden>
+   364→   364→          <span className="df-orb left-[6%] top-2 h-56 w-56 bg-teal-300/70" />
+   365→   365→          <span className="df-orb df-orb-2 left-[38%] -top-6 h-64 w-64 bg-amber-200/80" />
+   366→   366→          <span className="df-orb df-orb-3 right-[4%] top-6 h-52 w-52 bg-violet-300/60" />
+   367→   367→        </div>
+   368→   368→        <div
+   369→   369→          className="absolute inset-x-0 -top-6 h-64 -z-10 opacity-60"
+   370→   370→          style={{
+   371→   371→            backgroundImage: 'radial-gradient(#d4d4d4 1.2px, transparent 1.6px)',
+   372→   372→            backgroundSize: '22px 22px',
+   373→   373→            maskImage: 'radial-gradient(ellipse 60% 60% at 50% 35%, black 30%, transparent 75%)',
+   374→   374→            WebkitMaskImage: 'radial-gradient(ellipse 60% 60% at 50% 35%, black 30%, transparent 75%)',
+   375→   375→          }}
+   376→   376→          aria-hidden
+   377→   377→        />
+   378→   378→        <Badge variant="outline" className="gap-1.5 px-3 py-1 text-xs bg-white/70">
+   379→   379→          <Sparkles className="h-3.5 w-3.5 text-amber-500" /> AI presentation studio
+   380→   380→        </Badge>
+   381→   381→        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-neutral-900">
+   382→   382→          Prompt to <span className="df-gradient-text">polished deck</span> in minutes
+   383→   383→        </h1>
+   384→   384→        <p className="text-muted-foreground text-lg">
+   385→   385→          Describe your topic or drop your data. DeckForge writes, structures and designs the
+   386→   386→          whole presentation — then lets you edit, present and export it.
+   387→   387→        </p>
+   388→   388→        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 pt-1" aria-label="How it works">
+   389→   389→          {[
+   390→   390→            { icon: <PenLine className="h-3.5 w-3.5" />, label: 'Prompt' },
+   391→   391→            { icon: <LayoutTemplate className="h-3.5 w-3.5" />, label: 'Design' },
+   392→   392→            { icon: <MonitorPlay className="h-3.5 w-3.5" />, label: 'Present' },
+   393→   393→            { icon: <Share2 className="h-3.5 w-3.5" />, label: 'Export' },
+   394→   394→          ].map((step, i, arr) => (
+   395→   395→            <span key={step.label} className="flex items-center gap-2 sm:gap-3">
+   396→   396→              <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 shadow-sm">
+   397→   397→                {step.icon} {step.label}
+   398→   398→              </span>
+   399→   399→              {i < arr.length - 1 && <span className="h-px w-4 sm:w-6 bg-neutral-300" aria-hidden />}
+   400→   400→            </span>
+   401→   401→          ))}
+   402→   402→        </div>
+   403→   403→      </motion.header>
+   404→   404→
+   405→   405→      {/* Prompt card */}
+   406→   406→      <motion.div {...enter(0.08)}>
+   407→   407→      <Card className="border-neutral-200 shadow-xl shadow-neutral-900/5">
+   408→   408→        <CardContent className="p-4 sm:p-6 space-y-5">
+   409→   409→          <Textarea
+   410→   410→            value={prompt}
+   411→   411→            onChange={(e) => setPrompt(e.target.value)}
+   412→   412→            placeholder='e.g. "Create me a presentation about our 2026 sustainability strategy for investors"'
+   413→   413→            className="min-h-24 text-base resize-none border-neutral-300 focus-visible:ring-neutral-900"
+   414→   414→            maxLength={1200}
+   415→   415→            aria-label="Presentation topic"
+   416→   416→          />
+   417→   417→          <div className="flex flex-wrap items-center gap-2">
+   418→   418→            {dealExamples(ideaSeed).map((ex) => (
+   419→   419→              <button
+   420→   420→                key={ex}
+   421→   421→                onClick={() => setPrompt(ex)}
+   422→   422→                className="text-xs rounded-full border border-neutral-200 px-3 py-1.5 text-muted-foreground hover:border-neutral-900 hover:text-neutral-900 transition-colors truncate max-w-full"
+   423→   423→              >
+   424→   424→                {ex.length > 52 ? ex.slice(0, 52) + '…' : ex}
+   425→   425→              </button>
+   426→   426→            ))}
+   427→   427→            <button
+   428→   428→              onClick={() => setIdeaSeed((s) => s + 1)}
+   429→   429→              className="inline-flex items-center gap-1.5 text-xs rounded-full border border-dashed border-neutral-300 px-3 py-1.5 text-neutral-500 hover:border-neutral-900 hover:text-neutral-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900"
+   430→   430→              title="Show other starter ideas"
+   431→   431→              aria-label="Show other starter ideas"
+   432→   432→            >
+   433→   433→              <Dices className="h-3.5 w-3.5" /> More ideas
+   434→   434→            </button>
+   435→   435→          </div>
+   436→   436→
+   437→   437→          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+   438→   438→            <label className="space-y-1.5">
+   439→   439→              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Audience</span>
+   440→   440→              <Input value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="investors, execs…" maxLength={120} />
+   441→   441→            </label>
+   442→   442→            <label className="space-y-1.5">
+   443→   443→              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tone</span>
+   444→   444→              <Input value={tone} onChange={(e) => setTone(e.target.value)} placeholder="professional" maxLength={120} />
+   445→   445→            </label>
+   446→   446→            <label className="space-y-1.5">
+   447→   447→              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Language</span>
+   448→   448→              <Input value={language} onChange={(e) => setLanguage(e.target.value)} maxLength={60} />
+   449→   449→            </label>
+   450→   450→            <div className="space-y-1.5">
+   451→   451→              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Slides: {slideCount}</span>
+   452→   452→              <Slider value={[slideCount]} onValueChange={([v]) => setSlideCount(v)} min={4} max={30} step={1} />
+   453→   453→            </div>
+   454→   454→          </div>
+   455→   455→
+   456→   456→          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
+   457→   457→            <Button
+   458→   458→              size="lg"
+   459→   459→              onClick={generateOutline}
+   460→   460→              disabled={!!busy}
+   461→   461→              className="flex-1 bg-neutral-900 hover:bg-neutral-800 text-white h-12 text-base"
+   462→   462→            >
+   463→   463→              {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Wand2 className="h-5 w-5" />}
+   464→   464→              {busy ?? 'Generate outline'}
+   465→   465→            </Button>
+   466→   466→          </div>
+   467→   467→          {dataError && (
+   468→   468→            <p className="text-sm text-red-600 flex items-center gap-1.5">
+   469→   469→              <AlertTriangle className="h-4 w-4" /> {dataError}
+   470→   470→            </p>
+   471→   471→          )}
+   472→   472→        </CardContent>
+   473→   473→      </Card>
+   474→   474→      </motion.div>
+   475→   475→
+   476→   476→      {/* Data + Templates */}
+   477→   477→      <div className="grid gap-8 lg:grid-cols-5">
+   478→   478→        <motion.section {...enter(0.16)} className="lg:col-span-2 space-y-4">
+   479→   479→          <div className="flex items-center gap-2">
+   480→   480→            <h2 className="text-lg font-semibold">2. Your data <span className="text-muted-foreground text-sm font-normal">(optional)</span></h2>
+   481→   481→            {hasData && <Badge className="bg-emerald-600">{tables.length + chartSpecs.length + (diagram ? 1 : 0)} assets</Badge>}
+   482→   482→          </div>
+   483→   483→          <Card>
+   484→   484→            <CardContent className="p-4">
+   485→   485→              {/* Static-button tabs (no Radix id generation — keeps SSR/hydration
+   486→   486→                  ids fully deterministic) */}
+   487→   487→              <div role="tablist" aria-label="Data input type" className="grid grid-cols-4 mb-3">
+   488→   488→                {([
+   489→   489→                  { id: 'files', label: 'Files', icon: <FileSpreadsheet className="h-3.5 w-3.5" /> },
+   490→   490→                  { id: 'image', label: 'Chart img', icon: <ImageIcon className="h-3.5 w-3.5" /> },
+   491→   491→                  { id: 'mermaid', label: 'Mermaid', icon: <Workflow className="h-3.5 w-3.5" /> },
+   492→   492→                  { id: 'markdown', label: 'Markdown', icon: <FileText className="h-3.5 w-3.5" /> },
+   493→   493→                ] as const).map((t) => (
+   494→   494→                  <button
+   495→   495→                    key={t.id}
+   496→   496→                    role="tab"
+   497→   497→                    id={`data-tab-${t.id}`}
+   498→   498→                    aria-selected={dataTab === t.id}
+   499→   499→                    aria-controls={`data-panel-${t.id}`}
+   500→   500→                    tabIndex={dataTab === t.id ? 0 : -1}
+   501→   501→                    onClick={() => setDataTab(t.id)}
+   502→   502→                    className={cn(
+   503→   503→                      'inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-xs font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 disabled:pointer-events-none disabled:opacity-50',
+   504→   504→                      dataTab === t.id
+   505→   505→                        ? 'bg-background text-foreground shadow-sm'
+   506→   506→                        : 'text-muted-foreground hover:text-foreground'
+   507→   507→                    )}
+   508→   508→                  >
+   509→   509→                    {t.icon} {t.label}
+   510→   510→                  </button>
+   511→   511→                ))}
+   512→   512→              </div>
+   513→   513→
+   514→   514→              {dataTab === 'files' && (
+   515→   515→              <div role="tabpanel" id="data-panel-files" aria-labelledby="data-tab-files" className="space-y-3">
+   516→   516→                  <button
+   517→   517→                    onClick={() => fileRef.current?.click()}
+   518→   518→                    className="w-full rounded-lg border-2 border-dashed border-neutral-300 hover:border-neutral-900 transition-colors p-6 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900"
+   519→   519→                  >
+   520→   520→                    <FileUp className="h-6 w-6 mx-auto text-neutral-400" />
+   521→   521→                    <p className="text-sm font-medium mt-2">Drop or click to upload</p>
+   522→   522→                    <p className="text-xs text-muted-foreground mt-1">CSV · XLSX · JSON, max 4 MB</p>
+   523→   523→                  </button>
+   524→   524→                  <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls,.json,.txt" multiple hidden onChange={(e) => handleFiles(e.target.files)} />
+   525→   525→                  {tables.length > 0 && (
+   526→   526→                    <ul className="space-y-1.5">
+   527→   527→                      {tables.map((t, i) => (
+   528→   528→                        <li key={i} className="flex items-center justify-between text-xs bg-neutral-50 rounded-md px-2.5 py-2">
+   529→   529→                          <span className="flex items-center gap-1.5 truncate">
+   530→   530→                            {t.name.endsWith('.json') ? <FileJson2 className="h-3.5 w-3.5 text-neutral-400" /> : <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />}
+   531→   531→                            <span className="truncate font-medium">{t.name}</span>
+   532→   532→                            <span className="text-muted-foreground">{t.rows.length} rows × {t.columns.length} cols</span>
+   533→   533→                          </span>
+   534→   534→                          <button
+   535→   535→                            onClick={() => setTables(tables.filter((_, j) => j !== i))}
+   536→   536→                            className="text-neutral-400 hover:text-red-600"
+   537→   537→                            aria-label={`Remove ${t.name}`}
+   538→   538→                          >
+   539→   539→                            <X className="h-3.5 w-3.5" />
+   540→   540→                          </button>
+   541→   541→                        </li>
+   542→   542→                      ))}
+   543→   543→                    </ul>
+   544→   544→                  )}
+   545→   545→              </div>
+   546→   546→              )}
+   547→   547→
+   548→   548→              {dataTab === 'image' && (
+   549→   549→              <div role="tabpanel" id="data-panel-image" aria-labelledby="data-tab-image" className="space-y-3">
+   550→   550→                  <button
+   551→   551→                    onClick={() => imgRef.current?.click()}
+   552→   552→                    className="w-full rounded-lg border-2 border-dashed border-neutral-300 hover:border-neutral-900 transition-colors p-6 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900"
+   553→   553→                  >
+   554→   554→                    <ImageIcon className="h-6 w-6 mx-auto text-neutral-400" />
+   555→   555→                    <p className="text-sm font-medium mt-2">Upload a chart screenshot</p>
+   556→   556→                    <p className="text-xs text-muted-foreground mt-1">AI reads the values — no retyping</p>
+   557→   557→                  </button>
+   558→   558→                  <input ref={imgRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => handleChartImage(e.target.files)} />
+   559→   559→                  {chartSpecs.length > 0 && (
+   560→   560→                    <ul className="space-y-1.5">
+   561→   561→                      {chartSpecs.map((c, i) => (
+   562→   562→                        <li key={i} className="flex items-center justify-between text-xs bg-neutral-50 rounded-md px-2.5 py-2">
+   563→   563→                          <span className="flex items-center gap-1.5 truncate">
+   564→   564→                            <BarChart3 className="h-3.5 w-3.5 text-sky-600" />
+   565→   565→                            <span className="truncate font-medium">{c.title || 'Chart'} · {c.data.length} pts</span>
+   566→   566→                          </span>
+   567→   567→                          <button onClick={() => setChartSpecs(chartSpecs.filter((_, j) => j !== i))} className="text-neutral-400 hover:text-red-600" aria-label="Remove chart">
+   568→   568→                            <X className="h-3.5 w-3.5" />
+   569→   569→                          </button>
+   570→   570→                        </li>
+   571→   571→                      ))}
+   572→   572→                    </ul>
+   573→   573→                  )}
+   574→   574→              </div>
+   575→   575→              )}
+   576→   576→
+   577→   577→              {dataTab === 'markdown' && (
+   578→   578→              <div role="tabpanel" id="data-panel-markdown" aria-labelledby="data-tab-markdown" className="space-y-3">
+   579→   579→                  <Textarea
+   580→   580→                    value={markdown}
+   581→   581→                    onChange={(e) => setMarkdown(e.target.value)}
+   582→   582→                    placeholder={'# Q3 Review\nsubtitle: Revenue, wins and risks\n## Highlights\n- Revenue up 18%\n- Churn at all-time low\n## Revenue by region [chart]\n## Thank you / next steps'}
+   583→   583→                    className="font-mono text-xs min-h-40"
+   584→   584→                    aria-label="Markdown outline"
+   585→   585→                  />
+   586→   586→                  {(() => {
+   587→   587→                    const trimmed = markdown.trim();
+   588→   588→                    if (!trimmed) {
+   589→   589→                      return (
+   590→   590→                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+   591→   591→                          <code className="bg-neutral-100 rounded px-1">#</code> title · <code className="bg-neutral-100 rounded px-1">##</code> slide · bullets become the brief · <code className="bg-neutral-100 rounded px-1">[chart]</code> tag picks the layout. Structure stays exactly as you write it — no AI rewriting.
+   592→   592→                        </p>
+   593→   593→                      );
+   594→   594→                    }
+   595→   595→                    const parsed = parseMarkdownOutline(trimmed);
+   596→   596→                    const bullets = parsed.slides.reduce((n, s) => n + (s.brief ? s.brief.split(' • ').length : 0), 0);
+   597→   597→                    return (
+   598→   598→                      <div className="flex flex-wrap items-center gap-1.5">
+   599→   599→                        <Badge variant="outline" className="gap-1 text-[11px] bg-white/70"><ListTree className="h-3 w-3" /> {parsed.slides.length} slides</Badge>
+   600→   600→                        <Badge variant="outline" className="text-[11px] bg-white/70">{bullets} bullets</Badge>
+   601→   601→                        <Badge variant="outline" className="gap-1 max-w-45 text-[11px] bg-white/70 truncate"><FileText className="h-3 w-3 shrink-0" /> {parsed.title}</Badge>
+   602→   602→                      </div>
+   603→   603→                    );
+   604→   604→                  })()}
+   605→   605→                  <Button size="sm" className="w-full gap-1.5" onClick={buildFromMarkdown} disabled={!!busy}>
+   606→   606→                    <ListTree className="h-4 w-4" />
+   607→   607→                    Build outline from markdown
+   608→   608→                  </Button>
+   609→   609→              </div>
+   610→   610→              )}
+   611→   611→
+   612→   612→              {dataTab === 'mermaid' && (
+   613→   613→              <div role="tabpanel" id="data-panel-mermaid" aria-labelledby="data-tab-mermaid" className="space-y-3">
+   614→   614→                  <Textarea
+   615→   615→                    value={mermaid}
+   616→   616→                    onChange={(e) => setMermaid(e.target.value)}
+   617→   617→                    placeholder={'graph LR\n  Upload --> Parse --> Analyze --> Report'}
+   618→   618→                    className="font-mono text-xs min-h-28"
+   619→   619→                  />
+   620→   620→                  {diagram ? (
+   621→   621→                    <div className="flex items-center justify-between text-xs bg-neutral-50 rounded-md px-2.5 py-2">
+   622→   622→                      <span className="flex items-center gap-1.5"><Workflow className="h-3.5 w-3.5 text-violet-600" /><span className="font-medium">{diagram.title}</span> · {diagram.nodes.length} nodes</span>
+   623→   623→                      <button onClick={() => setDiagram(null)} className="text-neutral-400 hover:text-red-600" aria-label="Remove diagram"><X className="h-3.5 w-3.5" /></button>
+   624→   624→                    </div>
+   625→   625→                  ) : (
+   626→   626→                    <Button variant="secondary" size="sm" onClick={analyzeMermaid} disabled={!!busy}>
+   627→   627→                      Convert diagram
+   628→   628→                    </Button>
+   629→   629→                  )}
+   630→   630→              </div>
+   631→   631→              )}
+   632→   632→            </CardContent>
+   633→   633→          </Card>
+   634→   634→        </motion.section>
+   635→   635→
+   636→   636→        <motion.section {...enter(0.22)} className="lg:col-span-3 space-y-4">
+   637→   637→          <h2 className="text-lg font-semibold">3. Pick a design system <span className="text-muted-foreground text-sm font-normal">— or let AI choose</span></h2>
+   638→   638→          <TemplateGallery compact />
+   639→   639→        </motion.section>
+   640→   640→      </div>
+   641→   641→
+   642→   642→      {/* Deck library */}
+   643→   643→      <RecentDecks onOpen={(d) => openDeck(d)} />
+   644→   644→    </div>
+   645→   645→  );
+   646→   646→}
+   647→   647→
