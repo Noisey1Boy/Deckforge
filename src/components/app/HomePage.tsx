@@ -17,36 +17,36 @@ export function HomePage() {
   const reduceMotion = useReducedMotion();
 
   return (
-    <div className={cn('flex flex-col bg-neutral-50', view === 'editor' ? 'h-screen overflow-hidden' : 'min-h-screen')}>
-      {/* header — ink mark, mono anchors */}
-      <header className="sticky top-0 z-40 h-16 border-b bg-background/90 backdrop-blur">
+    <div className={cn('flex flex-col bg-[color:var(--stg-cream)]', view === 'editor' ? 'h-screen overflow-hidden' : 'min-h-screen')}>
+      {/* header — ink bar, yellow mark, caps nav */}
+      <header className="sticky top-0 z-40 h-16 border-b-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-ink)] text-[color:var(--stg-cream)]">
         <div className="mx-auto flex h-full max-w-7xl items-center gap-3 px-4 sm:px-6">
           <button
             onClick={() => setView('create')}
-            className="flex items-center gap-2.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
+            className="flex items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--stg-yellow)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--stg-ink)]"
             aria-label="DeckForge AI home"
           >
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-neutral-950 text-white shadow-md shadow-neutral-950/25">
+            <span className="grid h-8 w-8 place-items-center bg-[color:var(--stg-yellow)] text-[color:var(--stg-ink)]">
               <Presentation className="h-4.5 w-4.5" aria-hidden />
             </span>
-            <span className="df-display text-lg font-bold tracking-tight">
+            <span className="stg-display text-xl uppercase leading-none">
               DeckForge
-              <span className="df-mono ml-1.5 align-middle text-[10px] font-medium tracking-[0.2em] text-amber-600">AI</span>
+              <span className="stg-label ml-2 align-middle text-[9px] text-[color:var(--stg-yellow)]">AI</span>
             </span>
           </button>
 
-          <nav className="df-mono ml-auto hidden items-center gap-6 text-[11px] tracking-[0.18em] text-neutral-500 md:flex" aria-label="Page sections">
-            <a href="#method" className="df-link transition-colors hover:text-neutral-950">METHOD</a>
-            <a href="#brief" className="df-link transition-colors hover:text-neutral-950">WORKBENCH</a>
-            <a href="#systems" className="df-link transition-colors hover:text-neutral-950">SYSTEMS</a>
-            <a href="#decks" className="df-link transition-colors hover:text-neutral-950">DECKS</a>
+          <nav className="stg-label ml-auto hidden items-center gap-7 text-[10px] text-white/60 md:flex" aria-label="Page sections">
+            <a href="#method" className="stg-link py-2 transition-colors hover:text-[color:var(--stg-cream)]">Method</a>
+            <a href="#brief" className="stg-link py-2 transition-colors hover:text-[color:var(--stg-cream)]">Workbench</a>
+            <a href="#systems" className="stg-link py-2 transition-colors hover:text-[color:var(--stg-cream)]">Systems</a>
+            <a href="#decks" className="stg-link py-2 transition-colors hover:text-[color:var(--stg-cream)]">Decks</a>
           </nav>
 
           <a
             href="#brief"
-            className="df-mono ml-auto inline-flex h-9 items-center rounded-md bg-neutral-950 px-3.5 text-[11px] font-medium tracking-[0.18em] text-white transition-colors hover:bg-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2 md:ml-6"
+            className="stg-label ml-auto inline-flex h-9 items-center bg-[color:var(--stg-yellow)] px-4 text-[10px] text-[color:var(--stg-ink)] transition-colors hover:bg-[color:var(--stg-yellow-deep)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--stg-yellow)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--stg-ink)] md:ml-7"
           >
-            NEW DECK
+            New deck
           </a>
         </div>
       </header>
@@ -64,7 +64,7 @@ export function HomePage() {
             key={view}
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.28, ease: [0.22, 0.61, 0.36, 1] }}
+            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
             className={view === 'editor' ? 'flex-1 min-h-0 flex flex-col' : undefined}
           >
             {view === 'create' && <CreateView />}
@@ -76,32 +76,32 @@ export function HomePage() {
       </main>
 
       {/* footer — ink colophon, sticks to the bottom on short pages */}
-      <footer className="mt-auto bg-neutral-950 text-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-10">
-          <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+      <footer className="mt-auto border-t-2 border-[color:var(--stg-yellow)] bg-[color:var(--stg-ink)] text-[color:var(--stg-cream)]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-9 sm:py-12">
+          <div className="flex flex-col justify-between gap-7 md:flex-row md:items-end">
             <div>
               <div className="flex items-center gap-2.5">
-                <span className="grid h-7 w-7 place-items-center rounded-md bg-white text-neutral-950">
+                <span className="grid h-7 w-7 place-items-center bg-[color:var(--stg-yellow)] text-[color:var(--stg-ink)]">
                   <Presentation className="h-4 w-4" aria-hidden />
                 </span>
-                <span className="df-display text-base font-bold tracking-tight">DeckForge AI</span>
+                <span className="stg-display text-lg uppercase leading-none">DeckForge AI</span>
               </div>
-              <p className="mt-3 max-w-sm text-sm leading-relaxed text-neutral-400">
-                A presentation design studio that runs on your prompt. Built for people
-                with something to say and no time to fight a slide editor.
+              <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/60">
+                A presentation foundry that runs on your prompt. Built for people with
+                something to say and no time to fight a slide editor.
               </p>
             </div>
-            <div className="df-mono space-y-2 text-[11px] tracking-[0.18em] text-neutral-400">
-              <p>8 SYSTEMS · 11 LAYOUTS · 3 EXPORT FORMATS</p>
+            <div className="stg-label space-y-2.5 text-[10px] text-white/55">
+              <p>8 systems · 11 layouts · 3 export formats</p>
               <p className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
-                AI RUNS SERVER-SIDE — YOUR DATA STAYS YOURS
+                <span className="h-1.5 w-1.5 bg-[color:var(--stg-yellow)]" aria-hidden />
+                AI runs server-side · Your data stays yours
               </p>
             </div>
           </div>
-          <div className="df-mono mt-8 flex flex-col gap-2 border-t border-white/10 pt-4 text-[10px] tracking-[0.18em] text-neutral-600 sm:flex-row sm:items-center sm:justify-between">
-            <span>PROMPT → OUTLINE → DESIGN → PRESENT → EXPORT</span>
-            <span>1280×720 · TOKEN-RENDERED · NO TEMPLATES</span>
+          <div className="stg-label mt-9 flex flex-col gap-2 border-t border-white/15 pt-4 text-[9px] text-white/35 sm:flex-row sm:items-center sm:justify-between">
+            <span>Prompt → Outline → Design → Present → Export</span>
+            <span>1280×720 · Token-rendered · No templates</span>
           </div>
         </div>
       </footer>

@@ -20,7 +20,6 @@ import { cn } from '@/lib/utils';
 import {
   FileSpreadsheet, FileJson2, ImageIcon, Loader2, Hammer,
   BarChart3, Workflow, AlertTriangle, X, FileUp, ListTree,
-  ShieldCheck, Palette, FileOutput,
 } from 'lucide-react';
 
 const EXAMPLES = [
@@ -61,17 +60,17 @@ const METHOD_STEPS = [
   {
     n: '01',
     title: 'Brief',
-    body: 'One sentence is enough. Audience, tone, language and length are optional dials — the brief stays yours.',
+    body: 'One sentence is enough. Audience, tone, language and length are optional dials; the brief stays yours.',
   },
   {
     n: '02',
     title: 'Outline',
-    body: 'DeckForge drafts the story first. You read it, edit it, reorder it — only then does a single slide exist.',
+    body: 'DeckForge drafts the story first. You read it, edit it, reorder it. Only then does a single slide exist.',
   },
   {
     n: '03',
     title: 'Design',
-    body: 'Eleven layouts rendered live from design tokens. Charts are computed from your numbers — never invented.',
+    body: 'Eleven layouts rendered live from design tokens. Charts are computed from your numbers, never invented.',
   },
   {
     n: '04',
@@ -82,22 +81,18 @@ const METHOD_STEPS = [
 
 const HOUSE_RULES = [
   {
-    icon: ShieldCheck,
     title: 'Your numbers are sacred.',
-    body: 'Charts are computed from the data you attach. If a figure can’t be traced to your files, it doesn’t get charted — the slide falls back to words.',
+    body: 'Charts are computed from the data you attach. If a figure can’t be traced to your files, it doesn’t get charted. The slide falls back to words.',
   },
   {
-    icon: Palette,
     title: 'Design systems, not templates.',
     body: 'Every slide is rendered live from a token set. Swap themes mid-deck and nothing breaks, nothing overflows, nothing needs re-aligning.',
   },
   {
-    icon: ListTree,
     title: 'Outline before pixels.',
-    body: 'Design can’t rescue the wrong story. You approve the structure — and edit it — before the first slide is designed.',
+    body: 'Design can’t rescue the wrong story. You approve the structure, and edit it, before the first slide is designed.',
   },
   {
-    icon: FileOutput,
     title: 'The file is yours.',
     body: 'Native editable charts in PPTX, a print-perfect PDF, and a standalone HTML deck that works offline. No watermarks. No lock-in.',
   },
@@ -118,7 +113,7 @@ export function CreateView() {
       : {
           initial: { opacity: 0, y: 18 },
           animate: { opacity: 1, y: 0 },
-          transition: { duration: 0.5, delay, ease: [0.22, 0.61, 0.36, 1] as const },
+          transition: { duration: 0.55, delay, ease: [0.16, 1, 0.3, 1] as const },
         };
 
   const [prompt, setPrompt] = useState('');
@@ -306,7 +301,7 @@ export function CreateView() {
   // ------------------------------------------------- markdown → outline
   const buildFromMarkdown = () => {
     if (markdown.trim().length < 10) {
-      toast.error('Paste some markdown first — headings become slides.');
+      toast.error('Paste some markdown first; headings become slides.');
       return;
     }
     try {
@@ -398,80 +393,72 @@ export function CreateView() {
   return (
     <div className="w-full" onDragOver={pageDrag} onDragLeave={pageDragLeave} onDrop={pageDrop}>
       {droppingData && (
-        <div className="fixed inset-2 z-40 grid place-items-center rounded-2xl border-2 border-dashed border-white bg-neutral-950/90 backdrop-blur-sm pointer-events-none" aria-hidden>
-          <div className="text-center text-white">
-            <FileUp className="h-8 w-8 mx-auto" />
-            <p className="mt-2 text-base font-semibold">Drop your data</p>
-            <p className="df-mono text-[11px] tracking-wider text-neutral-400 mt-0.5">CSV · XLSX · JSON AS DATA — IMAGES AS CHART SCREENSHOTS</p>
+        <div className="fixed inset-2 z-40 grid place-items-center border-2 border-dashed border-[color:var(--stg-yellow)] bg-[color:var(--stg-ink)]/95 pointer-events-none" aria-hidden>
+          <div className="text-center">
+            <FileUp className="h-8 w-8 mx-auto text-[color:var(--stg-yellow)]" />
+            <p className="stg-display mt-2 text-2xl uppercase text-[color:var(--stg-cream)]">Drop your data</p>
+            <p className="stg-label mt-1 text-[color:var(--stg-gray)]">CSV · XLSX · JSON AS DATA · IMAGES AS CHART SCREENSHOTS</p>
           </div>
         </div>
       )}
 
       {/* ================================================================
-          HERO — ink band. Real type, real slides, no gradients.
+          HERO — the stage. Ink, poster yellow, and the screen.
          ================================================================ */}
-      <section className="relative overflow-hidden bg-neutral-950 text-white">
-        <div
-          className="absolute inset-0 df-dots-dark opacity-70"
-          style={{
-            maskImage: 'radial-gradient(ellipse 75% 80% at 30% 20%, black 25%, transparent 78%)',
-            WebkitMaskImage: 'radial-gradient(ellipse 75% 80% at 30% 20%, black 25%, transparent 78%)',
-          }}
-          aria-hidden
-        />
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 pt-14 sm:pt-20 pb-12 sm:pb-16">
-          <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-12">
+      <section className="relative overflow-hidden bg-[color:var(--stg-ink)] text-[color:var(--stg-cream)]">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 pt-16 sm:pt-24 pb-14 sm:pb-20">
+          <div className="grid items-center gap-12 lg:grid-cols-12 lg:gap-14">
             {/* Copy */}
-            <motion.div {...enter(0)} className="lg:col-span-6 space-y-6">
-              <p className="df-mono flex items-center gap-2.5 text-[11px] sm:text-xs tracking-[0.28em] text-amber-300/90">
-                <span className="inline-block h-px w-8 bg-amber-300/70" aria-hidden />
-                A DESIGN STUDIO THAT RUNS ON YOUR PROMPT
+            <motion.div {...enter(0)} className="lg:col-span-6 space-y-7">
+              <p className="stg-label flex items-center gap-3 text-[color:var(--stg-yellow)]">
+                <span className="inline-block h-2 w-2 bg-[color:var(--stg-yellow)]" aria-hidden />
+                DeckForge AI · A presentation foundry
               </p>
-              <h1 className="df-display text-4xl sm:text-5xl lg:text-[3.6rem] font-bold leading-[1.04] text-balance">
-                Presentations that look like{' '}
-                <span className="df-serif-it font-medium text-amber-200">someone cared.</span>
+              <h1 className="stg-display text-[clamp(3.1rem,7vw,5.9rem)] uppercase leading-[0.93]">
+                <span className="block">The lights go down.</span>
+                <span className="block text-[color:var(--stg-yellow)]">Your story holds the room.</span>
               </h1>
-              <p className="max-w-xl text-base sm:text-lg leading-relaxed text-neutral-400">
-                Give it a sentence — or hand it your spreadsheet. DeckForge drafts the
+              <p className="max-w-[62ch] text-base sm:text-lg leading-relaxed text-[color:var(--stg-gray)]">
+                Give DeckForge one sentence, or hand it your spreadsheet. It drafts the
                 outline, you approve the story, and every slide is designed against a real
                 design system with charts built from your actual numbers.
               </p>
               <div className="flex flex-wrap items-center gap-3 pt-1">
                 <a
                   href="#brief"
-                  className="inline-flex h-12 items-center gap-2 rounded-lg bg-amber-300 px-6 text-base font-semibold text-neutral-950 transition-colors hover:bg-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
+                  className="stg-label inline-flex h-12 items-center gap-2 bg-[color:var(--stg-yellow)] px-6 text-[color:var(--stg-ink)] transition-colors hover:bg-[color:var(--stg-yellow-deep)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--stg-yellow)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--stg-ink)]"
                 >
-                  <Hammer className="h-4.5 w-4.5" aria-hidden />
-                  Forge an outline
+                  <Hammer className="h-4 w-4" aria-hidden />
+                  Start the brief
                 </a>
                 <a
                   href="#method"
-                  className="inline-flex h-12 items-center rounded-lg border border-white/20 px-6 text-base font-medium text-neutral-200 transition-colors hover:border-white/50 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
+                  className="stg-label inline-flex h-12 items-center border-2 border-white/25 px-6 text-[color:var(--stg-cream)] transition-colors hover:border-[color:var(--stg-yellow)] hover:text-[color:var(--stg-yellow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--stg-ink)]"
                 >
                   Read the method
                 </a>
               </div>
-              <p className="df-mono pt-1 text-[11px] tracking-[0.18em] text-neutral-500">
-                NO INVENTED NUMBERS · OUTLINE FIRST · AI RUNS SERVER-SIDE
+              <p className="stg-label pt-1 text-[10px] text-white/40">
+                No invented numbers · Outline first · AI runs server-side
               </p>
             </motion.div>
 
-            {/* Live specimen — real slides, real themes */}
-            <motion.div {...enter(0.1)} className="lg:col-span-6">
+            {/* The Screen — real slides, real themes */}
+            <motion.div {...enter(0.12)} className="lg:col-span-6">
               <HeroSpecimen />
             </motion.div>
           </div>
         </div>
 
-        {/* Marquee — press specifications strip */}
-        <div className="df-marquee relative border-t border-white/10 py-2.5 overflow-hidden" aria-hidden>
-          <div className="df-marquee-track flex w-max items-center">
+        {/* Poster ticker */}
+        <div className="stg-ticker border-t-2 border-[color:var(--stg-ink)] py-2.5" aria-hidden>
+          <div className="stg-ticker-track flex w-max items-center">
             {[0, 1].map((copy) => (
               <div key={copy} className="flex items-center" aria-hidden={copy === 1}>
                 {MARQUEE_ITEMS.map((item) => (
-                  <span key={`${copy}-${item}`} className="df-mono flex items-center text-[11px] tracking-[0.22em] text-neutral-500">
+                  <span key={`${copy}-${item}`} className="stg-label flex items-center text-[10px]">
                     <span className="px-5">{item}</span>
-                    <span className="h-1 w-1 rounded-full bg-amber-400/70" />
+                    <span className="h-1.5 w-1.5 bg-[color:var(--stg-ink)]" aria-hidden />
                   </span>
                 ))}
               </div>
@@ -481,31 +468,40 @@ export function CreateView() {
       </section>
 
       {/* ================================================================
-          01 — THE METHOD (numbered, like a studio process)
+          01 — THE METHOD (poster rows, oversized numerals)
          ================================================================ */}
-      <section id="method" className="scroll-mt-16 border-b bg-neutral-50">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-16">
-          <motion.div {...enter(0)} className="flex flex-wrap items-end justify-between gap-3">
+      <section id="method" className="scroll-mt-16 bg-[color:var(--stg-cream)] text-[color:var(--stg-ink)]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-14 sm:py-20">
+          <motion.div {...enter(0)} className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="df-mono text-[11px] tracking-[0.28em] text-neutral-500">01 — THE METHOD</p>
-              <h2 className="df-display mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900">
-                You own the story. DeckForge owns the pixels.
+              <p className="stg-label flex items-center gap-2.5 text-[color:var(--stg-ink)]/60">
+                <span className="inline-block h-2 w-2 bg-[color:var(--stg-yellow)]" aria-hidden />
+                01 · The method
+              </p>
+              <h2 className="stg-display mt-3 text-4xl sm:text-5xl uppercase leading-[0.95]">
+                You own the story. We own the pixels.
               </h2>
             </div>
-            <p className="max-w-xs text-sm text-muted-foreground">
+            <p className="max-w-xs pb-1 text-sm leading-relaxed text-[color:var(--stg-ink)]/70">
               Four steps, in order, every time. Nothing is generated past a step you haven’t approved.
             </p>
           </motion.div>
 
-          <motion.ol {...enter(0.08)} className="mt-8 grid gap-px overflow-hidden rounded-xl border border-neutral-200 bg-neutral-200 sm:grid-cols-2 lg:grid-cols-4">
-            {METHOD_STEPS.map((step) => (
-              <li key={step.n} className="group bg-white p-6 transition-colors hover:bg-neutral-50">
-                <div className="flex items-center justify-between">
-                  <span className="df-mono text-sm text-neutral-400 transition-colors group-hover:text-amber-600">{step.n}</span>
-                  <span className="df-reg h-3 w-3 text-neutral-300 transition-colors group-hover:text-amber-500" aria-hidden />
+          <motion.ol {...enter(0.08)} className="mt-10">
+            {METHOD_STEPS.map((step, i) => (
+              <li
+                key={step.n}
+                className={cn(
+                  'stg-num-fill grid grid-cols-[auto_1fr] items-start gap-5 border-t-2 border-[color:var(--stg-ink)] py-7 sm:gap-10 sm:py-9',
+                  i === 1 && 'lg:pl-20',
+                  i === 3 && 'lg:pl-20',
+                )}
+              >
+                <span className="stg-num select-none pt-1 text-6xl sm:text-8xl" aria-hidden>{step.n}</span>
+                <div className="pt-1.5">
+                  <h3 className="stg-display text-2xl sm:text-3xl uppercase">{step.title}</h3>
+                  <p className="mt-2 max-w-[62ch] text-sm sm:text-base leading-relaxed text-[color:var(--stg-ink)]/75">{step.body}</p>
                 </div>
-                <h3 className="df-display mt-4 text-lg font-semibold tracking-tight text-neutral-900">{step.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.body}</p>
               </li>
             ))}
           </motion.ol>
@@ -515,33 +511,36 @@ export function CreateView() {
       {/* ================================================================
           02 — THE WORKBENCH (functional: brief → materials → systems)
          ================================================================ */}
-      <section id="brief" className="scroll-mt-16">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-16">
-          <motion.div {...enter(0)} className="flex flex-wrap items-end justify-between gap-3">
+      <section id="brief" className="scroll-mt-16 bg-[color:var(--stg-cream-2)] text-[color:var(--stg-ink)]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-14 sm:py-20">
+          <motion.div {...enter(0)} className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="df-mono text-[11px] tracking-[0.28em] text-neutral-500">02 — THE WORKBENCH</p>
-              <h2 className="df-display mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900">
-                Start the job.
-              </h2>
+              <p className="stg-label flex items-center gap-2.5 text-[color:var(--stg-ink)]/60">
+                <span className="inline-block h-2 w-2 bg-[color:var(--stg-yellow)]" aria-hidden />
+                02 · The workbench
+              </p>
+              <h2 className="stg-display mt-3 text-4xl sm:text-5xl uppercase leading-[0.95]">Start the job.</h2>
             </div>
-            <p className="df-mono max-w-xs text-right text-[11px] leading-relaxed tracking-wider text-neutral-500">
-              A · BRIEF&nbsp;&nbsp;B · MATERIALS&nbsp;&nbsp;C · DESIGN SYSTEM
+            <p className="stg-label max-w-xs pb-1 text-right text-[10px] text-[color:var(--stg-ink)]/60">
+              A · Brief&nbsp;&nbsp;B · Materials&nbsp;&nbsp;C · Design system
             </p>
           </motion.div>
 
-          {/* ---- A · Brief ------------------------------------------------ */}
-          <motion.div {...enter(0.06)} className="mt-8 rounded-xl border-2 border-neutral-900 bg-white p-4 sm:p-6 shadow-[6px_6px_0_0_#171717]">
+          {/* ---- A · Brief: the job ticket --------------------------------- */}
+          <motion.div {...enter(0.06)} className="mt-9 border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-yellow)] p-4 text-[color:var(--stg-ink)] shadow-[8px_8px_0_0_var(--stg-ink)] sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="df-mono text-[11px] tracking-[0.22em] text-neutral-500">A · BRIEF</p>
+              <p className="stg-label text-[11px]">A · Brief</p>
               {hasData && (
-                <Badge className="bg-emerald-600 text-white">{tables.length + chartSpecs.length + (diagram ? 1 : 0)} materials attached</Badge>
+                <Badge className="bg-[color:var(--stg-ink)] text-[color:var(--stg-yellow)] hover:bg-[color:var(--stg-ink)]">
+                  {tables.length + chartSpecs.length + (diagram ? 1 : 0)} materials attached
+                </Badge>
               )}
             </div>
             <Textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="e.g. “Create me a presentation about our 2026 sustainability strategy for investors”"
-              className="mt-3 min-h-28 resize-none border-neutral-300 text-base focus-visible:ring-neutral-900"
+              className="mt-3 min-h-28 resize-none border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-cream)] text-base text-[color:var(--stg-ink)] placeholder:text-[color:var(--stg-ink)]/50 focus-visible:ring-[color:var(--stg-ink)]"
               maxLength={1200}
               aria-label="Presentation topic"
             />
@@ -551,14 +550,14 @@ export function CreateView() {
                 <button
                   key={ex}
                   onClick={() => setPrompt(ex)}
-                  className="df-mono max-w-full truncate rounded-full border border-neutral-200 px-3 py-1.5 text-[11px] tracking-wide text-muted-foreground transition-colors hover:border-neutral-900 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900"
+                  className="stg-label max-w-full truncate border border-[color:var(--stg-ink)]/45 px-3 py-1.5 text-[10px] text-[color:var(--stg-ink)]/85 transition-colors hover:bg-[color:var(--stg-ink)] hover:text-[color:var(--stg-yellow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--stg-ink)]"
                 >
                   {ex.length > 52 ? ex.slice(0, 52) + '…' : ex}
                 </button>
               ))}
               <button
                 onClick={() => setIdeaSeed((s) => s + 1)}
-                className="df-mono inline-flex items-center gap-1.5 rounded-full border border-dashed border-neutral-300 px-3 py-1.5 text-[11px] tracking-wide text-neutral-500 transition-colors hover:border-neutral-900 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900"
+                className="stg-label inline-flex items-center gap-1.5 border border-dashed border-[color:var(--stg-ink)]/55 px-3 py-1.5 text-[10px] text-[color:var(--stg-ink)]/70 transition-colors hover:border-[color:var(--stg-ink)] hover:text-[color:var(--stg-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--stg-ink)]"
                 title="Show other starter ideas"
                 aria-label="Show other starter ideas"
               >
@@ -568,19 +567,19 @@ export function CreateView() {
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <label className="space-y-1.5">
-                <span className="df-mono text-[10px] font-medium tracking-[0.18em] text-neutral-500">AUDIENCE</span>
-                <Input value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="investors, execs…" maxLength={120} className="border-neutral-300" />
+                <span className="stg-label text-[9px] text-[color:var(--stg-ink)]/75">Audience</span>
+                <Input value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="investors, execs…" maxLength={120} className="border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-cream)] text-[color:var(--stg-ink)]" />
               </label>
               <label className="space-y-1.5">
-                <span className="df-mono text-[10px] font-medium tracking-[0.18em] text-neutral-500">TONE</span>
-                <Input value={tone} onChange={(e) => setTone(e.target.value)} placeholder="professional" maxLength={120} className="border-neutral-300" />
+                <span className="stg-label text-[9px] text-[color:var(--stg-ink)]/75">Tone</span>
+                <Input value={tone} onChange={(e) => setTone(e.target.value)} placeholder="professional" maxLength={120} className="border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-cream)] text-[color:var(--stg-ink)]" />
               </label>
               <label className="space-y-1.5">
-                <span className="df-mono text-[10px] font-medium tracking-[0.18em] text-neutral-500">LANGUAGE</span>
-                <Input value={language} onChange={(e) => setLanguage(e.target.value)} maxLength={60} className="border-neutral-300" />
+                <span className="stg-label text-[9px] text-[color:var(--stg-ink)]/75">Language</span>
+                <Input value={language} onChange={(e) => setLanguage(e.target.value)} maxLength={60} className="border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-cream)] text-[color:var(--stg-ink)]" />
               </label>
               <div className="space-y-1.5">
-                <span className="df-mono text-[10px] font-medium tracking-[0.18em] text-neutral-500">SLIDES: {slideCount}</span>
+                <span className="stg-label text-[9px] text-[color:var(--stg-ink)]/75">Slides: {slideCount}</span>
                 <Slider value={[slideCount]} onValueChange={([v]) => setSlideCount(v)} min={4} max={30} step={1} aria-label="Number of slides" />
               </div>
             </div>
@@ -590,41 +589,41 @@ export function CreateView() {
                 size="lg"
                 onClick={generateOutline}
                 disabled={!!busy}
-                className="h-12 flex-1 bg-neutral-900 text-base text-white hover:bg-neutral-800 df-display tracking-tight"
+                className="stg-label h-12 flex-1 bg-[color:var(--stg-ink)] text-[13px] text-[color:var(--stg-yellow)] hover:bg-[color:var(--stg-ink-2)]"
               >
-                {busy ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <Hammer className="h-5 w-5" aria-hidden />}
+                {busy ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <Hammer className="h-4 w-4" aria-hidden />}
                 {busy ?? 'Forge the outline'}
               </Button>
-              <p className="df-mono text-[11px] leading-relaxed tracking-wider text-neutral-500 sm:max-w-60 sm:text-left text-center">
-                YOU APPROVE THE OUTLINE BEFORE A SINGLE SLIDE IS DESIGNED.
+              <p className="stg-label text-center text-[10px] leading-relaxed text-[color:var(--stg-ink)]/75 sm:max-w-64 sm:text-left">
+                You approve the outline before a single slide is designed.
               </p>
             </div>
             {dataError && (
-              <p className="mt-3 flex items-center gap-1.5 text-sm text-red-600">
+              <p className="mt-3 flex items-center gap-1.5 text-sm font-medium text-red-800">
                 <AlertTriangle className="h-4 w-4" aria-hidden /> {dataError}
               </p>
             )}
           </motion.div>
 
           {/* ---- B · Materials + C · Design systems ------------------------ */}
-          <div className="mt-10 grid gap-8 lg:grid-cols-5">
+          <div className="mt-10 grid gap-10 lg:grid-cols-5">
             {/* B — Materials */}
             <motion.section {...enter(0.1)} className="space-y-4 lg:col-span-2" aria-labelledby="materials-h">
               <div>
-                <p className="df-mono text-[11px] tracking-[0.28em] text-neutral-500">B · MATERIALS — OPTIONAL</p>
-                <h3 id="materials-h" className="df-display mt-1.5 text-lg font-semibold tracking-tight text-neutral-900">
+                <p className="stg-label text-[color:var(--stg-ink)]/60">B · Materials — optional</p>
+                <h3 id="materials-h" className="stg-display mt-2 text-2xl uppercase">
                   Bring your own evidence.
                 </h3>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="mt-1.5 max-w-[55ch] text-sm leading-relaxed text-[color:var(--stg-ink)]/70">
                   Spreadsheets become charts with the exact numbers. Screenshots get read.
                   Structure you wrote stays exactly as you wrote it.
                 </p>
               </div>
 
-              <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-cream)] p-4">
                 {/* Static-button tabs (no Radix id generation — keeps SSR/hydration
                     ids fully deterministic) */}
-                <div role="tablist" aria-label="Data input type" className="grid grid-cols-4 mb-3 gap-1 rounded-lg bg-neutral-100 p-1">
+                <div role="tablist" aria-label="Data input type" className="mb-3 grid grid-cols-4 gap-1 border border-[color:var(--stg-ink)]/20 p-1">
                   {([
                     { id: 'files', label: 'Files', icon: <FileSpreadsheet className="h-3.5 w-3.5" /> },
                     { id: 'image', label: 'Chart img', icon: <ImageIcon className="h-3.5 w-3.5" /> },
@@ -640,10 +639,10 @@ export function CreateView() {
                       tabIndex={dataTab === t.id ? 0 : -1}
                       onClick={() => setDataTab(t.id)}
                       className={cn(
-                        'df-mono inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-[11px] font-medium tracking-wide whitespace-nowrap transition-[color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 disabled:pointer-events-none disabled:opacity-50',
+                        'stg-label inline-flex h-9 items-center justify-center gap-1.5 px-1 text-[9px] whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--stg-ink)] disabled:pointer-events-none disabled:opacity-50',
                         dataTab === t.id
-                          ? 'bg-background text-foreground shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground',
+                          ? 'bg-[color:var(--stg-ink)] text-[color:var(--stg-cream)]'
+                          : 'text-[color:var(--stg-ink)]/60 hover:text-[color:var(--stg-ink)]',
                       )}
                     >
                       {t.icon} {t.label}
@@ -655,25 +654,25 @@ export function CreateView() {
                   <div role="tabpanel" id="data-panel-files" aria-labelledby="data-tab-files" className="space-y-3">
                     <button
                       onClick={() => fileRef.current?.click()}
-                      className="df-dots-paper w-full rounded-lg border-2 border-dashed border-neutral-300 p-6 text-center transition-colors hover:border-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900"
+                      className="w-full border-2 border-dashed border-[color:var(--stg-ink)]/40 bg-[color:var(--stg-cream)] p-6 text-center transition-colors hover:border-[color:var(--stg-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--stg-ink)]"
                     >
-                      <FileUp className="mx-auto h-6 w-6 text-neutral-400" aria-hidden />
-                      <p className="mt-2 text-sm font-medium">Drop or click to upload</p>
-                      <p className="df-mono mt-1 text-[11px] tracking-wide text-muted-foreground">CSV · XLSX · JSON — MAX 4 MB</p>
+                      <FileUp className="mx-auto h-6 w-6 text-[color:var(--stg-ink)]/50" aria-hidden />
+                      <p className="mt-2 text-sm font-semibold">Drop or click to upload</p>
+                      <p className="stg-label mt-1 text-[9px] text-[color:var(--stg-ink)]/60">CSV · XLSX · JSON · Max 4 MB</p>
                     </button>
                     <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls,.json,.txt" multiple hidden onChange={(e) => handleFiles(e.target.files)} />
                     {tables.length > 0 && (
                       <ul className="space-y-1.5">
                         {tables.map((t, i) => (
-                          <li key={i} className="flex items-center justify-between rounded-md bg-neutral-50 px-2.5 py-2 text-xs">
+                          <li key={i} className="flex items-center justify-between border border-[color:var(--stg-ink)]/20 bg-[color:var(--stg-cream)] px-2.5 py-2 text-xs">
                             <span className="flex items-center gap-1.5 truncate">
-                              {t.name.endsWith('.json') ? <FileJson2 className="h-3.5 w-3.5 text-neutral-400" aria-hidden /> : <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" aria-hidden />}
+                              {t.name.endsWith('.json') ? <FileJson2 className="h-3.5 w-3.5 text-[color:var(--stg-ink)]/60" aria-hidden /> : <FileSpreadsheet className="h-3.5 w-3.5 text-[color:var(--stg-ink)]" aria-hidden />}
                               <span className="truncate font-medium">{t.name}</span>
-                              <span className="df-mono text-neutral-500">{t.rows.length}×{t.columns.length}</span>
+                              <span className="text-[color:var(--stg-ink)]/60">{t.rows.length}×{t.columns.length}</span>
                             </span>
                             <button
                               onClick={() => setTables(tables.filter((_, j) => j !== i))}
-                              className="text-neutral-400 hover:text-red-600"
+                              className="text-[color:var(--stg-ink)]/50 hover:text-red-700"
                               aria-label={`Remove ${t.name}`}
                             >
                               <X className="h-3.5 w-3.5" aria-hidden />
@@ -689,22 +688,22 @@ export function CreateView() {
                   <div role="tabpanel" id="data-panel-image" aria-labelledby="data-tab-image" className="space-y-3">
                     <button
                       onClick={() => imgRef.current?.click()}
-                      className="df-dots-paper w-full rounded-lg border-2 border-dashed border-neutral-300 p-6 text-center transition-colors hover:border-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900"
+                      className="w-full border-2 border-dashed border-[color:var(--stg-ink)]/40 bg-[color:var(--stg-cream)] p-6 text-center transition-colors hover:border-[color:var(--stg-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--stg-ink)]"
                     >
-                      <ImageIcon className="mx-auto h-6 w-6 text-neutral-400" aria-hidden />
-                      <p className="mt-2 text-sm font-medium">Upload a chart screenshot</p>
-                      <p className="df-mono mt-1 text-[11px] tracking-wide text-muted-foreground">AI READS THE VALUES — NO RETYPING</p>
+                      <ImageIcon className="mx-auto h-6 w-6 text-[color:var(--stg-ink)]/50" aria-hidden />
+                      <p className="mt-2 text-sm font-semibold">Upload a chart screenshot</p>
+                      <p className="stg-label mt-1 text-[9px] text-[color:var(--stg-ink)]/60">AI reads the values · No retyping</p>
                     </button>
                     <input ref={imgRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => handleChartImage(e.target.files)} />
                     {chartSpecs.length > 0 && (
                       <ul className="space-y-1.5">
                         {chartSpecs.map((c, i) => (
-                          <li key={i} className="flex items-center justify-between rounded-md bg-neutral-50 px-2.5 py-2 text-xs">
+                          <li key={i} className="flex items-center justify-between border border-[color:var(--stg-ink)]/20 bg-[color:var(--stg-cream)] px-2.5 py-2 text-xs">
                             <span className="flex items-center gap-1.5 truncate">
-                              <BarChart3 className="h-3.5 w-3.5 text-sky-600" aria-hidden />
+                              <BarChart3 className="h-3.5 w-3.5 text-[color:var(--stg-ink)]" aria-hidden />
                               <span className="truncate font-medium">{c.title || 'Chart'} · {c.data.length} pts</span>
                             </span>
-                            <button onClick={() => setChartSpecs(chartSpecs.filter((_, j) => j !== i))} className="text-neutral-400 hover:text-red-600" aria-label="Remove chart">
+                            <button onClick={() => setChartSpecs(chartSpecs.filter((_, j) => j !== i))} className="text-[color:var(--stg-ink)]/50 hover:text-red-700" aria-label="Remove chart">
                               <X className="h-3.5 w-3.5" aria-hidden />
                             </button>
                           </li>
@@ -720,15 +719,15 @@ export function CreateView() {
                       value={markdown}
                       onChange={(e) => setMarkdown(e.target.value)}
                       placeholder={'# Q3 Review\nsubtitle: Revenue, wins and risks\n## Highlights\n- Revenue up 18%\n- Churn at all-time low\n## Revenue by region [chart]\n## Thank you / next steps'}
-                      className="df-mono min-h-40 text-xs"
+                      className="min-h-40 font-mono text-xs"
                       aria-label="Markdown outline"
                     />
                     {(() => {
                       const trimmed = markdown.trim();
                       if (!trimmed) {
                         return (
-                          <p className="df-mono text-[11px] leading-relaxed tracking-wide text-muted-foreground">
-                            <code className="rounded bg-neutral-100 px-1">#</code> title · <code className="rounded bg-neutral-100 px-1">##</code> slide · bullets become the brief · <code className="rounded bg-neutral-100 px-1">[chart]</code> tag picks the layout. Structure stays exactly as you write it — no AI rewriting.
+                          <p className="text-[11px] leading-relaxed text-[color:var(--stg-ink)]/65">
+                            <code className="bg-[color:var(--stg-ink)]/10 px-1 font-mono">#</code> title · <code className="bg-[color:var(--stg-ink)]/10 px-1 font-mono">##</code> slide · bullets become the brief · <code className="bg-[color:var(--stg-ink)]/10 px-1 font-mono">[chart]</code> tag picks the layout. Structure stays exactly as you write it, no AI rewriting.
                           </p>
                         );
                       }
@@ -736,13 +735,13 @@ export function CreateView() {
                       const bullets = parsed.slides.reduce((n, s) => n + (s.brief ? s.brief.split(' • ').length : 0), 0);
                       return (
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <Badge variant="outline" className="df-mono gap-1 bg-white/70 text-[11px]"><ListTree className="h-3 w-3" aria-hidden /> {parsed.slides.length} slides</Badge>
-                          <Badge variant="outline" className="df-mono bg-white/70 text-[11px]">{bullets} bullets</Badge>
-                          <Badge variant="outline" className="df-mono max-w-45 truncate gap-1 bg-white/70 text-[11px]"><ListTree className="h-3 w-3 shrink-0" aria-hidden /> {parsed.title}</Badge>
+                          <Badge variant="outline" className="gap-1 border-[color:var(--stg-ink)]/30 text-[11px]"><ListTree className="h-3 w-3" aria-hidden /> {parsed.slides.length} slides</Badge>
+                          <Badge variant="outline" className="border-[color:var(--stg-ink)]/30 text-[11px]">{bullets} bullets</Badge>
+                          <Badge variant="outline" className="max-w-45 truncate gap-1 border-[color:var(--stg-ink)]/30 text-[11px]"><ListTree className="h-3 w-3 shrink-0" aria-hidden /> {parsed.title}</Badge>
                         </div>
                       );
                     })()}
-                    <Button size="sm" className="w-full gap-1.5" onClick={buildFromMarkdown} disabled={!!busy}>
+                    <Button size="sm" className="stg-label w-full gap-1.5 bg-[color:var(--stg-ink)] text-[11px] text-[color:var(--stg-yellow)] hover:bg-[color:var(--stg-ink-2)]" onClick={buildFromMarkdown} disabled={!!busy}>
                       <ListTree className="h-4 w-4" aria-hidden />
                       Build outline from markdown
                     </Button>
@@ -755,12 +754,12 @@ export function CreateView() {
                       value={mermaid}
                       onChange={(e) => setMermaid(e.target.value)}
                       placeholder={'graph LR\n  Upload --> Parse --> Analyze --> Report'}
-                      className="df-mono min-h-28 text-xs"
+                      className="min-h-28 font-mono text-xs"
                     />
                     {diagram ? (
-                      <div className="flex items-center justify-between rounded-md bg-neutral-50 px-2.5 py-2 text-xs">
-                        <span className="flex items-center gap-1.5"><Workflow className="h-3.5 w-3.5 text-violet-600" aria-hidden /><span className="font-medium">{diagram.title}</span> · {diagram.nodes.length} nodes</span>
-                        <button onClick={() => setDiagram(null)} className="text-neutral-400 hover:text-red-600" aria-label="Remove diagram"><X className="h-3.5 w-3.5" aria-hidden /></button>
+                      <div className="flex items-center justify-between border border-[color:var(--stg-ink)]/20 bg-[color:var(--stg-cream)] px-2.5 py-2 text-xs">
+                        <span className="flex items-center gap-1.5"><Workflow className="h-3.5 w-3.5 text-[color:var(--stg-ink)]" aria-hidden /><span className="font-medium">{diagram.title}</span> · {diagram.nodes.length} nodes</span>
+                        <button onClick={() => setDiagram(null)} className="text-[color:var(--stg-ink)]/50 hover:text-red-700" aria-label="Remove diagram"><X className="h-3.5 w-3.5" aria-hidden /></button>
                       </div>
                     ) : (
                       <Button variant="secondary" size="sm" onClick={analyzeMermaid} disabled={!!busy}>
@@ -776,13 +775,13 @@ export function CreateView() {
             <motion.section {...enter(0.16)} id="systems" className="scroll-mt-16 space-y-4 lg:col-span-3" aria-labelledby="systems-h">
               <div className="flex flex-wrap items-end justify-between gap-2">
                 <div>
-                  <p className="df-mono text-[11px] tracking-[0.28em] text-neutral-500">C · DESIGN SYSTEM</p>
-                  <h3 id="systems-h" className="df-display mt-1.5 text-lg font-semibold tracking-tight text-neutral-900">
+                  <p className="stg-label text-[color:var(--stg-ink)]/60">C · Design system</p>
+                  <h3 id="systems-h" className="stg-display mt-2 text-2xl uppercase">
                     Eight systems. Zero templates.
                   </h3>
                 </div>
-                <p className="max-w-xs text-sm text-muted-foreground">
-                  Auto lets the model match your topic — every option is a full token set, not a skin.
+                <p className="max-w-xs pb-1 text-sm leading-relaxed text-[color:var(--stg-ink)]/70">
+                  Auto lets the model match your topic: every option is a full token set, not a skin.
                 </p>
               </div>
               <TemplateGallery compact />
@@ -792,37 +791,33 @@ export function CreateView() {
       </section>
 
       {/* ================================================================
-          03 — HOUSE RULES (opinions we run on)
+          03 — HOUSE RULES (opinions we run on, numbered rows)
          ================================================================ */}
-      <section className="relative scroll-mt-16 overflow-hidden border-y bg-neutral-950 text-white">
-        <div
-          className="absolute inset-0 df-dots-dark opacity-40"
-          style={{
-            maskImage: 'radial-gradient(ellipse 60% 90% at 80% 10%, black 20%, transparent 75%)',
-            WebkitMaskImage: 'radial-gradient(ellipse 60% 90% at 80% 10%, black 20%, transparent 75%)',
-          }}
-          aria-hidden
-        />
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-16">
-          <motion.div {...enter(0)} className="flex flex-wrap items-end justify-between gap-3">
+      <section className="scroll-mt-16 bg-[color:var(--stg-ink)] text-[color:var(--stg-cream)]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-14 sm:py-20">
+          <motion.div {...enter(0)} className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="df-mono text-[11px] tracking-[0.28em] text-amber-300/90">03 — HOUSE RULES</p>
-              <h2 className="df-display mt-2 text-2xl sm:text-3xl font-bold tracking-tight">
+              <p className="stg-label flex items-center gap-2.5 text-[color:var(--stg-yellow)]">
+                <span className="inline-block h-2 w-2 bg-[color:var(--stg-yellow)]" aria-hidden />
+                03 · House rules
+              </p>
+              <h2 className="stg-display mt-3 text-4xl sm:text-5xl uppercase leading-[0.95]">
                 Opinions we refuse to soften.
               </h2>
             </div>
-            <p className="df-mono text-[11px] tracking-[0.18em] text-neutral-500">NON-NEGOTIABLE · ENFORCED IN CODE</p>
+            <p className="stg-label pb-1 text-[10px] text-white/40">Non-negotiable · Enforced in code</p>
           </motion.div>
 
-          <motion.div {...enter(0.08)} className="mt-8 grid gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-4">
-            {HOUSE_RULES.map((rule) => (
-              <article key={rule.title} className="group bg-neutral-950 p-6 transition-colors hover:bg-white/[0.045]">
-                <div className="flex items-center justify-between">
-                  <rule.icon className="h-5 w-5 text-amber-300" aria-hidden />
-                  <span className="df-reg h-3 w-3 text-white/20 transition-colors group-hover:text-amber-400/70" aria-hidden />
+          <motion.div {...enter(0.08)} className="mt-10">
+            {HOUSE_RULES.map((rule, i) => (
+              <article key={rule.title} className="grid grid-cols-[auto_1fr] gap-5 border-t-2 border-white/15 py-7 first:border-t-0 first:pt-0 sm:gap-10 sm:py-8">
+                <span className="stg-display select-none pt-1 text-4xl leading-none text-[color:var(--stg-yellow)] sm:text-6xl" aria-hidden>
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <div>
+                  <h3 className="stg-display text-2xl uppercase sm:text-3xl">{rule.title}</h3>
+                  <p className="mt-2 max-w-[70ch] text-sm leading-relaxed text-white/65 sm:text-base">{rule.body}</p>
                 </div>
-                <h3 className="df-display mt-4 text-lg font-semibold tracking-tight">{rule.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-neutral-400">{rule.body}</p>
               </article>
             ))}
           </motion.div>
@@ -830,19 +825,22 @@ export function CreateView() {
       </section>
 
       {/* ================================================================
-          04 — YOUR DECKS
+          04 — THE ARCHIVE
          ================================================================ */}
-      <section id="decks" className="scroll-mt-16">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-16">
-          <motion.div {...enter(0)} className="mb-6 flex flex-wrap items-end justify-between gap-3">
+      <section id="decks" className="scroll-mt-16 bg-[color:var(--stg-cream)] text-[color:var(--stg-ink)]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-14 sm:py-20">
+          <motion.div {...enter(0)} className="mb-7 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="df-mono text-[11px] tracking-[0.28em] text-neutral-500">04 — YOUR DECKS</p>
-              <h2 className="df-display mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900">
-                The archive.
+              <p className="stg-label flex items-center gap-2.5 text-[color:var(--stg-ink)]/60">
+                <span className="inline-block h-2 w-2 bg-[color:var(--stg-yellow)]" aria-hidden />
+                04 · The archive
+              </p>
+              <h2 className="stg-display mt-3 text-4xl sm:text-5xl uppercase leading-[0.95]">
+                Your decks, ready to rerun.
               </h2>
             </div>
-            <p className="df-mono text-[11px] tracking-wider text-neutral-500">
-              AUTOSAVED · EXPORT, DUPLICATE, IMPORT .DECK.JSON
+            <p className="stg-label pb-1 text-[10px] text-[color:var(--stg-ink)]/60">
+              Autosaved · Export, duplicate, import .deck.json
             </p>
           </motion.div>
           <RecentDecks onOpen={(d) => openDeck(d)} hideHeading />

@@ -183,95 +183,98 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Landing utilities — "print shop" system.
- * Monochrome foundation, one amber accent, real product typefaces (the same
- * families the slide themes load). No gradients, no glow — ink on paper.
+ * Landing system — "the stage" (billposter direction), per DESIGN.md.
+ * Committed color strategy: poster yellow carries the key surfaces over warm
+ * ink. Big Shoulders Display for billboard type, Archivo for everything else.
+ * No gradients, no glass, no glow, no mono, no hairline editorial rules.
  * ------------------------------------------------------------------------- */
-.df-mono {
-  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-.df-display {
-  font-family: 'Inter Tight', 'Inter', 'Helvetica Neue', Arial, sans-serif;
-  letter-spacing: -0.03em;
-}
-.df-serif-it {
-  font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
-  font-style: italic;
-  letter-spacing: -0.015em;
+:root {
+  --stg-ink: oklch(0.17 0.008 95);
+  --stg-ink-2: oklch(0.23 0.01 95);
+  --stg-yellow: oklch(0.84 0.19 96);
+  --stg-yellow-deep: oklch(0.76 0.175 92);
+  --stg-cream: oklch(0.955 0.015 95);
+  --stg-cream-2: oklch(0.915 0.02 95);
+  --stg-gray: oklch(0.66 0.012 95);
 }
 
-/* Dot grids — hero (light dots on ink) + paper (ink dots on paper) */
-.df-dots-dark {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.13) 1px, transparent 1.4px);
-  background-size: 22px 22px;
-}
-.df-dots-paper {
-  background-image: radial-gradient(rgba(23, 23, 23, 0.10) 1px, transparent 1.4px);
-  background-size: 22px 22px;
+/* Billboard display: condensed poster voice */
+.stg-display {
+  font-family: 'Big Shoulders Display', 'Archivo', 'Arial Narrow', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.005em;
 }
 
-/* Registration mark — the little crosshair used by print shops */
-.df-reg {
-  position: relative;
-}
-.df-reg::before,
-.df-reg::after {
-  content: '';
-  position: absolute;
-  background: currentColor;
-  opacity: 0.5;
-}
-.df-reg::before {
-  width: 9px;
-  height: 1px;
-  left: -4.5px;
-  top: 50%;
-}
-.df-reg::after {
-  width: 1px;
-  height: 9px;
-  left: 50%;
-  top: -4.5px;
+/* Caps label (replaces the old mono label; mono-as-costume is banned) */
+.stg-label {
+  font-family: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.6875rem;
 }
 
-/* Marquee strip */
-@keyframes df-marquee {
+/* Oversized outline numerals for poster rows (fill on hover via .stg-num-fill) */
+.stg-num {
+  font-family: 'Big Shoulders Display', 'Archivo', sans-serif;
+  font-weight: 800;
+  line-height: 0.85;
+  color: transparent;
+  -webkit-text-stroke: 2px var(--stg-ink);
+  transition: color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.stg-num-fill:hover .stg-num,
+.stg-num-fill:focus-visible .stg-num {
+  color: var(--stg-yellow);
+  -webkit-text-stroke: 2px var(--stg-ink);
+}
+@media (prefers-reduced-motion: reduce) {
+  .stg-num { transition: none; }
+}
+
+/* Yellow poster ticker strip */
+.stg-ticker {
+  background: var(--stg-yellow);
+  color: var(--stg-ink);
+  overflow: hidden;
+}
+@keyframes stg-ticker {
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
 }
-.df-marquee-track {
-  animation: df-marquee 38s linear infinite;
+.stg-ticker-track {
+  animation: stg-ticker 30s linear infinite;
   will-change: transform;
 }
-.df-marquee:hover .df-marquee-track {
+.stg-ticker:hover .stg-ticker-track {
   animation-play-state: paused;
 }
 
-/* Underline sweep for anchor links */
-.df-link {
+/* Underline sweep for nav anchors (2px, poster-weight) */
+.stg-link {
   position: relative;
 }
-.df-link::after {
+.stg-link::after {
   content: '';
   position: absolute;
   left: 0;
-  bottom: -2px;
-  height: 1px;
+  bottom: -3px;
+  height: 2px;
   width: 100%;
-  background: currentColor;
+  background: var(--stg-yellow);
   transform: scaleX(0);
   transform-origin: right;
-  transition: transform 0.25s ease;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.df-link:hover::after,
-.df-link:focus-visible::after {
+.stg-link:hover::after,
+.stg-link:focus-visible::after {
   transform: scaleX(1);
   transform-origin: left;
 }
 
 ::selection {
-  background: #fbbf24;
-  color: #171717;
+  background: var(--stg-yellow);
+  color: var(--stg-ink);
 }
 
 html {
@@ -279,7 +282,7 @@ html {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .df-marquee-track { animation: none; }
+  .stg-ticker-track { animation: none; }
   html { scroll-behavior: auto; }
-  .df-link::after { transition: none; }
+  .stg-link::after { transition: none; }
 }

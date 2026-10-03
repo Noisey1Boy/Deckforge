@@ -8,10 +8,10 @@ import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
 
 /**
- * Live product specimen for the landing hero.
- * Not a screenshot, not a mock — every frame is a real slide rendered by the
+ * The Screen — landing hero specimen.
+ * Not a screenshot, not a mock: every frame is a real slide rendered by the
  * same SlideView + theme-token pipeline the app ships, cycling through the
- * eight design systems like a contact sheet on a lightbox.
+ * eight design systems like a projector testing reels before the show.
  */
 
 interface Specimen {
@@ -145,26 +145,30 @@ export function HeroSpecimen() {
   const theme = getTheme(current.themeId);
 
   return (
-    <figure className="w-full" aria-label="Live samples of DeckForge design systems">
-      {/* Lightbox frame */}
-      <div
-        className="relative rounded-xl border border-white/15 bg-black p-1.5 shadow-2xl shadow-black/60"
-        onMouseEnter={() => (hoverRef.current = true)}
-        onMouseLeave={() => (hoverRef.current = false)}
-      >
-        {/* window chrome strip */}
-        <div className="flex items-center gap-1.5 px-2.5 py-2" aria-hidden>
-          <span className="h-2 w-2 rounded-full bg-white/20" />
-          <span className="h-2 w-2 rounded-full bg-white/20" />
-          <span className="h-2 w-2 rounded-full bg-white/20" />
-          <span className="ml-2 df-mono inline-flex h-3.5 max-w-40 items-center truncate rounded-sm bg-white/10 px-1.5 text-[8px] leading-3.5 text-white/40">
-            deckforge · live render · 1280×720
+    <figure
+      className="w-full"
+      aria-label="Live samples of DeckForge design systems, rendered by the product itself"
+      onMouseEnter={() => (hoverRef.current = true)}
+      onMouseLeave={() => (hoverRef.current = false)}
+    >
+      {/* Projection frame: flat ink, poster-yellow leader strip, no glass */}
+      <div className="border-2 border-[color:var(--stg-gray)]/40 bg-[color:var(--stg-ink-2)] shadow-[0_0_0_1px_rgba(0,0,0,0.6),10px_10px_0_0_rgba(0,0,0,0.45)]">
+        {/* Leader strip: reel marker + live cue */}
+        <div className="flex items-center gap-2 border-b border-white/10 bg-[color:var(--stg-ink)] px-3 py-2">
+          <span className="stg-label bg-[color:var(--stg-yellow)] px-1.5 py-0.5 text-[9px] text-[color:var(--stg-ink)]">
+            Live
+          </span>
+          <span className="stg-label text-[9px] text-white/50">
+            The screen · real render · 1280×720
+          </span>
+          <span className="ml-auto flex items-center gap-1.5" aria-hidden>
+            <span className={cn('h-1.5 w-1.5 rounded-full', playing ? 'bg-[color:var(--stg-yellow)]' : 'bg-white/25')} />
+            <span className="stg-label text-[9px] text-white/40">{playing ? 'Rolling' : 'Paused'}</span>
           </span>
         </div>
 
-        <div className="relative overflow-hidden rounded-lg" style={{ aspectRatio: '16 / 9' }}>
+        <div className="relative overflow-hidden" style={{ aspectRatio: '16 / 9' }}>
           {SPECIMENS.map((spec, i) => {
-            const th = getTheme(spec.themeId);
             const active = i === index;
             return (
               <div
@@ -175,20 +179,21 @@ export function HeroSpecimen() {
                 )}
                 aria-hidden={!active || undefined}
               >
-                <ScaledSlide slide={spec.slide} theme={th} />
+                <ScaledSlide slide={spec.slide} theme={getTheme(spec.themeId)} />
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* Control strip */}
+      {/* Caption row: reel counter + theme + transport */}
       <figcaption className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-        <span className="df-mono text-[11px] tracking-wide text-neutral-400">
-          FIG. {String(index + 1).padStart(2, '0')}/<span className="text-neutral-600">{String(SPECIMENS.length).padStart(2, '0')}</span>
+        <span className="stg-display text-lg leading-none text-[color:var(--stg-yellow)]">
+          REEL {String(index + 1).padStart(2, '0')}
+          <span className="text-white/40">/{String(SPECIMENS.length).padStart(2, '0')}</span>
         </span>
-        <span className="df-mono text-[11px] tracking-wide text-white">{theme.name.toUpperCase()}</span>
-        <span className="df-mono hidden text-[11px] tracking-wide text-neutral-500 sm:inline">{current.fig.toUpperCase()} LAYOUT</span>
+        <span className="stg-label text-[10px] text-white">{theme.name}</span>
+        <span className="stg-label hidden text-[10px] text-white/40 sm:inline">{current.fig} layout</span>
 
         <span className="ml-auto flex items-center gap-1.5" role="group" aria-label="Specimen controls">
           {/* theme dots */}
@@ -200,8 +205,8 @@ export function HeroSpecimen() {
                 aria-label={`Show ${s.label} sample`}
                 aria-current={i === index}
                 className={cn(
-                  'h-1.5 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300',
-                  i === index ? 'w-5 bg-white' : 'w-1.5 bg-white/25 hover:bg-white/60',
+                  'h-1.5 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--stg-yellow)]',
+                  i === index ? 'w-5 bg-[color:var(--stg-yellow)]' : 'w-1.5 bg-white/25 hover:bg-white/60',
                 )}
               />
             ))}
@@ -209,21 +214,21 @@ export function HeroSpecimen() {
           <button
             onClick={prev}
             aria-label="Previous sample"
-            className="grid h-7 w-7 place-items-center rounded-md border border-white/15 text-neutral-300 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+            className="grid h-7 w-7 place-items-center border border-white/20 text-white/70 transition-colors hover:border-[color:var(--stg-yellow)] hover:text-[color:var(--stg-yellow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--stg-yellow)]"
           >
             <ChevronLeft className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={() => setPlaying((p) => !p)}
             aria-label={playing ? 'Pause cycling' : 'Play cycling'}
-            className="grid h-7 w-7 place-items-center rounded-md border border-white/15 text-neutral-300 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+            className="grid h-7 w-7 place-items-center border border-white/20 text-white/70 transition-colors hover:border-[color:var(--stg-yellow)] hover:text-[color:var(--stg-yellow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--stg-yellow)]"
           >
             {playing ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
           </button>
           <button
             onClick={next}
             aria-label="Next sample"
-            className="grid h-7 w-7 place-items-center rounded-md border border-white/15 text-neutral-300 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+            className="grid h-7 w-7 place-items-center border border-white/20 text-white/70 transition-colors hover:border-[color:var(--stg-yellow)] hover:text-[color:var(--stg-yellow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--stg-yellow)]"
           >
             <ChevronRight className="h-3.5 w-3.5" />
           </button>
