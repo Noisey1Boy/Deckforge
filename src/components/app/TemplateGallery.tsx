@@ -1,12 +1,14 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import { THEMES } from '@/lib/design/themes';
-import type { Slide } from '@/lib/deck/types';
+import type { Slide, ThemeManifest } from '@/lib/deck/types';
 import { ScaledSlide } from '@/components/deck/ScaledSlide';
 import { useAppStore } from '@/lib/store/deck-store';
 import { cn } from '@/lib/utils';
-import { Sparkles } from 'lucide-react';
+import { Search, Sparkles } from 'lucide-react';
 import { getTheme } from '@/lib/design/themes';
+import { Input } from '@/components/ui/input';
 
 /** One representative sample slide per tone so previews feel real. */
 const SAMPLES: Record<string, Slide> = {
@@ -41,65 +43,234 @@ const SAMPLES: Record<string, Slide> = {
   warm: {
     id: 'sample', layout: 'title', title: 'Growing together, sustainably', subtitle: 'IMPACT REPORT',
   },
+  // ---- theme-expansion tones (M-b) ----
+  eink: {
+    id: 'sample', layout: 'quote', quote: 'Print is a slow medium. That is the point.', attribution: 'The editor',
+  },
+  ledger: {
+    id: 'sample', layout: 'bullets', title: 'What we heard',
+    bullets: ['Twelve interviews, three themes', 'Pricing clarity tops the list', 'Onboarding leaks at step two'],
+  },
+  finance: {
+    id: 'sample', layout: 'stats', title: 'Advisory Snapshot',
+    stats: [{ value: '$1.2B', label: 'Mandates signed', context: 'fiscal year' },
+      { value: '14', label: 'Live processes', context: 'across sectors' },
+      { value: '3.2x', label: 'Median multiple', context: 'comparable set' }],
+  },
+  institutional: {
+    id: 'sample', layout: 'section', title: 'THE MANDATE',
+  },
+  grove: {
+    id: 'sample', layout: 'title', title: 'Rooted in good soil', subtitle: 'A FIELD REPORT',
+  },
+  terminal: {
+    id: 'sample', layout: 'chart',
+    title: 'Deploy velocity',
+    chart: { kind: 'column', data: [{ label: 'Mon', value: 42 }, { label: 'Tue', value: 51 }, { label: 'Wed', value: 48 }, { label: 'Thu', value: 63 }], unit: '', insight: 'Ship rate up 18% week over week.' },
+  },
+  biennale: {
+    id: 'sample', layout: 'title', title: 'Biennale of Moving Light', subtitle: 'EXHIBITION PROGRAMME',
+  },
+  collage: {
+    id: 'sample', layout: 'bullets', title: 'Kickoff retro, sticky-wall edition',
+    bullets: ['What clicked, and why', 'What stalled, without blame', 'Votes on the next experiment'],
+  },
+};
+
+/** Style group per theme id — drives the filter chips (one group each). */
+const THEME_GROUPS: Record<string, string> = {
+  'corporate-clean': 'light',
+  'minimal-mono': 'light',
+  'pitch-book-finance': 'light',
+  'bold-impact': 'dark',
+  'dark-elegant': 'dark',
+  'signal-navy': 'dark',
+  'forest-grove': 'dark',
+  'tech-modern': 'tech',
+  'cyber-terminal': 'tech',
+  'editorial-serif': 'editorial',
+  'eink-editorial': 'editorial',
+  'ivory-ledger': 'editorial',
+  'warm-earth': 'warm',
+  'biennale-yellow': 'warm',
+  'playful-pop': 'playful',
+  'paper-collage': 'playful',
+};
+
+const GROUP_FILTERS = [
+  { id: 'all', label: 'All' },
+  { id: 'light', label: 'Light' },
+  { id: 'dark', label: 'Dark' },
+  { id: 'warm', label: 'Warm' },
+  { id: 'playful', label: 'Playful' },
+  { id: 'editorial', label: 'Editorial' },
+  { id: 'tech', label: 'Tech' },
+] as const;
+
+interface GalleryItem {
+  id: string;
+  name: string;
+  tone: string;
+  description: string;
+  bestFor: string[];
+  manifest?: ThemeManifest;
+}
+
+const AUTO_ITEM: GalleryItem = {
+  id: 'auto',
+  name: 'Auto',
+  tone: 'ai',
+  description: 'Let the AI pick the best match for your topic and tone.',
+  bestFor: [],
 };
 
 export function TemplateGallery({ compact = false }: { compact?: boolean }) {
   const themeChoice = useAppStore((s) => s.themeChoice);
   const setThemeChoice = useAppStore((s) => s.setThemeChoice);
+  const [query, setQuery] = useState('');
+  const [group, setGroup] = useState<string>('all');
 
-  const items = [{ id: 'auto', name: 'Auto', tone: 'ai', description: 'Let the AI pick the best match for your topic and tone.', bestFor: [] as string[] }, ...THEMES.map((t) => ({ id: t.id, name: t.name, tone: t.tone, description: t.description, bestFor: t.bestFor, manifest: t }))];
+  const items: GalleryItem[] = useMemo(() => {
+    const themeItems: GalleryItem[] = THEMES.map((t) => ({
+      id: t.id, name: t.name, tone: t.tone, description: t.description, bestFor: t.bestFor, manifest: t,
+    }));
+    const q = query.trim().toLowerCase();
+    const filtering = q.length > 0 || group !== 'all';
+    if (!filtering) return [AUTO_ITEM, ...themeItems];
+    const matched = themeItems.filter((it) => {
+      if (group !== 'all' && THEME_GROUPS[it.id] !== group) return false;
+      if (!q) return true;
+      const hay = [it.name, it.tone, it.id, it.description, it.bestFor.join(' ')].join(' ').toLowerCase();
+      return hay.includes(q);
+    });
+    // Auto stays first whenever there is anything to show; empty state when none.
+    return matched.length > 0 ? [AUTO_ITEM, ...matched] : [];
+  }, [query, group]);
+
+  const filtering = query.trim().length > 0 || group !== 'all';
+  const matchedCount = Math.max(items.length - (items.length > 0 ? 1 : 0), 0);
 
   return (
-    <div
-      className={cn(
-        'grid gap-4',
-        compact ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-      )}
-      role="radiogroup"
-      aria-label="Design system"
-    >
-      {items.map((item) => {
-        const selected = themeChoice === item.id;
-        const theme = item.id === 'auto' ? getTheme('minimal-mono') : (item as { manifest: typeof THEMES[number] }).manifest;
-        const sample = SAMPLES[theme.tone] ?? SAMPLES.minimal;
-        const accent = item.id === 'auto' ? '#f59e0b' : theme.tokens.colors.primary;
-        return (
+    <div className="flex flex-col gap-3">
+      {/* Search + style filters — ink borders, paper chips, amber stays on Auto */}
+      <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center">
+        <div className="relative lg:max-w-xs lg:flex-1">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
+          <Input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search systems, tones, best for..."
+            aria-label="Search design systems"
+            className="h-9 rounded-full border-neutral-300 bg-white pl-9 pr-4 text-sm focus-visible:ring-neutral-900"
+          />
+        </div>
+        <div role="group" aria-label="Filter design systems by style" className="flex flex-wrap items-center gap-1.5">
+          {GROUP_FILTERS.map((f) => {
+            const active = group === f.id;
+            return (
+              <button
+                key={f.id}
+                type="button"
+                aria-pressed={active}
+                onClick={() => setGroup(f.id)}
+                className={cn(
+                  'rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-1',
+                  active
+                    ? 'border-neutral-900 bg-neutral-900 text-white'
+                    : 'border-neutral-300 bg-white text-neutral-600 hover:border-neutral-500 hover:text-neutral-900'
+                )}
+              >
+                {f.label}
+              </button>
+            );
+          })}
+        </div>
+        {filtering && (
+          <p className="text-xs text-muted-foreground lg:ml-auto" role="status" aria-live="polite">
+            {matchedCount} of {THEMES.length} systems
+          </p>
+        )}
+      </div>
+
+      {items.length === 0 ? (
+        <div className="rounded-xl border-2 border-dashed border-neutral-300 bg-card px-6 py-10 text-center">
+          <p className="text-sm font-semibold text-neutral-900">No design systems match</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Try another word, or clear the filters to see all {THEMES.length} systems.
+          </p>
           <button
-            key={item.id}
-            role="radio"
-            aria-checked={selected}
-            onClick={() => setThemeChoice(item.id)}
-            style={selected ? { borderColor: accent } : undefined}
+            type="button"
+            onClick={() => {
+              setQuery('');
+              setGroup('all');
+            }}
             className={cn(
-              'group text-left rounded-xl border-2 p-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-neutral-900 hover:-translate-y-0.5',
-              selected
-                ? 'shadow-lg shadow-neutral-900/10'
-                : 'border-transparent hover:border-neutral-300 hover:shadow-md bg-card'
+              'mt-3 rounded-full border border-neutral-900 px-4 py-1.5 text-xs font-semibold text-neutral-900 transition-colors',
+              'hover:bg-neutral-900 hover:text-white',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-1'
             )}
           >
-            <div className="relative rounded-lg overflow-hidden border border-neutral-200 shadow-sm">
-              <ScaledSlide slide={sample} theme={theme} index={0} pageCount={12} showFooter />
-              <span
-                className="absolute top-1.5 right-1.5 rounded-full bg-black/65 text-white text-[9px] uppercase tracking-wider px-2 py-0.5 font-semibold backdrop-blur-sm"
-                aria-hidden
-              >
-                {item.tone}
-              </span>
-            </div>
-            <div className="flex items-start justify-between gap-2 pt-2 px-1">
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  {item.id === 'auto' && <Sparkles className="h-3.5 w-3.5 text-amber-500 shrink-0" />}
-                  <span className="font-semibold text-sm leading-snug" title={item.name}>{item.name}</span>
-                </div>
-                {!compact && (
-                  <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{item.description}</p>
-                )}
-              </div>
-            </div>
+            Clear search & filters
           </button>
-        );
-      })}
+        </div>
+      ) : (
+        <div
+          className={cn(
+            'grid gap-4',
+            compact ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+          )}
+          role="radiogroup"
+          aria-label="Design system"
+        >
+          {items.map((item) => {
+            const selected = themeChoice === item.id;
+            const theme = item.id === 'auto' ? getTheme('minimal-mono') : (item.manifest as ThemeManifest);
+            const sample = SAMPLES[theme.tone] ?? SAMPLES.minimal;
+            const accent = item.id === 'auto' ? '#f59e0b' : theme.tokens.colors.primary;
+            return (
+              <button
+                key={item.id}
+                role="radio"
+                aria-checked={selected}
+                onClick={() => setThemeChoice(item.id)}
+                style={selected ? { borderColor: accent } : undefined}
+                className={cn(
+                  'group text-left rounded-xl border-2 p-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-neutral-900 hover:-translate-y-0.5',
+                  selected
+                    ? 'shadow-lg shadow-neutral-900/10'
+                    : 'border-transparent hover:border-neutral-300 hover:shadow-md bg-card'
+                )}
+              >
+                <div className="relative rounded-lg overflow-hidden border border-neutral-200 shadow-sm">
+                  <ScaledSlide slide={sample} theme={theme} index={0} pageCount={12} showFooter />
+                  <span
+                    className="absolute top-1.5 right-1.5 rounded-full bg-black/65 text-white text-[9px] uppercase tracking-wider px-2 py-0.5 font-semibold backdrop-blur-sm"
+                    aria-hidden
+                  >
+                    {item.tone}
+                  </span>
+                </div>
+                <div className="flex items-start justify-between gap-2 pt-2 px-1">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      {item.id === 'auto' && <Sparkles className="h-3.5 w-3.5 text-amber-500 shrink-0" />}
+                      <span className="font-semibold text-sm leading-snug" title={item.name}>{item.name}</span>
+                    </div>
+                    {!compact && (
+                      <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{item.description}</p>
+                    )}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

@@ -4,6 +4,16 @@ import type { ChartSpec, DeckOutline, OutlineItem, Slide } from '@/lib/deck/type
 import { LAYOUT_IDS } from '@/lib/deck/types';
 import { LAYOUT_BUDGETS } from '@/lib/deck/limits';
 import { getTheme } from '@/lib/design/themes';
+import {
+  CONTENT_BANS,
+  DEFAULT_STRATEGY,
+  STRATEGY_MAP,
+  formulaGuidance,
+  isStrategyId,
+  toneDirective,
+  verbosityDirective,
+  verbosityWordTarget,
+} from '@/lib/ai/strategies';
 
 export const maxDuration = 300;
 
@@ -14,6 +24,10 @@ interface GenReq {
   language?: string;
   themeId?: string;
   dataContext?: string;
+  /** Narrative strategy id ('auto' is resolved to the default here). */
+  strategy?: string;
+  /** Copy density: 'concise' | 'standard' | 'text-heavy'. */
+  verbosity?: string;
   /** Pre-parsed chart data mapped by outline slide index (from user uploads). */
   chartAssignments?: Record<string, ChartSpec>;
 }
@@ -33,7 +47,7 @@ function slideJsonTemplate(layout: string): string {
     comparison: `${base}, "comparison": {"headers": [string, string], "rows": [{"label": string, "left": string, "right": string}]} (3-5 rows, values <=80 chars)`,
     closing: `${base}, "subtitle": short CTA chip text, "bullets": up to 3 next-step strings (<=60 chars)`,
   };
-  return `{ ${map[layout] ?? map.bullets}, "notes": speaker notes (2-4 sentences) }`;
+  return `{ ${map[layout] ?? map.bullets}, "notes": presenter talking points: 2-4 short sentences (not a verbatim script) plus exactly one delivery cue in square brackets like [pause here], [ask the room] or [point at the chart] }`;
 }
 
 function buildSlidePrompt(item: OutlineItem, i: number, total: number, req: GenReq, assignedChart?: ChartSpec): string {
@@ -43,15 +57,18 @@ function buildSlidePrompt(item: OutlineItem, i: number, total: number, req: GenR
     : item.layout === 'chart'
       ? '\nIMPORTANT: the user supplied NO verified data for a chart here. Do NOT invent numbers and do NOT return a "chart" field. Instead return {"title", "bullets": [3-5 qualitative points], "notes"} — qualitative points only, no statistics.'
       : '';
+  const words = verbosityWordTarget(req.verbosity);
   return `Write slide ${i + 1} of ${total}.
 Deck: "${req.outline.title}" — ${req.outline.subtitle}
 Slide plan: [${item.layout}] "${item.title}" — ${item.brief}
-Audience: ${req.audience || 'general business'} | Tone: ${req.tone || 'professional'} | Language: ${req.language || 'English'}
+Audience: ${req.audience || 'general business'} | Tone: ${toneDirective(req.tone)} | Language: ${req.language || 'English'}
+Density: ${verbosityDirective(req.verbosity)} Target roughly ${words} words of visible on-slide text (char limits below are hard).
+Copy formula for this slide: ${formulaGuidance(item.layout)}
 Layout budget: ${budget.describe}${chartLine}
 
 Return STRICT JSON only: ${slideJsonTemplate(item.layout)}
 
-Rules: respect char limits exactly (text gets clipped otherwise). Plain text only (no markdown, no HTML). Speaker notes in the same language.`;
+Rules: respect char limits exactly (text gets clipped otherwise). Plain text only (no markdown, no HTML). Never invent a number that is not in the slide plan or the fixed chart data. If the content will not fit, cut or split it — never crowd the layout. Speaker notes in the same language.`;
 }
 
 function coerceSlide(raw: Record<string, unknown>, item: OutlineItem, id: string, assignedChart?: ChartSpec): Slide {
@@ -183,7 +200,8 @@ export async function POST(req: NextRequest) {
       const total = outline.slides.length;
       send('start', { total });
 
-      const system = `You are a senior presentation copywriter for the "${theme.name}" design system (${theme.tone} tone). You write crisp, specific, presentation-grade copy. Never use markdown, bullets characters, emoji, or HTML in field values. Respond with STRICT JSON only.`;
+      const strategyId = body.strategy && body.strategy !== 'auto' && isStrategyId(body.strategy) ? body.strategy : DEFAULT_STRATEGY;
+      const system = `You are a senior presentation copywriter for the "${theme.name}" design system (${theme.tone} tone), writing a "${STRATEGY_MAP[strategyId].name}" narrative. You write crisp, specific, presentation-grade copy. Never use markdown, bullets characters, emoji, or HTML in field values. Respond with STRICT JSON only.\n\n${CONTENT_BANS}`;
 
       const generateOne = async (i: number): Promise<Slide> => {
         const item = outline.slides[i];

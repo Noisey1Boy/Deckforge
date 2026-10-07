@@ -23,6 +23,16 @@ const FONTS_HREF =
   "&family=Fraunces:wght@500;600;700" +
   "&family=Work+Sans:wght@400;500;600;700" +
   "&family=IBM+Plex+Mono:wght@400;500;600" +
+  // Theme-expansion families (M-b): serif numerals + editorial + terminal +
+  // paper-collage display faces.
+  "&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400" +
+  "&family=Public+Sans:wght@400;500;600;700" +
+  "&family=DM+Sans:wght@400;500;600;700" +
+  "&family=Jost:wght@300;400;500;600" +
+  "&family=JetBrains+Mono:wght@400;500;700" +
+  "&family=Instrument+Serif:ital@0;1" +
+  "&family=Shrikhand" +
+  "&family=Zilla+Slab:ital,wght@0,400;0,500;0,600;0,700;1,400" +
   "&display=swap";
 
 export const metadata: Metadata = {
@@ -41,7 +51,7 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="stylesheet" href={FONTS_HREF} />
+        <link rel="stylesheet" href={FONTS_HREF} crossOrigin="anonymous" />
       </head>
       <body className="antialiased bg-background text-foreground min-h-screen flex flex-col">
         <TooltipProvider delayDuration={200}>{children}</TooltipProvider>

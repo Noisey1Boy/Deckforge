@@ -2,8 +2,9 @@
 
 import { create } from 'zustand';
 import type { ChartSpec, Deck, DeckOutline, Slide } from '@/lib/deck/types';
-import { DEFAULT_THEME_ID } from '@/lib/design/themes';
+import { DEFAULT_THEME_ID, getTheme } from '@/lib/design/themes';
 import type { ParsedTable } from '@/lib/data/parse';
+import type { StrategyId, Verbosity } from '@/lib/ai/strategies';
 
 export type AppView = 'create' | 'outline' | 'generating' | 'editor';
 
@@ -35,9 +36,19 @@ export interface GenProgress {
 /** Generation controls chosen in CreateView; consumed by the slide pipeline. */
 export interface GenSettings {
   audience: string;
+  /**
+   * Tone id from TONE_OPTIONS ('professional' | 'casual' | 'funny' |
+   * 'educational' | 'sales-pitch' | 'inspiring'). Kept as a plain string for
+   * backward compatibility with legacy free-text values (resolved via
+   * asToneId() wherever consumed).
+   */
   tone: string;
   language: string;
   slideCount: number;
+  /** Narrative strategy: one of the 10 ids or 'auto' (keyword-detect the brief). */
+  strategy: StrategyId | 'auto';
+  /** Copy density: concise / standard / text-heavy (~20/40/60 words per slide). */
+  verbosity: Verbosity;
 }
 
 export const DEFAULT_GEN_SETTINGS: GenSettings = {
@@ -45,6 +56,8 @@ export const DEFAULT_GEN_SETTINGS: GenSettings = {
   tone: 'professional',
   language: 'English',
   slideCount: 10,
+  strategy: 'auto',
+  verbosity: 'standard',
 };
 
 interface AppState {

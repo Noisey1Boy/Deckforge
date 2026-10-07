@@ -1,20 +1,31 @@
 import type { ThemeManifest } from '@/lib/deck/types';
 
 /**
- * DeckForge theme catalog — 8 design systems curated from
- * docs/design-analysis.md (open-design + awesome-design-md research).
+ * DeckForge theme catalog — 16 design systems.
+ *
+ * Original 8 curated from docs/design-analysis.md (open-design +
+ * awesome-design-md research): stripe→corporate-clean, vercel→minimal-mono,
+ * theverge→bold-impact, nintendo-2001→playful-pop, linear.app→dark-elegant,
+ * wired→editorial-serif, raycast→tech-modern, starbucks→warm-earth.
+ *
+ * Expansion 8 distilled from real source palettes/typography (council
+ * decision #6): skills/design/design-templates/ppt/guizang-ppt (ink-classic
+ * e-ink) → eink-editorial; upload decksmith `monochrome` → ivory-ledger;
+ * skills ib-pitch-book → pitch-book-finance; decksmith `signal` →
+ * signal-navy; decksmith `grove` → forest-grove; decksmith
+ * `hermes-cyber-terminal` → cyber-terminal; zhangzara biennale-yellow →
+ * biennale-yellow; decksmith `scatterbrain` → paper-collage.
  *
  * Every theme declares the FULL token set; slide components read tokens
  * via CSS variables only. All px values are on the fixed 1280x720 canvas.
- *
- * Sources: stripe→corporate-clean, vercel→minimal-mono, theverge→bold-impact,
- * nintendo-2001→playful-pop, linear.app→dark-elegant, wired→editorial-serif,
- * raycast→tech-modern, starbucks→warm-earth.
+ * `accent` is decorative (rules, check bullets, tape); accent-as-TEXT always
+ * routes through the contrast-derived `primaryText` (deck.css / applyAccent).
  */
 
 const SANS_FALLBACK = `, 'Inter', 'Helvetica Neue', Arial, sans-serif`;
 const SERIF_FALLBACK = `, Georgia, 'Times New Roman', serif`;
 const MONO = `'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace`;
+const JET_FALLBACK = `, 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace`;
 
 export const THEMES: ThemeManifest[] = [
   // ---------------------------------------------------------------- corporate
@@ -329,6 +340,322 @@ export const THEMES: ThemeManifest[] = [
       },
       motion: { style: 'fade', duration: 0.5 },
       decor: 'corner',
+    },
+  },
+
+  // ------------------------------------------------------------------- e-ink
+  {
+    id: 'eink-editorial',
+    name: 'E-Ink Editorial',
+    tone: 'eink',
+    description:
+      'E-reader magazine system — warm paper, pure ink, serif body text and masthead rules. No color at all, only typography.',
+    bestFor: ['longform', 'essay', 'journal', 'culture', 'brand-story', 'keynote'],
+    tokens: {
+      colors: {
+        bg: '#f1efea',
+        bgAlt: '#e8e5de',
+        surface: '#faf9f6',
+        text: '#0a0a0b',
+        textMuted: '#6b6862',
+        primary: '#0a0a0b',
+        primaryContrast: '#f1efea',
+        accent: '#55534d',
+        border: '#d6d2c8',
+      },
+      fonts: {
+        display: `'Playfair Display'${SERIF_FALLBACK}`,
+        body: `'Source Serif 4'${SERIF_FALLBACK}`,
+        mono: MONO,
+      },
+      typeScale: { display: 78, h1: 56, h2: 34, h3: 24, body: 19, caption: 14 },
+      spacing: { slide: 76, gutter: 52, block: 24 },
+      radius: { sm: 2, md: 4, lg: 6 },
+      shadow: { soft: 'none', card: '0 10px 26px rgba(10,10,11,.08)' },
+      chart: {
+        palette: ['#0a0a0b', '#55534d', '#8c8a82', '#b8b5ac', '#3d3b36', '#d8d5cc'],
+        grid: '#d6d2c8',
+        axis: '#6b6862',
+      },
+      motion: { style: 'fade', duration: 0.5 },
+      decor: 'masthead',
+    },
+  },
+
+  // ------------------------------------------------------------------ ledger
+  {
+    id: 'ivory-ledger',
+    name: 'Ivory Ledger',
+    tone: 'ledger',
+    description:
+      'Typographic restraint, period — black ink on ivory ledger paper, geometric sans, ruled hairlines and mono marginalia.',
+    bestFor: ['research', 'synthesis', 'consulting', 'report', 'academic', 'audit'],
+    tokens: {
+      colors: {
+        bg: '#fafadf',
+        bgAlt: '#f2f2d2',
+        surface: '#f5f0e4',
+        text: '#1a1a16',
+        textMuted: '#5e5e54',
+        primary: '#1a1a16',
+        primaryContrast: '#fafadf',
+        accent: '#5e5e54',
+        border: '#1a1a16',
+      },
+      fonts: {
+        display: `'Jost'${SANS_FALLBACK}`,
+        body: `'Jost'${SANS_FALLBACK}`,
+        mono: `'JetBrains Mono'${JET_FALLBACK}`,
+      },
+      typeScale: { display: 74, h1: 52, h2: 32, h3: 22, body: 18, caption: 13 },
+      spacing: { slide: 80, gutter: 56, block: 22 },
+      radius: { sm: 0, md: 0, lg: 0 },
+      shadow: { soft: 'none', card: '0 2px 0 rgba(26,26,22,.14)' },
+      chart: {
+        palette: ['#1a1a16', '#5e5e54', '#8a8a80', '#b5b5a8', '#3a3a33', '#d5d5c8'],
+        grid: '#d9d9c4',
+        axis: '#5e5e54',
+      },
+      motion: { style: 'rise', duration: 0.45 },
+      decor: 'frame',
+    },
+  },
+
+  // ----------------------------------------------------------------- finance
+  {
+    id: 'pitch-book-finance',
+    name: 'Pitch Book',
+    tone: 'finance',
+    description:
+      'Investment-banking discussion materials — warm paper, oxblood rules, deep-green positives, serif numerals, square corners. Dense by design.',
+    bestFor: ['finance', 'banking', 'board', 'valuation', 'report', 'investor'],
+    tokens: {
+      colors: {
+        bg: '#faf9f6',
+        bgAlt: '#f2efe8',
+        surface: '#fdfcf9',
+        text: '#262420',
+        textMuted: '#5c584f',
+        primary: '#9e3f3b',
+        primaryContrast: '#fdfcf9',
+        accent: '#2f6b52',
+        border: '#d9d6cf',
+      },
+      fonts: {
+        display: `'Source Serif 4'${SERIF_FALLBACK}`,
+        body: `'Public Sans'${SANS_FALLBACK}`,
+        mono: MONO,
+      },
+      typeScale: { display: 64, h1: 46, h2: 30, h3: 21, body: 17, caption: 12 },
+      spacing: { slide: 64, gutter: 40, block: 20 },
+      radius: { sm: 0, md: 2, lg: 4 },
+      shadow: { soft: 'none', card: '0 2px 12px rgba(38,36,32,.08)' },
+      chart: {
+        palette: ['#9e3f3b', '#2f6b52', '#26241f', '#8a857b', '#b98a4a', '#d0ccc2'],
+        grid: '#d9d6cf',
+        axis: '#5c584f',
+      },
+      motion: { style: 'fade', duration: 0.4 },
+      decor: 'rule-top',
+    },
+  },
+
+  // ------------------------------------------------------------ institutional
+  {
+    id: 'signal-navy',
+    name: 'Signal Navy',
+    tone: 'institutional',
+    description:
+      'Institutional gravitas — deep navy canvas, warm bone text, one antique-gold signal color and editorial serif headlines.',
+    bestFor: ['policy', 'government', 'institution', 'annual', 'report', 'trust'],
+    tokens: {
+      colors: {
+        bg: '#1c2644',
+        bgAlt: '#232f55',
+        surface: '#1f2a4c',
+        text: '#e2dcd0',
+        textMuted: '#8a96a8',
+        primary: '#c8a870',
+        primaryContrast: '#1c2644',
+        accent: '#8a96a8',
+        border: '#2e3d5c',
+      },
+      fonts: {
+        display: `'Source Serif 4'${SERIF_FALLBACK}`,
+        body: `'DM Sans'${SANS_FALLBACK}`,
+        mono: MONO,
+      },
+      typeScale: { display: 78, h1: 56, h2: 34, h3: 24, body: 19, caption: 14 },
+      spacing: { slide: 80, gutter: 56, block: 24 },
+      radius: { sm: 2, md: 4, lg: 8 },
+      shadow: { soft: 'none', card: '0 18px 44px rgba(0,0,0,.35)' },
+      chart: {
+        palette: ['#c8a870', '#e2dcd0', '#8a96a8', '#a9bcd8', '#c9977f', '#9ab0a0'],
+        grid: '#2e3d5c',
+        axis: '#8a96a8',
+      },
+      motion: { style: 'fade', duration: 0.5 },
+      decor: 'band',
+    },
+  },
+
+  // -------------------------------------------------------------------- grove
+  {
+    id: 'forest-grove',
+    name: 'Forest Grove',
+    tone: 'grove',
+    description:
+      'Botanical dark — deep forest canvas, warm cream serif with italic accents, one terracotta note. Breathes like a greenhouse.',
+    bestFor: ['sustainability', 'nature', 'wellness', 'outdoors', 'literary', 'wine'],
+    tokens: {
+      colors: {
+        bg: '#192b1b',
+        bgAlt: '#1e3221',
+        surface: '#233826',
+        text: '#d4cfbf',
+        textMuted: '#8d927e',
+        primary: '#d4cfbf',
+        primaryContrast: '#192b1b',
+        // Source terracotta — decorative only (3.4:1 non-text); accent-as-text
+        // routes through primaryText (cream, 9.6:1 on this bg).
+        accent: '#c8524a',
+        border: '#2e4330',
+      },
+      fonts: {
+        display: `'Playfair Display'${SERIF_FALLBACK}`,
+        body: `'Jost'${SANS_FALLBACK}`,
+        mono: `'JetBrains Mono'${JET_FALLBACK}`,
+      },
+      typeScale: { display: 76, h1: 54, h2: 33, h3: 23, body: 18, caption: 13 },
+      spacing: { slide: 84, gutter: 56, block: 26 },
+      radius: { sm: 2, md: 4, lg: 6 },
+      shadow: { soft: 'none', card: '0 14px 36px rgba(0,0,0,.35)' },
+      chart: {
+        palette: ['#d4cfbf', '#cf5b52', '#8f9d7a', '#b8875a', '#7f9d90', '#9aa87f'],
+        grid: '#2e4330',
+        axis: '#8d927e',
+      },
+      motion: { style: 'rise', duration: 0.55 },
+      decor: 'corner',
+    },
+  },
+
+  // ----------------------------------------------------------------- terminal
+  {
+    id: 'cyber-terminal',
+    name: 'Cyber Terminal',
+    tone: 'terminal',
+    description:
+      'CRT console — near-black blue-cast canvas, mint phosphor type in JetBrains Mono, scanline overlay and amber warnings.',
+    bestFor: ['developer', 'devtools', 'security', 'hackathon', 'cli', 'ai'],
+    tokens: {
+      colors: {
+        bg: '#0a0c10',
+        bgAlt: '#15151b',
+        surface: '#12141a',
+        text: '#e4e2d8',
+        textMuted: '#8a8892',
+        primary: '#7ed3a4',
+        primaryContrast: '#0a0c10',
+        accent: '#64dfdf',
+        border: '#1f302b',
+      },
+      fonts: {
+        display: `'JetBrains Mono'${JET_FALLBACK}`,
+        body: `'Inter'${SANS_FALLBACK}`,
+        mono: `'JetBrains Mono'${JET_FALLBACK}`,
+      },
+      typeScale: { display: 64, h1: 46, h2: 30, h3: 21, body: 17, caption: 13 },
+      spacing: { slide: 64, gutter: 44, block: 20 },
+      radius: { sm: 4, md: 8, lg: 10 },
+      shadow: { soft: 'none', card: '0 0 44px rgba(126,211,164,.07), 0 14px 36px rgba(0,0,0,.45)' },
+      chart: {
+        palette: ['#7ed3a4', '#64dfdf', '#e9c58a', '#d4a0b9', '#ff6b6b', '#e4e2d8'],
+        grid: '#1f302b',
+        axis: '#8a8892',
+      },
+      motion: { style: 'slide', duration: 0.35 },
+      decor: 'scanlines',
+    },
+  },
+
+  // ---------------------------------------------------------------- biennale
+  {
+    id: 'biennale-yellow',
+    name: 'Biennale Yellow',
+    tone: 'biennale',
+    description:
+      'Art-poster atmosphere — warm parchment, deep indigo serif, a soft ember edge and the memory of solar yellow. Dutch-editorial.',
+    bestFor: ['arts', 'exhibition', 'conference', 'culture', 'literary', 'museum'],
+    tokens: {
+      colors: {
+        bg: '#e9e5db',
+        bgAlt: '#ded9cc',
+        surface: '#f2efe7',
+        text: '#1b2566',
+        textMuted: '#63666e',
+        primary: '#1b2566',
+        primaryContrast: '#f2efe7',
+        // Source ember, stepped one stop darker for 3.2:1 non-text contrast on
+        // parchment; decorative only — text uses primaryText (indigo, 11:1).
+        accent: '#d4593a',
+        border: '#d5d0c3',
+      },
+      fonts: {
+        display: `'Instrument Serif'${SERIF_FALLBACK}`,
+        body: `'Archivo'${SANS_FALLBACK}`,
+        mono: `'JetBrains Mono'${JET_FALLBACK}`,
+      },
+      typeScale: { display: 80, h1: 56, h2: 34, h3: 23, body: 18, caption: 13 },
+      spacing: { slide: 76, gutter: 52, block: 24 },
+      radius: { sm: 2, md: 4, lg: 8 },
+      shadow: { soft: 'none', card: '0 12px 30px rgba(27,37,102,.10)' },
+      chart: {
+        palette: ['#1b2566', '#d4593a', '#8b84b0', '#a87c22', '#5f8a7e', '#a3a3a0'],
+        grid: '#d5d0c3',
+        axis: '#63666e',
+      },
+      motion: { style: 'rise', duration: 0.5 },
+      decor: 'corner',
+    },
+  },
+
+  // ----------------------------------------------------------------- collage
+  {
+    id: 'paper-collage',
+    name: 'Paper Collage',
+    tone: 'collage',
+    description:
+      'Sticky-note workshop wall — paper ground, pastel washi tape, thumbtack red and chunky slab display type. Playful, hands-on.',
+    bestFor: ['workshop', 'brainstorm', 'retro', 'education', 'community', 'fun'],
+    tokens: {
+      colors: {
+        bg: '#f7f5f0',
+        bgAlt: '#efece4',
+        surface: '#faf8f3',
+        text: '#2d2a26',
+        textMuted: '#5c5750',
+        primary: '#c92a2a',
+        primaryContrast: '#ffffff',
+        accent: '#ffd43b',
+        border: '#e0dcd2',
+      },
+      fonts: {
+        display: `'Shrikhand'${SERIF_FALLBACK}`,
+        body: `'Zilla Slab'${SERIF_FALLBACK}`,
+        mono: MONO,
+      },
+      typeScale: { display: 64, h1: 46, h2: 30, h3: 22, body: 18, caption: 13 },
+      spacing: { slide: 60, gutter: 40, block: 22 },
+      radius: { sm: 8, md: 16, lg: 24 },
+      shadow: { soft: '0 2px 6px rgba(45,42,38,.10)', card: '6px 8px 0 rgba(45,42,38,.12)' },
+      chart: {
+        palette: ['#c92a2a', '#1971c2', '#2f9e44', '#e8590c', '#6741d9', '#2d2a26'],
+        grid: '#e0dcd2',
+        axis: '#5c5750',
+      },
+      motion: { style: 'zoom', duration: 0.4 },
+      decor: 'tape',
     },
   },
 ];

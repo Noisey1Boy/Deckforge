@@ -1,0 +1,22 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "## Ranked Design Decisions\n\n1. **Adopt 6 new themes from decksmith/design-skill (max 8 total)**: Prioritize \"guizang-ppt\" (e-ink magazine), \"ib-pitch-book\" (finance), \"zhangzara\" (8-bit-orbit), \"biennale-yellow\" (art), \"grove\" (nature), and \"pin-and-paper\" (handcrafted). Each with distinct palettes/fonts/mood - e.g., guizang: charcoal paper + serif, biennale: primary yellow + black. Rationale: Visual diversity > quantity, existing themes cover corporate/modern, these add editorial/artistic/niche.\n\n2. **TemplateGallery upgrade with search/filters/categories**: Add tone/description/bestFor metadata to templates, implement search + category chips + lazy previews. Rationale: Critical UX for template discovery, aligns with decksmith's strength, minimal effort.\n\n3. **Enforce BANS/FLOORS/MOTION rules**: Implement content-level bans (no identical grids, no eyebrow overuse), quality floors (contrast ≥4.5:1, 65-75ch line length), and motion rules (ease-out-expo, stagger reveals). Rationale: Elevates output quality, prevents generic AI artifacts, consistent with \"designed not generated.\"\n\n4. **Adopt strategies/copywriting formulas**: Integrate 10 strategies (YC, Kawasaki, etc.) and 5 copywriting formulas (PAS, AIDA) with slide types. Rationale: Structural improvement over current generic copy, aligns with narrative design.\n\n5. **Per-slide regenerate/status UX**: Add pending/loading/done/error states to outline + inline editing. Rationale: Critical UX for AI workflow, matches decksmith strength.\n\n6. **Do NOT adopt template-locked philosophy**: Reconcile by enforcing BANS/FLOORS/MOTION + human-editable tokens. Rationale: \"Designed not generated\" = guardrails + editable tokens, not templates.\n\n7. **Landing page changes**: Minor tweaks only - current \"billposter\" style is strong. Rationale: Existing design is impeccable, focus on core features.\n\n8. **Do NOT adopt HTML export upgrade**: Runtime.js too heavy, HTML exports already functional. Rationale: Scope discipline (ponytail), no user pain point.\n\n9. **Do NOT adopt decksmith's 57 templates**: Too many, inconsistent quality. Rationale: Quality > quantity, existing 8 + 6 new sufficient.\n\n10. **PPTX pixel-perfect snapshot**: Low priority, existing native charts are stronger. Rationale: \"Native editable charts\" already superior.",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1791396251,
+  "id": "20261008020406656b5f9acfad4b84",
+  "model": "glm-4-plus",
+  "object": "chat.completion",
+  "request_id": "20261008020406656b5f9acfad4b84",
+  "usage": {
+    "completion_tokens": 549,
+    "prompt_tokens": 1849,
+    "total_tokens": 2398
+  }
+}

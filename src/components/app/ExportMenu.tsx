@@ -6,23 +6,35 @@ import { exportPptx } from '@/lib/export/pptx';
 import { exportStandaloneHtml } from '@/lib/export/html';
 import { exportNotesMarkdown } from '@/lib/export/notes';
 import { exportDeckJson } from '@/lib/export/deckjson';
+import { exportPptxSnapshot, exportSlidePng, deckSlug } from '@/lib/export/pptx-snapshot';
 import { SlideView } from '@/components/deck/SlideView';
 import { deckTheme } from '@/lib/design/themes';
 import { deckFooterText, visibleSlides } from '@/lib/deck/types';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
-import { Download, FileText, Globe, Presentation, Loader2, StickyNote, FileJson } from 'lucide-react';
+import { Download, FileText, Globe, Presentation, Loader2, StickyNote, FileJson, Camera, ImageDown } from 'lucide-react';
+
+/**
+ * Cross-instance guard: the menu and the command palette each hold their own
+ * hook instance, so local `busy` state cannot see each other. The snapshot
+ * jobs are heavy (offscreen render + rasterize per slide) — never run two.
+ */
+let snapshotInFlight = false;
 
 /**
  * PPTX → PptxGenJS (client), PDF → print CSS (@page 1280x720), HTML →
  * server-rendered standalone file from /api/export/html/:id.
+ * Snapshot exports (pixel-perfect PPTX / slide PNG) rasterize the real
+ * slide components offscreen via html-to-image.
  *
  * The export actions live in a hook so the editor command palette (⌘K)
  * can trigger the exact same code paths as this menu.
  */
 export function useExportActions() {
   const deck = useAppStore((s) => s.deck);
+  const currentSlideIndex = useAppStore((s) => s.currentSlideIndex);
   const [busy, setBusy] = useState<string | null>(null);
+  const [snapshotProgress, setSnapshotProgress] = useState<{ done: number; total: number } | null>(null);
 
   const pptx = async () => {
     if (!deck) return;
@@ -34,6 +46,64 @@ export function useExportActions() {
       console.error(e);
       toast.error('PPTX export failed.');
     } finally {
+      setBusy(null);
+    }
+  };
+
+  /**
+   * Pixel-perfect PPTX: every slide rendered by the real components and
+   * embedded as a full-bleed image. Slower than the editable export —
+   * progress streams through snapshotProgress for the menu label.
+   */
+  const pptxSnapshot = async () => {
+    if (!deck || snapshotInFlight) return;
+    setBusy('pptxSnapshot');
+    snapshotInFlight = true;
+    setSnapshotProgress({ done: 0, total: visibleSlides(deck.slides).length });
+    try {
+      await exportPptxSnapshot({
+        deck,
+        onProgress: (done, total) => setSnapshotProgress({ done, total }),
+      });
+      toast.success('Pixel-perfect PPTX downloaded — slides embedded as full-bleed images.');
+    } catch (e) {
+      console.error(e);
+      toast.error('Snapshot PPTX failed. The editable PPTX export builds native slides instead.');
+    } finally {
+      snapshotInFlight = false;
+      setBusy(null);
+      setSnapshotProgress(null);
+    }
+  };
+
+  /** Single current-slide PNG download (thumbnail / handout quality). */
+  const slidePng = async () => {
+    if (!deck || snapshotInFlight) return;
+    const slides = visibleSlides(deck.slides);
+    const visIdx = Math.min(currentSlideIndex, slides.length - 1);
+    const slide = slides[visIdx];
+    if (!slide) {
+      toast.error('Nothing to export — the deck has no visible slides.');
+      return;
+    }
+    setBusy('slidePng');
+    snapshotInFlight = true;
+    try {
+      await exportSlidePng({
+        slide,
+        theme: deckTheme(deck),
+        index: visIdx,
+        pageCount: slides.length,
+        deckTitle: deckFooterText(deck),
+        showPageNumbers: deck.meta?.showPageNumbers !== false,
+        fileBase: deckSlug(deck.title),
+      });
+      toast.success(`Slide ${visIdx + 1} PNG downloaded.`);
+    } catch (e) {
+      console.error(e);
+      toast.error('Slide PNG export failed.');
+    } finally {
+      snapshotInFlight = false;
       setBusy(null);
     }
   };
@@ -80,11 +150,16 @@ export function useExportActions() {
     }
   };
 
-  return { deck, busy, pptx, pdf, html, notes, deckJson };
+  return { deck, busy, snapshotProgress, pptx, pdf, html, notes, deckJson, pptxSnapshot, slidePng };
 }
 
 export function ExportMenu() {
-  const { busy, pptx, pdf, html, notes, deckJson } = useExportActions();
+  const { busy, snapshotProgress, pptx, pdf, html, notes, deckJson, pptxSnapshot, slidePng } = useExportActions();
+
+  const snapshotLabel =
+    busy === 'pptxSnapshot'
+      ? `Rendering${snapshotProgress ? ` ${snapshotProgress.done}/${snapshotProgress.total}` : ''}…`
+      : 'PPTX — pixel-perfect (images)';
 
   return (
     <DropdownMenu>
@@ -107,6 +182,14 @@ export function ExportMenu() {
         </DropdownMenuItem>
         <DropdownMenuItem onClick={html} className="gap-2">
           <Globe className="h-4 w-4 text-neutral-500" /> Standalone HTML
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-neutral-400">Pixel-perfect</DropdownMenuLabel>
+        <DropdownMenuItem onClick={pptxSnapshot} disabled={!!busy} className="gap-2">
+          <Camera className="h-4 w-4 text-neutral-500" /> {snapshotLabel}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={slidePng} disabled={!!busy} className="gap-2">
+          <ImageDown className="h-4 w-4 text-neutral-500" /> {busy === 'slidePng' ? 'Rendering…' : 'PNG — current slide'}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-neutral-400">Handouts &amp; data</DropdownMenuLabel>

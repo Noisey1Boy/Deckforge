@@ -42,6 +42,12 @@ function Decor({ theme }: { theme: ThemeManifest }) {
       return <div className="slide-decor decor-dots" aria-hidden />;
     case 'frame':
       return <div className="slide-decor decor-frame" aria-hidden />;
+    case 'masthead':
+      return <div className="slide-decor decor-masthead" aria-hidden />;
+    case 'scanlines':
+      return <div className="slide-decor decor-scanlines" aria-hidden />;
+    case 'tape':
+      return <div className="slide-decor decor-tape" aria-hidden />;
     default:
       return null;
   }

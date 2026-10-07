@@ -5,12 +5,13 @@ import {
   CommandDialog, CommandEmpty, CommandGroup, CommandInput,
   CommandItem, CommandList, CommandSeparator, CommandShortcut,
 } from '@/components/ui/command';
+import { useExportActions } from '@/components/app/ExportMenu';
 import type { LayoutId, Slide } from '@/lib/deck/types';
 import {
   Type, Hash, List, Columns2, Image as ImageIcon, Quote, BarChart3, Workflow,
   Table2, Flag, Sigma, Play, Download, FileText, Globe, StickyNote, EyeOff,
   Copy, Trash2, Undo2, Redo2, Shuffle, Palette, NotebookPen, CornerDownLeft,
-  Sparkles, ArrowUp, ArrowDown, LayoutGrid, FileJson,
+  Sparkles, ArrowUp, ArrowDown, LayoutGrid, FileJson, Camera, ImageDown,
 } from 'lucide-react';
 
 /** Add-slide menu entries — shared shape with the editor toolbar. */
@@ -28,7 +29,12 @@ export const LAYOUT_MENU_ITEMS: Array<{ id: LayoutId; label: string; icon: React
   { id: 'closing', label: 'Closing', icon: <Flag className="h-4 w-4" /> },
 ];
 
-export type ExportKind = 'pptx' | 'pdf' | 'html' | 'notes' | 'deckjson';
+/**
+ * Export identifiers. 'pptxSnapshot' and 'slidePng' bypass the onExport prop:
+ * they call useExportActions() directly here (the parent handler maps only
+ * the native/print kinds), so both menu and palette share the same path.
+ */
+export type ExportKind = 'pptx' | 'pdf' | 'html' | 'notes' | 'deckjson' | 'pptxSnapshot' | 'slidePng';
 
 interface CommandPaletteProps {
   open: boolean;
@@ -66,6 +72,9 @@ export function CommandPalette({
     () => slides.map((s, i) => ({ s, i })),
     [slides],
   );
+
+  // Snapshot exports share the exact hook the Export menu uses.
+  const { pptxSnapshot, slidePng } = useExportActions();
 
   const run = (fn: () => void) => {
     onOpenChange(false);
@@ -178,6 +187,20 @@ export function CommandPalette({
           </CommandItem>
           <CommandItem value="export deck file json backup import" onSelect={() => run(() => onExport('deckjson'))} className="gap-2">
             <FileJson className="h-4 w-4" /> Export deck file (.json)
+          </CommandItem>
+          <CommandItem value="export pptx pixel-perfect snapshot image slides projector fidelity" onSelect={() => run(() => void pptxSnapshot())} className="gap-2">
+            <Camera className="h-4 w-4" />
+            <span className="flex flex-col">
+              <span>Export PPTX — pixel-perfect (images)</span>
+              <span className="text-xs text-neutral-400">Full-bleed PNG slides — identical to screen</span>
+            </span>
+          </CommandItem>
+          <CommandItem value="export png current slide image snapshot download" onSelect={() => run(() => void slidePng())} className="gap-2">
+            <ImageDown className="h-4 w-4" />
+            <span className="flex flex-col">
+              <span>Export PNG — current slide</span>
+              <span className="text-xs text-neutral-400">Download current slide as PNG</span>
+            </span>
           </CommandItem>
         </CommandGroup>
       </CommandList>

@@ -11,11 +11,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import type { ChartSpec, DeckOutline, OutlineItem } from '@/lib/deck/types';
 import type { ChartPlan, MermaidPlan } from '@/lib/data/plans';
 import { buildChartSpec, parseFileToTables, tableToMeta, type ParsedTable } from '@/lib/data/parse';
 import { parseMarkdownOutline, suggestThemeId } from '@/lib/data/markdown-outline';
+import { STRATEGY_OPTIONS, TONE_OPTIONS, VERBOSITY_OPTIONS } from '@/lib/ai/strategies';
+import type { StrategyId, ToneId, Verbosity } from '@/lib/ai/strategies';
 import { cn } from '@/lib/utils';
 import {
   FileSpreadsheet, FileJson2, ImageIcon, Loader2, Hammer,
@@ -42,6 +45,12 @@ function dealExamples(seed: number, count = 4): string[] {
   const start = (seed * count) % EXAMPLES.length;
   return Array.from({ length: Math.min(count, EXAMPLES.length) }, (_, i) => EXAMPLES[(start + i) % EXAMPLES.length]);
 }
+
+/** Shared look for the brief-ticket select triggers (matches the Inputs). */
+const TICKET_SELECT =
+  'w-full justify-between border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-cream)] text-[color:var(--stg-ink)] data-[placeholder]:text-[color:var(--stg-ink)]/50';
+const TICKET_CONTENT =
+  'border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-cream)] text-[color:var(--stg-ink)] rounded-none';
 
 const MARQUEE_ITEMS = [
   '8 DESIGN SYSTEMS',
@@ -118,9 +127,11 @@ export function CreateView() {
 
   const [prompt, setPrompt] = useState('');
   const [audience, setAudience] = useState('');
-  const [tone, setTone] = useState('professional');
+  const [tone, setTone] = useState<ToneId>('professional');
   const [slideCount, setSlideCount] = useState(10);
   const [language, setLanguage] = useState('English');
+  const [strategy, setStrategy] = useState<StrategyId | 'auto'>('auto');
+  const [verbosity, setVerbosity] = useState<Verbosity>('standard');
   const [busy, setBusy] = useState<string | null>(null);
   const [dataTab, setDataTab] = useState<'files' | 'image' | 'mermaid' | 'markdown'>('files');
   // Start with a deterministic seed so SSR and the first client render match
@@ -230,7 +241,8 @@ export function CreateView() {
     setBusy('Designing the outline…');
     try {
       // Persist generation controls so the slide pipeline uses the same settings.
-      setGenSettings({ audience, tone, language, slideCount });
+      const chosen = { audience, tone, language, slideCount, strategy, verbosity };
+      setGenSettings(chosen);
       let charts: ChartSpec[] = [...chartSpecs];
       let diagramPlan: MermaidPlan | undefined = diagram ?? undefined;
       let dataContext: string | undefined;
@@ -264,12 +276,18 @@ export function CreateView() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt, audience, tone, slideCount, language, themeChoice, dataContext,
+          prompt, audience, tone, slideCount, language, themeChoice, dataContext, strategy, verbosity,
         }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Outline failed');
       const outline = json.outline as DeckOutline;
+
+      // When the strategy was Auto, remember the resolved one so slide
+      // generation (and the outline UI) names the actual narrative used.
+      if (strategy === 'auto' && typeof json.strategyUsed === 'string') {
+        setGenSettings({ ...chosen, strategy: json.strategyUsed as StrategyId });
+      }
 
       // attach data: first N chart slides in the outline get real chart specs
       const chartAssignments: Record<string, ChartSpec> = {};
@@ -308,7 +326,7 @@ export function CreateView() {
       const parsed = parseMarkdownOutline(markdown);
       if (parsed.slides.length < 1) throw new Error('No headings found');
       // persist generation controls so the slide pipeline uses the same settings
-      setGenSettings({ audience, tone, language, slideCount });
+      setGenSettings({ audience, tone, language, slideCount, strategy, verbosity });
       const outline: DeckOutline = {
         title: parsed.title,
         subtitle: parsed.subtitle || prompt.trim().slice(0, 110),
@@ -565,19 +583,55 @@ export function CreateView() {
               </button>
             </div>
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <label className="space-y-1.5">
                 <span className="stg-label text-[9px] text-[color:var(--stg-ink)]/75">Audience</span>
                 <Input value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="investors, execs…" maxLength={120} className="border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-cream)] text-[color:var(--stg-ink)]" />
               </label>
-              <label className="space-y-1.5">
+              <div className="space-y-1.5">
                 <span className="stg-label text-[9px] text-[color:var(--stg-ink)]/75">Tone</span>
-                <Input value={tone} onChange={(e) => setTone(e.target.value)} placeholder="professional" maxLength={120} className="border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-cream)] text-[color:var(--stg-ink)]" />
-              </label>
+                <Select value={tone} onValueChange={(v) => setTone(v as ToneId)}>
+                  <SelectTrigger className={TICKET_SELECT} aria-label="Tone">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className={TICKET_CONTENT}>
+                    {TONE_OPTIONS.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <span className="stg-label text-[9px] text-[color:var(--stg-ink)]/75">Density</span>
+                <Select value={verbosity} onValueChange={(v) => setVerbosity(v as Verbosity)}>
+                  <SelectTrigger className={TICKET_SELECT} aria-label="Text density">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className={TICKET_CONTENT}>
+                    {VERBOSITY_OPTIONS.map((v) => (
+                      <SelectItem key={v.id} value={v.id}>{v.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <label className="space-y-1.5">
                 <span className="stg-label text-[9px] text-[color:var(--stg-ink)]/75">Language</span>
                 <Input value={language} onChange={(e) => setLanguage(e.target.value)} maxLength={60} className="border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-cream)] text-[color:var(--stg-ink)]" />
               </label>
+              <div className="space-y-1.5">
+                <span className="stg-label text-[9px] text-[color:var(--stg-ink)]/75">Strategy</span>
+                <Select value={strategy} onValueChange={(v) => setStrategy(v as StrategyId | 'auto')}>
+                  <SelectTrigger className={TICKET_SELECT} aria-label="Narrative strategy">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className={TICKET_CONTENT}>
+                    <SelectItem value="auto">Auto — detect from brief</SelectItem>
+                    {STRATEGY_OPTIONS.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-1.5">
                 <span className="stg-label text-[9px] text-[color:var(--stg-ink)]/75">Slides: {slideCount}</span>
                 <Slider value={[slideCount]} onValueChange={([v]) => setSlideCount(v)} min={4} max={30} step={1} aria-label="Number of slides" />
@@ -701,7 +755,7 @@ export function CreateView() {
                           <li key={i} className="flex items-center justify-between border border-[color:var(--stg-ink)]/20 bg-[color:var(--stg-cream)] px-2.5 py-2 text-xs">
                             <span className="flex items-center gap-1.5 truncate">
                               <BarChart3 className="h-3.5 w-3.5 text-[color:var(--stg-ink)]" aria-hidden />
-                              <span className="truncate font-medium">{c.title || 'Chart'} · {c.data.length} pts</span>
+                              <span className="truncate font-medium">{c.insight || c.kind} · {c.data.length} pts</span>
                             </span>
                             <button onClick={() => setChartSpecs(chartSpecs.filter((_, j) => j !== i))} className="text-[color:var(--stg-ink)]/50 hover:text-red-700" aria-label="Remove chart">
                               <X className="h-3.5 w-3.5" aria-hidden />
@@ -777,7 +831,7 @@ export function CreateView() {
                 <div>
                   <p className="stg-label text-[color:var(--stg-ink)]/60">C · Design system</p>
                   <h3 id="systems-h" className="stg-display mt-2 text-2xl uppercase">
-                    Eight systems. Zero templates.
+                    Sixteen systems. Zero templates.
                   </h3>
                 </div>
                 <p className="max-w-xs pb-1 text-sm leading-relaxed text-[color:var(--stg-ink)]/70">

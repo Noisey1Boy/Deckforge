@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Reveal Solarized</title>
+<link rel="stylesheet" href="/revealjs/dist/reset.css">
+<link rel="stylesheet" href="/revealjs/dist/reveal.css">
+<link rel="stylesheet" href="/revealjs/dist/theme/solarized.css" id="theme">
+<style>
+  :root { --accent: #b58900; }
+  .reveal .slide-number { font-size: 0.4em; }
+  .reveal section { text-align: left; }
+  .reveal h1, .reveal h2, .reveal h3, .reveal h4 { text-transform: none; letter-spacing: -0.01em; }
+  .reveal h1 { font-size: 2.2em; line-height: 1.15; }
+  .reveal h2 { font-size: 1.5em; line-height: 1.2; margin-bottom: 0.6em; }
+  .reveal h3 { font-size: 1.05em; }
+  .reveal p, .reveal li { line-height: 1.55; }
+  .reveal .kicker {
+    display: inline-block; font-size: 0.4em; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 0.5em; opacity: 0.95; font-weight: 600;
+  }
+  .reveal .lede { font-size: 0.55em; opacity: 0.7; line-height: 1.5; margin-top: 0.6em; }
+  .reveal .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; margin-top: 0.6em; }
+  .reveal .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.9em; margin-top: 0.6em; }
+  .reveal .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.8em; margin-top: 0.6em; }
+  .reveal .card {
+    background: rgba(127,127,127,0.08);
+    border: 1px solid rgba(127,127,127,0.15);
+    border-radius: 10px; padding: 1.1em;
+  }
+  .reveal .card h4 { color: var(--accent); font-size: 0.55em; margin-bottom: 0.4em; font-weight: 600; }
+  .reveal .card p { font-size: 0.42em; opacity: 0.75; line-height: 1.45; }
+  .reveal .big-number { font-size: 2.8em; font-weight: 700; color: var(--accent); line-height: 1; letter-spacing: -0.02em; }
+  .reveal .big-label { font-size: 0.42em; opacity: 0.65; margin-top: 0.3em; text-transform: uppercase; letter-spacing: 0.1em; }
+  .reveal .delta-up { color: #4ade80; font-size: 0.45em; }
+  .reveal .delta-down { color: #f87171; font-size: 0.45em; }
+  .reveal .pill {
+    display: inline-block; font-size: 0.35em;
+    padding: 0.25em 0.7em; border: 1px solid currentColor;
+    border-radius: 999px; margin-right: 0.3em; opacity: 0.8;
+  }
+  .reveal .quote { font-size: 0.7em; line-height: 1.5; font-style: italic; opacity: 0.9; max-width: 32em; }
+  .reveal .quote-attr { font-size: 0.42em; opacity: 0.55; margin-top: 0.6em; }
+  .reveal .timeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8em; margin-top: 0.8em; }
+  .reveal .timeline-item { border-left: 2px solid var(--accent); padding-left: 0.8em; }
+  .reveal .timeline-item h4 { font-size: 0.5em; color: var(--accent); margin-bottom: 0.2em; }
+  .reveal .timeline-item p { font-size: 0.4em; opacity: 0.7; }
+  .reveal ul.bullets { font-size: 0.5em; line-height: 1.7; padding-left: 1.2em; }
+  .reveal ul.bullets li { margin-bottom: 0.25em; }
+  .reveal .footer { position: absolute; bottom: 0.5em; right: 1em; font-size: 0.3em; opacity: 0.4; }
+</style>
+</head>
+<body>
+<div class="reveal">
+  <div class="slides">
+
+    <section>
+      <span class="kicker">Cover</span>
+      <h1>Presentation Title</h1>
+      <p class="lede">A concise subtitle that frames the talk.</p>
+      <p class="lede">Author Name · Date</p>
+    </section>
+
+    <section>
+      <span class="kicker">Problem</span>
+      <h2>The problem we're solving</h2>
+      <div class="grid-2">
+        <div class="card"><h4>Pain point 1</h4><p>Describe the issue and why it matters.</p></div>
+        <div class="card"><h4>Pain point 2</h4><p>Describe the issue and why it matters.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <span class="kicker">Solution</span>
+      <h2>How it works</h2>
+      <div class="grid-3">
+        <div class="card"><h4>Feature 1</h4><p>One-line description.</p></div>
+        <div class="card"><h4>Feature 2</h4><p>One-line description.</p></div>
+        <div class="card"><h4>Feature 3</h4><p>One-line description.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <span class="kicker">Traction</span>
+      <h2>The numbers</h2>
+      <div class="grid-3">
+        <div><div class="big-number">10k</div><div class="big-label">Weekly actives</div><div class="delta-up">+8%</div></div>
+        <div><div class="big-number">32%</div><div class="big-label">MoM growth</div><div class="delta-up">+5pt</div></div>
+        <div><div class="big-number">$14k</div><div class="big-label">MRR</div><div class="delta-up">+12%</div></div>
+      </div>
+    </section>
+
+    <section>
+      <span class="kicker">Roadmap</span>
+      <h2>Where we're going</h2>
+      <div class="timeline">
+        <div class="timeline-item"><h4>Q1</h4><p>Launch v1</p></div>
+        <div class="timeline-item"><h4>Q2</h4><p>Expand to EU</p></div>
+        <div class="timeline-item"><h4>Q3</h4><p>Mobile app</p></div>
+        <div class="timeline-item"><h4>Q4</h4><p>Series A</p></div>
+      </div>
+    </section>
+
+    <section>
+      <span class="kicker">Quote</span>
+      <h2>What people say</h2>
+      <p class="quote">"This product changed how our team works. We've cut meeting time by 40%."</p>
+      <p class="quote-attr">— Customer Name, CEO at Company</p>
+    </section>
+
+    <section>
+      <span class="kicker">Thanks</span>
+      <h2>Thank you</h2>
+      <p class="lede">Questions? hello@example.com</p>
+      <p class="lede">
+        <span class="pill">github.com/example</span>
+        <span class="pill">example.com</span>
+      </p>
+    </section>
+
+  </div>
+</div>
+
+<script src="/revealjs/dist/reveal.js"></script>
+<script src="/revealjs/dist/plugin/notes.js"></script>
+<script src="/revealjs/dist/plugin/markdown.js"></script>
+<script src="/revealjs/dist/plugin/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    controls: true,
+    progress: true,
+    center: true,
+    hash: true,
+    transition: 'slide',
+    plugins: [RevealNotes, RevealMarkdown, RevealHighlight]
+  });
+</script>
+</body>
+</html>

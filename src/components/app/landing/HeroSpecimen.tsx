@@ -10,8 +10,8 @@ import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
 /**
  * The Screen — landing hero specimen.
  * Not a screenshot, not a mock: every frame is a real slide rendered by the
- * same SlideView + theme-token pipeline the app ships, cycling through the
- * eight design systems like a projector testing reels before the show.
+ * same SlideView + theme-token pipeline the app ships, cycling through all
+ * sixteen design systems like a projector testing reels before the show.
  */
 
 interface Specimen {
@@ -119,6 +119,99 @@ const SPECIMENS: Specimen[] = [
       layout: 'bullets',
       title: 'What we will cover',
       bullets: ['Hands-on workshop goals', 'Three fun team challenges', 'Prizes & next steps'],
+    },
+  },
+  // ---- theme-expansion reels (M-b) ----
+  {
+    themeId: 'eink-editorial',
+    label: 'E-Ink Editorial',
+    fig: 'quote',
+    slide: {
+      id: 'spec-9',
+      layout: 'quote',
+      quote: 'Type is a beautiful group of letters, not a group of beautiful letters.',
+      attribution: 'Matthew Carter',
+    },
+  },
+  {
+    themeId: 'ivory-ledger',
+    label: 'Ivory Ledger',
+    fig: 'bullets',
+    slide: {
+      id: 'spec-10',
+      layout: 'bullets',
+      title: 'Research synthesis, week two',
+      bullets: ['Twelve interviews, three themes', 'Pricing clarity tops the list', 'Onboarding leaks at step two'],
+    },
+  },
+  {
+    themeId: 'pitch-book-finance',
+    label: 'Pitch Book',
+    fig: 'stats',
+    slide: {
+      id: 'spec-11',
+      layout: 'stats',
+      title: 'Advisory snapshot',
+      stats: [
+        { value: '$1.2B', label: 'Mandates signed', context: 'fiscal year' },
+        { value: '14', label: 'Live processes', context: 'across sectors' },
+        { value: '3.2x', label: 'Median multiple', context: 'comparable set' },
+      ],
+    },
+  },
+  {
+    themeId: 'signal-navy',
+    label: 'Signal Navy',
+    fig: 'section',
+    slide: { id: 'spec-12', layout: 'section', title: 'THE MANDATE' },
+  },
+  {
+    themeId: 'forest-grove',
+    label: 'Forest Grove',
+    fig: 'title',
+    slide: { id: 'spec-13', layout: 'title', title: 'Rooted in good soil', subtitle: 'A FIELD REPORT' },
+  },
+  {
+    themeId: 'cyber-terminal',
+    label: 'Cyber Terminal',
+    fig: 'chart',
+    slide: {
+      id: 'spec-14',
+      layout: 'chart',
+      title: 'Deploy velocity',
+      chart: {
+        kind: 'column',
+        data: [
+          { label: 'Mon', value: 42 },
+          { label: 'Tue', value: 51 },
+          { label: 'Wed', value: 48 },
+          { label: 'Thu', value: 63 },
+        ],
+        unit: '',
+        insight: 'Ship rate up 18% week over week.',
+      },
+    },
+  },
+  {
+    themeId: 'biennale-yellow',
+    label: 'Biennale Yellow',
+    fig: 'title',
+    slide: {
+      id: 'spec-15',
+      layout: 'title',
+      title: 'Biennale of Moving Light',
+      subtitle: 'EXHIBITION PROGRAMME — HALL 3',
+    },
+  },
+  {
+    themeId: 'paper-collage',
+    label: 'Paper Collage',
+    fig: 'bullets',
+    slide: {
+      id: 'spec-16',
+      layout: 'bullets',
+      title: 'Kickoff retro, sticky-wall edition',
+      bullets: ['What clicked, and why', 'What stalled, without blame', 'Votes on the next experiment'],
     },
   },
 ];

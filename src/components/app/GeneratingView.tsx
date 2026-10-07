@@ -10,6 +10,15 @@ import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { Loader2, PenLine, CheckCircle2 } from 'lucide-react';
 
+type SlideStatus = 'pending' | 'loading' | 'done' | 'error';
+
+const ERROR_NOTES_PREFIX = '(This slide could not be auto-generated';
+
+/** Deterministic placeholder id for streamed slides without one. */
+function slideKey(index: number): string {
+  return `slot-${index}`;
+}
+
 export function GeneratingView() {
   const outline = useAppStore((s) => s.outline) as DeckOutline;
   const themeChoice = useAppStore((s) => s.themeChoice);
@@ -19,6 +28,8 @@ export function GeneratingView() {
   const genSettings = useAppStore((s) => s.genSettings);
 
   const [slides, setSlides] = useState<Slide[]>([]);
+  const [received, setReceived] = useState(0);
+  const [errorSlots, setErrorSlots] = useState<Set<number>>(new Set());
   const [done, setDone] = useState(0);
   const [currentTitle, setCurrentTitle] = useState('');
   const [fatal, setFatal] = useState<string | null>(null);
@@ -43,6 +54,10 @@ export function GeneratingView() {
             themeId,
             chartAssignments: dataAssets.chartAssignments,
             language: genSettings.language || 'English',
+            audience: genSettings.audience || undefined,
+            tone: genSettings.tone || undefined,
+            verbosity: genSettings.verbosity || 'standard',
+            strategy: genSettings.strategy || 'auto',
           }),
         });
         if (!res.ok || !res.body) {
@@ -66,8 +81,14 @@ export function GeneratingView() {
             const event = evLine.slice(7).trim();
             const payload = JSON.parse(dataLine.slice(6));
             if (event === 'slide') {
-              collected[payload.index] = payload.slide as Slide;
+              const index = payload.index as number;
+              const slide = payload.slide as Slide;
+              collected[index] = slide;
               setSlides(collected.filter(Boolean));
+              setReceived(collected.filter(Boolean).length);
+              if (typeof slide.notes === 'string' && slide.notes.startsWith(ERROR_NOTES_PREFIX)) {
+                setErrorSlots((prev) => new Set(prev).add(index));
+              }
             } else if (event === 'progress') {
               setDone(payload.done);
               setCurrentTitle(payload.currentTitle);
@@ -148,6 +169,23 @@ export function GeneratingView() {
   const latest = slides.length ? slides[slides.length - 1] : null;
   const theme = getTheme(themeChoice === 'auto' ? outline?.recommendedThemeId : themeChoice);
 
+  // Per-slide status: slides stream in strictly ascending outline order, so a
+  // slot is done once received; the two slots at the pipeline head (2-way
+  // concurrency) are writing; anything the server replaced with a fallback
+  // placeholder is flagged failed; the rest are queued.
+  const statusFor = (i: number): SlideStatus => {
+    if (errorSlots.has(i)) return 'error';
+    if (i < received) return 'done';
+    if (!fatal && i < Math.min(received + 2, total)) return 'loading';
+    return fatal ? 'error' : 'pending';
+  };
+  const STATUS_SR: Record<SlideStatus, string> = {
+    pending: 'queued',
+    loading: 'writing',
+    done: 'done',
+    error: 'failed',
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-8">
       <header className="space-y-4">
@@ -166,13 +204,51 @@ export function GeneratingView() {
         </p>
       </header>
 
+      {total > 0 && (
+        <section aria-label="Slide status" aria-live="polite">
+          <ol
+            className="max-h-64 overflow-y-auto divide-y divide-neutral-100 rounded-xl border border-neutral-200 bg-white/60 pr-2
+              [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent
+              [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-neutral-300"
+          >
+            {outline.slides.map((item, i) => {
+              const st = statusFor(i);
+              return (
+                <li key={slideKey(i)} className="flex items-center gap-3 px-3 py-2 text-sm">
+                  <span
+                    aria-hidden
+                    className={
+                      'inline-block h-2 w-2 shrink-0 rounded-full ' +
+                      (st === 'done'
+                        ? 'bg-emerald-500'
+                        : st === 'loading'
+                          ? 'bg-amber-500 motion-safe:animate-pulse'
+                          : st === 'error'
+                            ? 'bg-red-500'
+                            : 'border border-neutral-300 bg-transparent')
+                    }
+                  />
+                  <span className="sr-only">{STATUS_SR[st]}</span>
+                  <span className="w-6 shrink-0 text-right font-mono text-xs text-neutral-400" aria-hidden>
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <span className={st === 'pending' ? 'truncate text-neutral-400' : 'truncate text-neutral-800'}>
+                    {item.title || 'Untitled slide'}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2">
         {slides.slice(0, done < total ? Math.max(0, slides.length - 1) : undefined).map((s, i) => (
           <div key={s.id ?? i} className="rounded-xl overflow-hidden border border-neutral-200 shadow-sm opacity-90">
             <ScaledSlide slide={s} theme={theme} index={i} pageCount={total} />
           </div>
         ))}
-        {slides.length > 0 && done < total && (
+        {latest && done < total && (
           <div className="rounded-xl overflow-hidden border-2 border-neutral-900 shadow-lg ring-4 ring-neutral-900/10">
             <ScaledSlide slide={latest} theme={theme} index={slides.length - 1} pageCount={total} />
           </div>

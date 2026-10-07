@@ -149,6 +149,73 @@
   opacity: 0.35;
 }
 
+/* Magazine masthead: thick rule + hairline beneath (E-Ink Editorial). */
+.decor-masthead {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: var(--s-primary);
+}
+
+.decor-masthead::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 9px;
+  height: 1.5px;
+  background: var(--s-primary);
+  opacity: 0.85;
+}
+
+/* CRT scanline overlay (Cyber Terminal): mint phosphor lines at 5%, static. */
+.decor-scanlines {
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    180deg,
+    transparent 0,
+    transparent 3px,
+    var(--s-primary) 3px,
+    var(--s-primary) 4px
+  );
+  opacity: 0.05;
+  mix-blend-mode: screen;
+}
+
+/* Washi-tape strips in the top corners (Paper Collage), static. */
+.decor-tape {
+  inset: 0;
+}
+
+.decor-tape::before {
+  content: '';
+  position: absolute;
+  top: 22px;
+  left: 64px;
+  width: 132px;
+  height: 30px;
+  background: var(--s-primary);
+  opacity: 0.28;
+  transform: rotate(-5deg);
+  border-radius: 2px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.07);
+}
+
+.decor-tape::after {
+  content: '';
+  position: absolute;
+  top: 28px;
+  right: 64px;
+  width: 120px;
+  height: 30px;
+  background: var(--s-accent);
+  opacity: 0.34;
+  transform: rotate(4deg);
+  border-radius: 2px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.07);
+}
+
 /* ----------------------------------------------------------- slide footer */
 .slide-footer {
   position: absolute;

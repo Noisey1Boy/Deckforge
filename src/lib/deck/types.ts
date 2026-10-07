@@ -200,8 +200,12 @@ export interface ThemeTokens {
   shadow: { soft: string; card: string };
   chart: { palette: string[]; grid: string; axis: string };
   motion: { style: 'fade' | 'rise' | 'zoom' | 'slide'; duration: number };
-  /** Decorative motif applied by chrome so every layout feels designed. */
-  decor: 'rule-top' | 'bar-left' | 'corner' | 'band' | 'dots' | 'frame';
+  /**
+   * Decorative motif applied by chrome so every layout feels designed.
+   * `masthead`, `scanlines` and `tape` were added with the theme expansion
+   * (M-b): magazine double rule, CRT scanline overlay, washi-tape strips.
+   */
+  decor: 'rule-top' | 'bar-left' | 'corner' | 'band' | 'dots' | 'frame' | 'masthead' | 'scanlines' | 'tape';
 }
 
 export interface ThemeManifest {

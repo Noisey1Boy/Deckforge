@@ -1,0 +1,423 @@
+   430→   430→                >
+   431→   431→                  <Hammer className="h-4 w-4" aria-hidden />
+   432→   432→                  Start the brief
+   433→   433→                </a>
+   434→   434→                <a
+   435→   435→                  href="#method"
+   436→   436→                  className="stg-label inline-flex h-12 items-center border-2 border-white/25 px-6 text-[color:var(--stg-cream)] transition-colors hover:border-[color:var(--stg-yellow)] hover:text-[color:var(--stg-yellow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--stg-ink)]"
+   437→   437→                >
+   438→   438→                  Read the method
+   439→   439→                </a>
+   440→   440→              </div>
+   441→   441→              <p className="stg-label pt-1 text-[10px] text-white/40">
+   442→   442→                No invented numbers · Outline first · AI runs server-side
+   443→   443→              </p>
+   444→   444→            </motion.div>
+   445→   445→
+   446→   446→            {/* The Screen — real slides, real themes */}
+   447→   447→            <motion.div {...enter(0.12)} className="lg:col-span-6">
+   448→   448→              <HeroSpecimen />
+   449→   449→            </motion.div>
+   450→   450→          </div>
+   451→   451→        </div>
+   452→   452→
+   453→   453→        {/* Poster ticker */}
+   454→   454→        <div className="stg-ticker border-t-2 border-[color:var(--stg-ink)] py-2.5" aria-hidden>
+   455→   455→          <div className="stg-ticker-track flex w-max items-center">
+   456→   456→            {[0, 1].map((copy) => (
+   457→   457→              <div key={copy} className="flex items-center" aria-hidden={copy === 1}>
+   458→   458→                {MARQUEE_ITEMS.map((item) => (
+   459→   459→                  <span key={`${copy}-${item}`} className="stg-label flex items-center text-[10px]">
+   460→   460→                    <span className="px-5">{item}</span>
+   461→   461→                    <span className="h-1.5 w-1.5 bg-[color:var(--stg-ink)]" aria-hidden />
+   462→   462→                  </span>
+   463→   463→                ))}
+   464→   464→              </div>
+   465→   465→            ))}
+   466→   466→          </div>
+   467→   467→        </div>
+   468→   468→      </section>
+   469→   469→
+   470→   470→      {/* ================================================================
+   471→   471→          01 — THE METHOD (poster rows, oversized numerals)
+   472→   472→         ================================================================ */}
+   473→   473→      <section id="method" className="scroll-mt-16 bg-[color:var(--stg-cream)] text-[color:var(--stg-ink)]">
+   474→   474→        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-14 sm:py-20">
+   475→   475→          <motion.div {...enter(0)} className="flex flex-wrap items-end justify-between gap-4">
+   476→   476→            <div>
+   477→   477→              <p className="stg-label flex items-center gap-2.5 text-[color:var(--stg-ink)]/60">
+   478→   478→                <span className="inline-block h-2 w-2 bg-[color:var(--stg-yellow)]" aria-hidden />
+   479→   479→                01 · The method
+   480→   480→              </p>
+   481→   481→              <h2 className="stg-display mt-3 text-4xl sm:text-5xl uppercase leading-[0.95]">
+   482→   482→                You own the story. We own the pixels.
+   483→   483→              </h2>
+   484→   484→            </div>
+   485→   485→            <p className="max-w-xs pb-1 text-sm leading-relaxed text-[color:var(--stg-ink)]/70">
+   486→   486→              Four steps, in order, every time. Nothing is generated past a step you haven’t approved.
+   487→   487→            </p>
+   488→   488→          </motion.div>
+   489→   489→
+   490→   490→          <motion.ol {...enter(0.08)} className="mt-10">
+   491→   491→            {METHOD_STEPS.map((step, i) => (
+   492→   492→              <li
+   493→   493→                key={step.n}
+   494→   494→                className={cn(
+   495→   495→                  'stg-num-fill grid grid-cols-[auto_1fr] items-start gap-5 border-t-2 border-[color:var(--stg-ink)] py-7 sm:gap-10 sm:py-9',
+   496→   496→                  i === 1 && 'lg:pl-20',
+   497→   497→                  i === 3 && 'lg:pl-20',
+   498→   498→                )}
+   499→   499→              >
+   500→   500→                <span className="stg-num select-none pt-1 text-6xl sm:text-8xl" aria-hidden>{step.n}</span>
+   501→   501→                <div className="pt-1.5">
+   502→   502→                  <h3 className="stg-display text-2xl sm:text-3xl uppercase">{step.title}</h3>
+   503→   503→                  <p className="mt-2 max-w-[62ch] text-sm sm:text-base leading-relaxed text-[color:var(--stg-ink)]/75">{step.body}</p>
+   504→   504→                </div>
+   505→   505→              </li>
+   506→   506→            ))}
+   507→   507→          </motion.ol>
+   508→   508→        </div>
+   509→   509→      </section>
+   510→   510→
+   511→   511→      {/* ================================================================
+   512→   512→          02 — THE WORKBENCH (functional: brief → materials → systems)
+   513→   513→         ================================================================ */}
+   514→   514→      <section id="brief" className="scroll-mt-16 bg-[color:var(--stg-cream-2)] text-[color:var(--stg-ink)]">
+   515→   515→        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-14 sm:py-20">
+   516→   516→          <motion.div {...enter(0)} className="flex flex-wrap items-end justify-between gap-4">
+   517→   517→            <div>
+   518→   518→              <p className="stg-label flex items-center gap-2.5 text-[color:var(--stg-ink)]/60">
+   519→   519→                <span className="inline-block h-2 w-2 bg-[color:var(--stg-yellow)]" aria-hidden />
+   520→   520→                02 · The workbench
+   521→   521→              </p>
+   522→   522→              <h2 className="stg-display mt-3 text-4xl sm:text-5xl uppercase leading-[0.95]">Start the job.</h2>
+   523→   523→            </div>
+   524→   524→            <p className="stg-label max-w-xs pb-1 text-right text-[10px] text-[color:var(--stg-ink)]/60">
+   525→   525→              A · Brief&nbsp;&nbsp;B · Materials&nbsp;&nbsp;C · Design system
+   526→   526→            </p>
+   527→   527→          </motion.div>
+   528→   528→
+   529→   529→          {/* ---- A · Brief: the job ticket --------------------------------- */}
+   530→   530→          <motion.div {...enter(0.06)} className="mt-9 border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-yellow)] p-4 text-[color:var(--stg-ink)] shadow-[8px_8px_0_0_var(--stg-ink)] sm:p-6">
+   531→   531→            <div className="flex flex-wrap items-center justify-between gap-2">
+   532→   532→              <p className="stg-label text-[11px]">A · Brief</p>
+   533→   533→              {hasData && (
+   534→   534→                <Badge className="bg-[color:var(--stg-ink)] text-[color:var(--stg-yellow)] hover:bg-[color:var(--stg-ink)]">
+   535→   535→                  {tables.length + chartSpecs.length + (diagram ? 1 : 0)} materials attached
+   536→   536→                </Badge>
+   537→   537→              )}
+   538→   538→            </div>
+   539→   539→            <Textarea
+   540→   540→              value={prompt}
+   541→   541→              onChange={(e) => setPrompt(e.target.value)}
+   542→   542→              placeholder="e.g. “Create me a presentation about our 2026 sustainability strategy for investors”"
+   543→   543→              className="mt-3 min-h-28 resize-none border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-cream)] text-base text-[color:var(--stg-ink)] placeholder:text-[color:var(--stg-ink)]/50 focus-visible:ring-[color:var(--stg-ink)]"
+   544→   544→              maxLength={1200}
+   545→   545→              aria-label="Presentation topic"
+   546→   546→            />
+   547→   547→
+   548→   548→            <div className="mt-3 flex flex-wrap items-center gap-2">
+   549→   549→              {dealExamples(ideaSeed).map((ex) => (
+   550→   550→                <button
+   551→   551→                  key={ex}
+   552→   552→                  onClick={() => setPrompt(ex)}
+   553→   553→                  className="stg-label max-w-full truncate border border-[color:var(--stg-ink)]/45 px-3 py-1.5 text-[10px] text-[color:var(--stg-ink)]/85 transition-colors hover:bg-[color:var(--stg-ink)] hover:text-[color:var(--stg-yellow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--stg-ink)]"
+   554→   554→                >
+   555→   555→                  {ex.length > 52 ? ex.slice(0, 52) + '…' : ex}
+   556→   556→                </button>
+   557→   557→              ))}
+   558→   558→              <button
+   559→   559→                onClick={() => setIdeaSeed((s) => s + 1)}
+   560→   560→                className="stg-label inline-flex items-center gap-1.5 border border-dashed border-[color:var(--stg-ink)]/55 px-3 py-1.5 text-[10px] text-[color:var(--stg-ink)]/70 transition-colors hover:border-[color:var(--stg-ink)] hover:text-[color:var(--stg-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--stg-ink)]"
+   561→   561→                title="Show other starter ideas"
+   562→   562→                aria-label="Show other starter ideas"
+   563→   563→              >
+   564→   564→                <X className="h-3 w-3 rotate-45" aria-hidden /> More briefs
+   565→   565→              </button>
+   566→   566→            </div>
+   567→   567→
+   568→   568→            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+   569→   569→              <label className="space-y-1.5">
+   570→   570→                <span className="stg-label text-[9px] text-[color:var(--stg-ink)]/75">Audience</span>
+   571→   571→                <Input value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="investors, execs…" maxLength={120} className="border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-cream)] text-[color:var(--stg-ink)]" />
+   572→   572→              </label>
+   573→   573→              <label className="space-y-1.5">
+   574→   574→                <span className="stg-label text-[9px] text-[color:var(--stg-ink)]/75">Tone</span>
+   575→   575→                <Input value={tone} onChange={(e) => setTone(e.target.value)} placeholder="professional" maxLength={120} className="border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-cream)] text-[color:var(--stg-ink)]" />
+   576→   576→              </label>
+   577→   577→              <label className="space-y-1.5">
+   578→   578→                <span className="stg-label text-[9px] text-[color:var(--stg-ink)]/75">Language</span>
+   579→   579→                <Input value={language} onChange={(e) => setLanguage(e.target.value)} maxLength={60} className="border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-cream)] text-[color:var(--stg-ink)]" />
+   580→   580→              </label>
+   581→   581→              <div className="space-y-1.5">
+   582→   582→                <span className="stg-label text-[9px] text-[color:var(--stg-ink)]/75">Slides: {slideCount}</span>
+   583→   583→                <Slider value={[slideCount]} onValueChange={([v]) => setSlideCount(v)} min={4} max={30} step={1} aria-label="Number of slides" />
+   584→   584→              </div>
+   585→   585→            </div>
+   586→   586→
+   587→   587→            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+   588→   588→              <Button
+   589→   589→                size="lg"
+   590→   590→                onClick={generateOutline}
+   591→   591→                disabled={!!busy}
+   592→   592→                className="stg-label h-12 flex-1 bg-[color:var(--stg-ink)] text-[13px] text-[color:var(--stg-yellow)] hover:bg-[color:var(--stg-ink-2)]"
+   593→   593→              >
+   594→   594→                {busy ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <Hammer className="h-4 w-4" aria-hidden />}
+   595→   595→                {busy ?? 'Forge the outline'}
+   596→   596→              </Button>
+   597→   597→              <p className="stg-label text-center text-[10px] leading-relaxed text-[color:var(--stg-ink)]/75 sm:max-w-64 sm:text-left">
+   598→   598→                You approve the outline before a single slide is designed.
+   599→   599→              </p>
+   600→   600→            </div>
+   601→   601→            {dataError && (
+   602→   602→              <p className="mt-3 flex items-center gap-1.5 text-sm font-medium text-red-800">
+   603→   603→                <AlertTriangle className="h-4 w-4" aria-hidden /> {dataError}
+   604→   604→              </p>
+   605→   605→            )}
+   606→   606→          </motion.div>
+   607→   607→
+   608→   608→          {/* ---- B · Materials + C · Design systems ------------------------ */}
+   609→   609→          <div className="mt-10 grid gap-10 lg:grid-cols-5">
+   610→   610→            {/* B — Materials */}
+   611→   611→            <motion.section {...enter(0.1)} className="space-y-4 lg:col-span-2" aria-labelledby="materials-h">
+   612→   612→              <div>
+   613→   613→                <p className="stg-label text-[color:var(--stg-ink)]/60">B · Materials — optional</p>
+   614→   614→                <h3 id="materials-h" className="stg-display mt-2 text-2xl uppercase">
+   615→   615→                  Bring your own evidence.
+   616→   616→                </h3>
+   617→   617→                <p className="mt-1.5 max-w-[55ch] text-sm leading-relaxed text-[color:var(--stg-ink)]/70">
+   618→   618→                  Spreadsheets become charts with the exact numbers. Screenshots get read.
+   619→   619→                  Structure you wrote stays exactly as you wrote it.
+   620→   620→                </p>
+   621→   621→              </div>
+   622→   622→
+   623→   623→              <div className="border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-cream)] p-4">
+   624→   624→                {/* Static-button tabs (no Radix id generation — keeps SSR/hydration
+   625→   625→                    ids fully deterministic) */}
+   626→   626→                <div role="tablist" aria-label="Data input type" className="mb-3 grid grid-cols-4 gap-1 border border-[color:var(--stg-ink)]/20 p-1">
+   627→   627→                  {([
+   628→   628→                    { id: 'files', label: 'Files', icon: <FileSpreadsheet className="h-3.5 w-3.5" /> },
+   629→   629→                    { id: 'image', label: 'Chart img', icon: <ImageIcon className="h-3.5 w-3.5" /> },
+   630→   630→                    { id: 'mermaid', label: 'Mermaid', icon: <Workflow className="h-3.5 w-3.5" /> },
+   631→   631→                    { id: 'markdown', label: 'Markdown', icon: <ListTree className="h-3.5 w-3.5" /> },
+   632→   632→                  ] as const).map((t) => (
+   633→   633→                    <button
+   634→   634→                      key={t.id}
+   635→   635→                      role="tab"
+   636→   636→                      id={`data-tab-${t.id}`}
+   637→   637→                      aria-selected={dataTab === t.id}
+   638→   638→                      aria-controls={`data-panel-${t.id}`}
+   639→   639→                      tabIndex={dataTab === t.id ? 0 : -1}
+   640→   640→                      onClick={() => setDataTab(t.id)}
+   641→   641→                      className={cn(
+   642→   642→                        'stg-label inline-flex h-9 items-center justify-center gap-1.5 px-1 text-[9px] whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--stg-ink)] disabled:pointer-events-none disabled:opacity-50',
+   643→   643→                        dataTab === t.id
+   644→   644→                          ? 'bg-[color:var(--stg-ink)] text-[color:var(--stg-cream)]'
+   645→   645→                          : 'text-[color:var(--stg-ink)]/60 hover:text-[color:var(--stg-ink)]',
+   646→   646→                      )}
+   647→   647→                    >
+   648→   648→                      {t.icon} {t.label}
+   649→   649→                    </button>
+   650→   650→                  ))}
+   651→   651→                </div>
+   652→   652→
+   653→   653→                {dataTab === 'files' && (
+   654→   654→                  <div role="tabpanel" id="data-panel-files" aria-labelledby="data-tab-files" className="space-y-3">
+   655→   655→                    <button
+   656→   656→                      onClick={() => fileRef.current?.click()}
+   657→   657→                      className="w-full border-2 border-dashed border-[color:var(--stg-ink)]/40 bg-[color:var(--stg-cream)] p-6 text-center transition-colors hover:border-[color:var(--stg-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--stg-ink)]"
+   658→   658→                    >
+   659→   659→                      <FileUp className="mx-auto h-6 w-6 text-[color:var(--stg-ink)]/50" aria-hidden />
+   660→   660→                      <p className="mt-2 text-sm font-semibold">Drop or click to upload</p>
+   661→   661→                      <p className="stg-label mt-1 text-[9px] text-[color:var(--stg-ink)]/60">CSV · XLSX · JSON · Max 4 MB</p>
+   662→   662→                    </button>
+   663→   663→                    <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls,.json,.txt" multiple hidden onChange={(e) => handleFiles(e.target.files)} />
+   664→   664→                    {tables.length > 0 && (
+   665→   665→                      <ul className="space-y-1.5">
+   666→   666→                        {tables.map((t, i) => (
+   667→   667→                          <li key={i} className="flex items-center justify-between border border-[color:var(--stg-ink)]/20 bg-[color:var(--stg-cream)] px-2.5 py-2 text-xs">
+   668→   668→                            <span className="flex items-center gap-1.5 truncate">
+   669→   669→                              {t.name.endsWith('.json') ? <FileJson2 className="h-3.5 w-3.5 text-[color:var(--stg-ink)]/60" aria-hidden /> : <FileSpreadsheet className="h-3.5 w-3.5 text-[color:var(--stg-ink)]" aria-hidden />}
+   670→   670→                              <span className="truncate font-medium">{t.name}</span>
+   671→   671→                              <span className="text-[color:var(--stg-ink)]/60">{t.rows.length}×{t.columns.length}</span>
+   672→   672→                            </span>
+   673→   673→                            <button
+   674→   674→                              onClick={() => setTables(tables.filter((_, j) => j !== i))}
+   675→   675→                              className="text-[color:var(--stg-ink)]/50 hover:text-red-700"
+   676→   676→                              aria-label={`Remove ${t.name}`}
+   677→   677→                            >
+   678→   678→                              <X className="h-3.5 w-3.5" aria-hidden />
+   679→   679→                            </button>
+   680→   680→                          </li>
+   681→   681→                        ))}
+   682→   682→                      </ul>
+   683→   683→                    )}
+   684→   684→                  </div>
+   685→   685→                )}
+   686→   686→
+   687→   687→                {dataTab === 'image' && (
+   688→   688→                  <div role="tabpanel" id="data-panel-image" aria-labelledby="data-tab-image" className="space-y-3">
+   689→   689→                    <button
+   690→   690→                      onClick={() => imgRef.current?.click()}
+   691→   691→                      className="w-full border-2 border-dashed border-[color:var(--stg-ink)]/40 bg-[color:var(--stg-cream)] p-6 text-center transition-colors hover:border-[color:var(--stg-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--stg-ink)]"
+   692→   692→                    >
+   693→   693→                      <ImageIcon className="mx-auto h-6 w-6 text-[color:var(--stg-ink)]/50" aria-hidden />
+   694→   694→                      <p className="mt-2 text-sm font-semibold">Upload a chart screenshot</p>
+   695→   695→                      <p className="stg-label mt-1 text-[9px] text-[color:var(--stg-ink)]/60">AI reads the values · No retyping</p>
+   696→   696→                    </button>
+   697→   697→                    <input ref={imgRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => handleChartImage(e.target.files)} />
+   698→   698→                    {chartSpecs.length > 0 && (
+   699→   699→                      <ul className="space-y-1.5">
+   700→   700→                        {chartSpecs.map((c, i) => (
+   701→   701→                          <li key={i} className="flex items-center justify-between border border-[color:var(--stg-ink)]/20 bg-[color:var(--stg-cream)] px-2.5 py-2 text-xs">
+   702→   702→                            <span className="flex items-center gap-1.5 truncate">
+   703→   703→                              <BarChart3 className="h-3.5 w-3.5 text-[color:var(--stg-ink)]" aria-hidden />
+   704→   704→                              <span className="truncate font-medium">{c.title || 'Chart'} · {c.data.length} pts</span>
+   705→   705→                            </span>
+   706→   706→                            <button onClick={() => setChartSpecs(chartSpecs.filter((_, j) => j !== i))} className="text-[color:var(--stg-ink)]/50 hover:text-red-700" aria-label="Remove chart">
+   707→   707→                              <X className="h-3.5 w-3.5" aria-hidden />
+   708→   708→                            </button>
+   709→   709→                          </li>
+   710→   710→                        ))}
+   711→   711→                      </ul>
+   712→   712→                    )}
+   713→   713→                  </div>
+   714→   714→                )}
+   715→   715→
+   716→   716→                {dataTab === 'markdown' && (
+   717→   717→                  <div role="tabpanel" id="data-panel-markdown" aria-labelledby="data-tab-markdown" className="space-y-3">
+   718→   718→                    <Textarea
+   719→   719→                      value={markdown}
+   720→   720→                      onChange={(e) => setMarkdown(e.target.value)}
+   721→   721→                      placeholder={'# Q3 Review\nsubtitle: Revenue, wins and risks\n## Highlights\n- Revenue up 18%\n- Churn at all-time low\n## Revenue by region [chart]\n## Thank you / next steps'}
+   722→   722→                      className="min-h-40 font-mono text-xs"
+   723→   723→                      aria-label="Markdown outline"
+   724→   724→                    />
+   725→   725→                    {(() => {
+   726→   726→                      const trimmed = markdown.trim();
+   727→   727→                      if (!trimmed) {
+   728→   728→                        return (
+   729→   729→                          <p className="text-[11px] leading-relaxed text-[color:var(--stg-ink)]/65">
+   730→   730→                            <code className="bg-[color:var(--stg-ink)]/10 px-1 font-mono">#</code> title · <code className="bg-[color:var(--stg-ink)]/10 px-1 font-mono">##</code> slide · bullets become the brief · <code className="bg-[color:var(--stg-ink)]/10 px-1 font-mono">[chart]</code> tag picks the layout. Structure stays exactly as you write it, no AI rewriting.
+   731→   731→                          </p>
+   732→   732→                        );
+   733→   733→                      }
+   734→   734→                      const parsed = parseMarkdownOutline(trimmed);
+   735→   735→                      const bullets = parsed.slides.reduce((n, s) => n + (s.brief ? s.brief.split(' • ').length : 0), 0);
+   736→   736→                      return (
+   737→   737→                        <div className="flex flex-wrap items-center gap-1.5">
+   738→   738→                          <Badge variant="outline" className="gap-1 border-[color:var(--stg-ink)]/30 text-[11px]"><ListTree className="h-3 w-3" aria-hidden /> {parsed.slides.length} slides</Badge>
+   739→   739→                          <Badge variant="outline" className="border-[color:var(--stg-ink)]/30 text-[11px]">{bullets} bullets</Badge>
+   740→   740→                          <Badge variant="outline" className="max-w-45 truncate gap-1 border-[color:var(--stg-ink)]/30 text-[11px]"><ListTree className="h-3 w-3 shrink-0" aria-hidden /> {parsed.title}</Badge>
+   741→   741→                        </div>
+   742→   742→                      );
+   743→   743→                    })()}
+   744→   744→                    <Button size="sm" className="stg-label w-full gap-1.5 bg-[color:var(--stg-ink)] text-[11px] text-[color:var(--stg-yellow)] hover:bg-[color:var(--stg-ink-2)]" onClick={buildFromMarkdown} disabled={!!busy}>
+   745→   745→                      <ListTree className="h-4 w-4" aria-hidden />
+   746→   746→                      Build outline from markdown
+   747→   747→                    </Button>
+   748→   748→                  </div>
+   749→   749→                )}
+   750→   750→
+   751→   751→                {dataTab === 'mermaid' && (
+   752→   752→                  <div role="tabpanel" id="data-panel-mermaid" aria-labelledby="data-tab-mermaid" className="space-y-3">
+   753→   753→                    <Textarea
+   754→   754→                      value={mermaid}
+   755→   755→                      onChange={(e) => setMermaid(e.target.value)}
+   756→   756→                      placeholder={'graph LR\n  Upload --> Parse --> Analyze --> Report'}
+   757→   757→                      className="min-h-28 font-mono text-xs"
+   758→   758→                    />
+   759→   759→                    {diagram ? (
+   760→   760→                      <div className="flex items-center justify-between border border-[color:var(--stg-ink)]/20 bg-[color:var(--stg-cream)] px-2.5 py-2 text-xs">
+   761→   761→                        <span className="flex items-center gap-1.5"><Workflow className="h-3.5 w-3.5 text-[color:var(--stg-ink)]" aria-hidden /><span className="font-medium">{diagram.title}</span> · {diagram.nodes.length} nodes</span>
+   762→   762→                        <button onClick={() => setDiagram(null)} className="text-[color:var(--stg-ink)]/50 hover:text-red-700" aria-label="Remove diagram"><X className="h-3.5 w-3.5" aria-hidden /></button>
+   763→   763→                      </div>
+   764→   764→                    ) : (
+   765→   765→                      <Button variant="secondary" size="sm" onClick={analyzeMermaid} disabled={!!busy}>
+   766→   766→                        Convert diagram
+   767→   767→                      </Button>
+   768→   768→                    )}
+   769→   769→                  </div>
+   770→   770→                )}
+   771→   771→              </div>
+   772→   772→            </motion.section>
+   773→   773→
+   774→   774→            {/* C — Design systems */}
+   775→   775→            <motion.section {...enter(0.16)} id="systems" className="scroll-mt-16 space-y-4 lg:col-span-3" aria-labelledby="systems-h">
+   776→   776→              <div className="flex flex-wrap items-end justify-between gap-2">
+   777→   777→                <div>
+   778→   778→                  <p className="stg-label text-[color:var(--stg-ink)]/60">C · Design system</p>
+   779→   779→                  <h3 id="systems-h" className="stg-display mt-2 text-2xl uppercase">
+   780→   780→                    Eight systems. Zero templates.
+   781→   781→                  </h3>
+   782→   782→                </div>
+   783→   783→                <p className="max-w-xs pb-1 text-sm leading-relaxed text-[color:var(--stg-ink)]/70">
+   784→   784→                  Auto lets the model match your topic: every option is a full token set, not a skin.
+   785→   785→                </p>
+   786→   786→              </div>
+   787→   787→              <TemplateGallery compact />
+   788→   788→            </motion.section>
+   789→   789→          </div>
+   790→   790→        </div>
+   791→   791→      </section>
+   792→   792→
+   793→   793→      {/* ================================================================
+   794→   794→          03 — HOUSE RULES (opinions we run on, numbered rows)
+   795→   795→         ================================================================ */}
+   796→   796→      <section className="scroll-mt-16 bg-[color:var(--stg-ink)] text-[color:var(--stg-cream)]">
+   797→   797→        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-14 sm:py-20">
+   798→   798→          <motion.div {...enter(0)} className="flex flex-wrap items-end justify-between gap-4">
+   799→   799→            <div>
+   800→   800→              <p className="stg-label flex items-center gap-2.5 text-[color:var(--stg-yellow)]">
+   801→   801→                <span className="inline-block h-2 w-2 bg-[color:var(--stg-yellow)]" aria-hidden />
+   802→   802→                03 · House rules
+   803→   803→              </p>
+   804→   804→              <h2 className="stg-display mt-3 text-4xl sm:text-5xl uppercase leading-[0.95]">
+   805→   805→                Opinions we refuse to soften.
+   806→   806→              </h2>
+   807→   807→            </div>
+   808→   808→            <p className="stg-label pb-1 text-[10px] text-white/40">Non-negotiable · Enforced in code</p>
+   809→   809→          </motion.div>
+   810→   810→
+   811→   811→          <motion.div {...enter(0.08)} className="mt-10">
+   812→   812→            {HOUSE_RULES.map((rule, i) => (
+   813→   813→              <article key={rule.title} className="grid grid-cols-[auto_1fr] gap-5 border-t-2 border-white/15 py-7 first:border-t-0 first:pt-0 sm:gap-10 sm:py-8">
+   814→   814→                <span className="stg-display select-none pt-1 text-4xl leading-none text-[color:var(--stg-yellow)] sm:text-6xl" aria-hidden>
+   815→   815→                  {String(i + 1).padStart(2, '0')}
+   816→   816→                </span>
+   817→   817→                <div>
+   818→   818→                  <h3 className="stg-display text-2xl uppercase sm:text-3xl">{rule.title}</h3>
+   819→   819→                  <p className="mt-2 max-w-[70ch] text-sm leading-relaxed text-white/65 sm:text-base">{rule.body}</p>
+   820→   820→                </div>
+   821→   821→              </article>
+   822→   822→            ))}
+   823→   823→          </motion.div>
+   824→   824→        </div>
+   825→   825→      </section>
+   826→   826→
+   827→   827→      {/* ================================================================
+   828→   828→          04 — THE ARCHIVE
+   829→   829→         ================================================================ */}
+   830→   830→      <section id="decks" className="scroll-mt-16 bg-[color:var(--stg-cream)] text-[color:var(--stg-ink)]">
+   831→   831→        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-14 sm:py-20">
+   832→   832→          <motion.div {...enter(0)} className="mb-7 flex flex-wrap items-end justify-between gap-4">
+   833→   833→            <div>
+   834→   834→              <p className="stg-label flex items-center gap-2.5 text-[color:var(--stg-ink)]/60">
+   835→   835→                <span className="inline-block h-2 w-2 bg-[color:var(--stg-yellow)]" aria-hidden />
+   836→   836→                04 · The archive
+   837→   837→              </p>
+   838→   838→              <h2 className="stg-display mt-3 text-4xl sm:text-5xl uppercase leading-[0.95]">
+   839→   839→                Your decks, ready to rerun.
+   840→   840→              </h2>
+   841→   841→            </div>
+   842→   842→            <p className="stg-label pb-1 text-[10px] text-[color:var(--stg-ink)]/60">
+   843→   843→              Autosaved · Export, duplicate, import .deck.json
+   844→   844→            </p>
+   845→   845→          </motion.div>
+   846→   846→          <RecentDecks onOpen={(d) => openDeck(d)} hideHeading />
+   847→   847→        </div>
+   848→   848→      </section>
+   849→   849→    </div>
+   850→   850→  );
+   851→   851→}
+   852→   852→

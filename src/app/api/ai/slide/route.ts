@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { extractJson, getZAI, rateLimit, sanitizeLines, sanitizeText, clientKey } from '@/lib/ai/helpers';
 import type { Slide } from '@/lib/deck/types';
+import { toneDirective } from '@/lib/ai/strategies';
 
 export const maxDuration = 60;
+
+const NOTES_CONTRACT =
+  'Presenter speaker notes: 2-4 short talking points as flowing spoken sentences (NOT a verbatim script to read aloud), covering the visual elements in order, plus exactly one delivery cue in square brackets such as [pause here], [ask the room], [point at the chart] or [let this sink in]. Never invent statistics that are not already on the slide.';
 
 const ACTIONS = {
   rewrite: 'Rewrite the slide copy to be sharper and more specific. Keep the same layout, same language, and all factual content.',
@@ -10,7 +14,7 @@ const ACTIONS = {
   expand: 'Enrich the copy with one concrete detail or example per element (no invented statistics). Keep the same layout and language.',
   regenerate: 'Regenerate the slide copy from scratch with a fresh angle on the same brief. Keep the same layout and language.',
   add_chart: 'Add a small chart: pick the best chart kind for this content and provide 3-6 plausible illustrative data points clearly marked as illustrative. Return "chart" plus a one-line "insight".',
-  speaker_notes: 'Write presenter speaker notes for this slide: 60-110 words, natural spoken tone, first person. Open with a hook or transition, cover every visual element on the slide in order, add one concrete example or number already present on the slide, and close with a segue to the next topic. Never invent statistics that are not on the slide. Return only a "notes" field.',
+  speaker_notes: `Write ${NOTES_CONTRACT} Return only a "notes" field.`,
 } as const;
 
 type Action = keyof typeof ACTIONS;
@@ -28,10 +32,13 @@ export async function POST(req: NextRequest) {
       topic?: string;
       context?: string;
       language?: string;
+      /** Optional tone id or legacy free text; resolved via toneDirective. */
+      tone?: string;
     };
     const action = body.action;
     const context = sanitizeText(body.context, 600);
     const language = sanitizeText(body.language, 40) || 'English';
+    const toneLine = body.tone ? `Tone: ${toneDirective(body.tone)}` : '';
 
     // ---------------------------------------------------------- compose_slide
     // Create a brand-new slide from a one-line topic. Layout is picked by the
@@ -43,7 +50,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Give the slide a topic first.' }, { status: 400 });
       }
       const zai = await getZAI();
-      const system = `You are an expert presentation writer. Compose ONE presentation slide from a topic. Respond with STRICT JSON only, no markdown or HTML anywhere.`;
+      const system = `You are an expert presentation writer. Compose ONE presentation slide from a topic.${toneLine ? ` ${toneLine}.` : ''} Respond with STRICT JSON only, no markdown or HTML anywhere.`;
       const user = `Topic: "${topic}"
 ${context ? `Deck context: ${context}` : ''}
 Language: ${language}
@@ -56,9 +63,10 @@ Return a JSON object:
   "bullets": array of 3-5 strings (<=90 chars each) — for layout "bullets" or "two-column" (then also leftTitle/rightTitle + leftContent/rightContent instead of bullets),
   "quote": string (<=240 chars) and "attribution": string (<=80 chars) — only for layout "quote",
   "stats": array of {"value": string (<=12 chars), "label": string (<=48 chars)} (2-4 items) — only for layout "stats" (never invent precise statistics; use round illustrative figures like "3x" or "40%"),
-  "notes": string (60-110 words of natural first-person speaker notes)
+  "notes": string (2-4 short presenter talking points plus one delivery cue in square brackets like [pause here] or [ask the room])
 }
-Choose the layout that best serves the topic. Omit fields that do not apply.`;
+Choose the layout that best serves the topic. Omit fields that do not apply.
+${toneLine}`.trim();
 
       const completion = await zai.chat.completions.create({
         messages: [
@@ -141,7 +149,7 @@ Choose the layout that best serves the topic. Omit fields that do not apply.`;
     }
 
     const zai = await getZAI();
-    const system = `You are an expert presentation copy editor. ${ACTIONS[action]} Respond with STRICT JSON only, no markdown or HTML anywhere.`;
+    const system = `You are an expert presentation copy editor. ${ACTIONS[action]} Respond with STRICT JSON only, no markdown or HTML anywhere.${toneLine ? ` ${toneLine}.` : ''}`;
 
     const user = `Slide JSON:
 ${JSON.stringify(slide, null, 1)}
