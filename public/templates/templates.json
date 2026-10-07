@@ -1,0 +1,1752 @@
+{
+  "templates": [
+    {
+      "id": "course-module",
+      "name": "Course Module",
+      "tagline": "Online-course / workshop module deck — warm paper background + Playfair serif, persistent left sidebar of learning objectives, ...",
+      "category": "Education",
+      "style": "Warm",
+      "palette": [
+        "#ffffff",
+        "#3b6cff",
+        "#111216",
+        "#7a5cff"
+      ],
+      "fonts": [
+        "Inter",
+        "Noto Sans SC",
+        "Noto Serif SC"
+      ],
+      "bestFor": [
+        "course module",
+        "course slides",
+        "workshop"
+      ],
+      "slidesCount": 7,
+      "tags": [
+        "course-module",
+        "course-slides",
+        "workshop"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-course-module"
+    },
+    {
+      "id": "graphify-dark-graph",
+      "name": "Graphify Dark Graph",
+      "tagline": "暗底知识图谱 deck — #06060c→#0e1020 深夜渐变 + 漂浮 blur orbs、封面 SVG 力导向图谱、彩虹渐变标题、JetBrains Mono 命令行高亮、glass-morphism 卡片。适合 dev-tool / CLI ...",
+      "category": "Tech",
+      "style": "Custom",
+      "palette": [
+        "#ffffff",
+        "#3b6cff",
+        "#111216",
+        "#7a5cff"
+      ],
+      "fonts": [
+        "Inter",
+        "Noto Sans SC",
+        "Noto Serif SC"
+      ],
+      "bestFor": [
+        "graph deck",
+        "dark graph",
+        "dev tool launch"
+      ],
+      "slidesCount": 8,
+      "tags": [
+        "graph-deck",
+        "dark-graph",
+        "dev-tool-launch"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-graphify-dark-graph"
+    },
+    {
+      "id": "hermes-cyber-terminal",
+      "name": "Hermes Cyber Terminal",
+      "tagline": "暗终端 honest-review deck — #0a0c10 黑底 + 56px 赛博网格 + CRT 暗角 + 扫描线、窗口红绿灯 chrome、`$ prompt` 命令行标题、薄荷绿 #7ed3a4 大字、JetBrains Mono、stro...",
+      "category": "Tech",
+      "style": "Custom",
+      "palette": [
+        "#ffffff",
+        "#3b6cff",
+        "#111216",
+        "#7a5cff"
+      ],
+      "fonts": [
+        "Inter",
+        "Noto Sans SC",
+        "Noto Serif SC"
+      ],
+      "bestFor": [
+        "terminal review",
+        "cli review",
+        "agent review"
+      ],
+      "slidesCount": 8,
+      "tags": [
+        "terminal-review",
+        "cli-review",
+        "agent-review"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-hermes-cyber-terminal"
+    },
+    {
+      "id": "knowledge-arch-blueprint",
+      "name": "Knowledge Arch Blueprint",
+      "tagline": "奶油蓝图架构 deck — 奶油纸 #F0EAE0 底色 + 单一锈红 #B5392A 高亮、48px 蓝图网格 mask、2px 黑边硬卡片、pipeline 步骤盒（其中一个抬高）、右侧锈红 insight callout、Playfair 衬线大字...",
+      "category": "Education",
+      "style": "Custom",
+      "palette": [
+        "#ffffff",
+        "#3b6cff",
+        "#111216",
+        "#7a5cff"
+      ],
+      "fonts": [
+        "Inter",
+        "Noto Sans SC",
+        "Noto Serif SC"
+      ],
+      "bestFor": [
+        "architecture",
+        "blueprint",
+        "system design"
+      ],
+      "slidesCount": 8,
+      "tags": [
+        "architecture",
+        "blueprint",
+        "system-design"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-knowledge-arch-blueprint"
+    },
+    {
+      "id": "obsidian-claude-gradient",
+      "name": "Obsidian Claude Gradient",
+      "tagline": "GitHub 暗紫渐变 deck — GitHub-dark #0d1117 + 紫蓝 radial 环境光 + 60px 网格 mask、居中布局、紫色 pill 标签、三色渐变标题（#a855f7→#60a5fa→#34d399）、GitHub 风代...",
+      "category": "Tech",
+      "style": "Dark",
+      "palette": [
+        "#ffffff",
+        "#3b6cff",
+        "#111216",
+        "#7a5cff"
+      ],
+      "fonts": [
+        "Inter",
+        "Noto Sans SC",
+        "Noto Serif SC"
+      ],
+      "bestFor": [
+        "github dark",
+        "developer tutorial",
+        "mcp tutorial"
+      ],
+      "slidesCount": 8,
+      "tags": [
+        "github-dark",
+        "developer-tutorial",
+        "mcp-tutorial"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-obsidian-claude-gradient"
+    },
+    {
+      "id": "pitch-deck",
+      "name": "Pitch Deck",
+      "tagline": "Investor-ready 10-slide HTML pitch deck — white + blue→purple gradient hero, big numbers, traction bar chart, $4.",
+      "category": "Business",
+      "style": "Gradient",
+      "palette": [
+        "#ffffff",
+        "#3b6cff",
+        "#111216",
+        "#7a5cff"
+      ],
+      "fonts": [
+        "Inter",
+        "Noto Sans SC",
+        "Noto Serif SC"
+      ],
+      "bestFor": [
+        "pitch deck",
+        "pitch",
+        "fundraising"
+      ],
+      "slidesCount": 10,
+      "tags": [
+        "pitch-deck",
+        "pitch",
+        "fundraising"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-pitch-deck"
+    },
+    {
+      "id": "presenter-mode-reveal",
+      "name": "Presenter Mode",
+      "tagline": "演讲者模式专用 deck — tokyo-night 默认主题，5 套主题 T 键切换，每页带 150-300 字逐字稿示例（<aside class=\"notes\">），按 S 打开 popup（CURRENT / NEXT / SCRIPT / TI...",
+      "category": "Engineering",
+      "style": "Custom",
+      "palette": [
+        "#ffffff",
+        "#3b6cff",
+        "#111216",
+        "#7a5cff"
+      ],
+      "fonts": [
+        "Inter",
+        "Noto Sans SC",
+        "Noto Serif SC"
+      ],
+      "bestFor": [
+        "presenter mode",
+        "speaker notes",
+        "presenter view"
+      ],
+      "slidesCount": 6,
+      "tags": [
+        "presenter-mode",
+        "speaker-notes",
+        "presenter-view"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-presenter-mode-reveal"
+    },
+    {
+      "id": "product-launch",
+      "name": "Product Launch",
+      "tagline": "Launch keynote deck — dark hero + light content, warm orange→peach accent, feature cards, pricing tiers, CTA.",
+      "category": "Business",
+      "style": "Dark",
+      "palette": [
+        "#ffffff",
+        "#3b6cff",
+        "#111216",
+        "#7a5cff"
+      ],
+      "fonts": [
+        "Inter",
+        "Noto Sans SC",
+        "Noto Serif SC"
+      ],
+      "bestFor": [
+        "product launch",
+        "keynote",
+        "launch deck"
+      ],
+      "slidesCount": 8,
+      "tags": [
+        "product-launch",
+        "keynote",
+        "launch-deck"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-product-launch"
+    },
+    {
+      "id": "taste-brutalist",
+      "name": "Taste Brutalist",
+      "tagline": "16:9 HTML deck in tactical-telemetry / CRT-terminal taste.",
+      "category": "Creative",
+      "style": "Custom",
+      "palette": [
+        "#0B0B0B",
+        "#131312",
+        "#ECECEA",
+        "#9F9F9C"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "Taste Brutalist",
+        "presentation",
+        "slides"
+      ],
+      "slidesCount": 11,
+      "tags": [
+        "taste-brutalist",
+        "presentation",
+        "slides"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-taste-brutalist"
+    },
+    {
+      "id": "taste-editorial",
+      "name": "Taste Editorial",
+      "tagline": "16:9 HTML deck in editorial-minimalist taste.",
+      "category": "Creative",
+      "style": "Minimal",
+      "palette": [
+        "#346538",
+        "#9F2F2D",
+        "#FBFBFA",
+        "#F4F3F0"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "Taste Editorial",
+        "presentation",
+        "slides"
+      ],
+      "slidesCount": 10,
+      "tags": [
+        "taste-editorial",
+        "presentation",
+        "slides"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-taste-editorial"
+    },
+    {
+      "id": "tech-sharing",
+      "name": "Tech Sharing",
+      "tagline": "Conference / internal tech-talk deck — GitHub-dark, JetBrains Mono, terminal code blocks, agenda + Q&A pages.",
+      "category": "Education",
+      "style": "Dark",
+      "palette": [
+        "#ffffff",
+        "#3b6cff",
+        "#111216",
+        "#7a5cff"
+      ],
+      "fonts": [
+        "Inter",
+        "Noto Sans SC",
+        "Noto Serif SC"
+      ],
+      "bestFor": [
+        "tech sharing",
+        "tech talk",
+        "engineering talk"
+      ],
+      "slidesCount": 8,
+      "tags": [
+        "tech-sharing",
+        "tech-talk",
+        "engineering-talk"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-tech-sharing"
+    },
+    {
+      "id": "testing-safety-alert",
+      "name": "Testing Safety Alert",
+      "tagline": "红琥珀警示 deck — 顶/底 45° 红黑 hazard 条纹、红色删除线否定标题、L1/L2/L3 绿/琥珀/红 tier 卡片、圆点状态 alert box、policy-yaml 代码块（红左边框 + bad 关键词高亮）、红绿 checkli...",
+      "category": "Engineering",
+      "style": "Custom",
+      "palette": [
+        "#ffffff",
+        "#3b6cff",
+        "#111216",
+        "#7a5cff"
+      ],
+      "fonts": [
+        "Inter",
+        "Noto Sans SC",
+        "Noto Serif SC"
+      ],
+      "bestFor": [
+        "safety alert",
+        "incident",
+        "red team"
+      ],
+      "slidesCount": 8,
+      "tags": [
+        "safety-alert",
+        "incident",
+        "red-team"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-testing-safety-alert"
+    },
+    {
+      "id": "weekly-report",
+      "name": "Weekly Report",
+      "tagline": "Team weekly / status-update deck — corporate clarity, 8-cell KPI grid, shipped list, 8-week bar chart, next-week table.",
+      "category": "Business",
+      "style": "Corporate",
+      "palette": [
+        "#ffffff",
+        "#3b6cff",
+        "#111216",
+        "#7a5cff"
+      ],
+      "fonts": [
+        "Inter",
+        "Noto Sans SC",
+        "Noto Serif SC"
+      ],
+      "bestFor": [
+        "weekly report",
+        "status update",
+        "team report"
+      ],
+      "slidesCount": 7,
+      "tags": [
+        "weekly-report",
+        "status-update",
+        "team-report"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-weekly-report"
+    },
+    {
+      "id": "xhs-pastel-card",
+      "name": "Xhs Pastel Card",
+      "tagline": "柔和马卡龙慢生活 deck — 奶油 #fef8f1 底 + 三个柔光 blob、Playfair 斜体衬线 display 标题混 sans 正文、28px 圆角马卡龙卡片（桃 / 薄荷 / 天 / 紫 / 柠 / 玫）、Playfair 斜体 01-...",
+      "category": "Social",
+      "style": "Custom",
+      "palette": [
+        "#ffffff",
+        "#3b6cff",
+        "#111216",
+        "#7a5cff"
+      ],
+      "fonts": [
+        "Inter",
+        "Noto Sans SC",
+        "Noto Serif SC"
+      ],
+      "bestFor": [
+        "pastel",
+        "macaron",
+        "lifestyle"
+      ],
+      "slidesCount": 8,
+      "tags": [
+        "pastel",
+        "macaron",
+        "lifestyle"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-xhs-pastel-card"
+    },
+    {
+      "id": "xhs-white-editorial",
+      "name": "Xhs White Editorial",
+      "tagline": "白底杂志风 deck — 纯白背景 + 顶部 10 色彩虹 bar、80-110px display 标题、紫→蓝→绿→橙→粉渐变文字、马卡龙软卡片组（粉/紫/蓝/绿/橙）、黑底白字.",
+      "category": "Social",
+      "style": "Custom",
+      "palette": [
+        "#ffffff",
+        "#3b6cff",
+        "#111216",
+        "#7a5cff"
+      ],
+      "fonts": [
+        "Inter",
+        "Noto Sans SC",
+        "Noto Serif SC"
+      ],
+      "bestFor": [
+        "xhs editorial",
+        "white editorial",
+        "editorial deck"
+      ],
+      "slidesCount": 8,
+      "tags": [
+        "xhs-editorial",
+        "white-editorial",
+        "editorial-deck"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-xhs-white-editorial"
+    },
+    {
+      "id": "8-bit-orbit",
+      "name": "Zhangzara 8 Bit Orbit",
+      "tagline": "8-Bit Orbit — Pixel-art neon arcade aesthetic on a deep navy void.",
+      "category": "Editorial",
+      "style": "Custom",
+      "palette": [
+        "#F0A6CA",
+        "#5EDCF4",
+        "#F4D03F",
+        "#0F1B3D"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "8-bit-orbit",
+        "zhangzara-8-bit-orbit",
+        "8-Bit Orbit"
+      ],
+      "slidesCount": 10,
+      "tags": [
+        "8-bit-orbit",
+        "zhangzara-8-bit-orbit",
+        "8-bit-orbit"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-8-bit-orbit"
+    },
+    {
+      "id": "biennale-yellow",
+      "name": "Zhangzara Biennale Yellow",
+      "tagline": "Biennale Yellow — Solar yellow on warm parchment with deep indigo serif and atmospheric sun-glow gradients.",
+      "category": "Editorial",
+      "style": "Warm",
+      "palette": [
+        "#E9E5DB",
+        "#DCD6C4",
+        "#F1EE2E",
+        "#F8F39B"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "biennale-yellow",
+        "zhangzara-biennale-yellow",
+        "Biennale Yellow"
+      ],
+      "slidesCount": 8,
+      "tags": [
+        "biennale-yellow",
+        "zhangzara-biennale-yellow",
+        "biennale-yellow"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-biennale-yellow"
+    },
+    {
+      "id": "block-frame",
+      "name": "Zhangzara Block Frame",
+      "tagline": "BlockFrame — Neobrutalist deck with pastel-neon color blocks and chunky black borders.",
+      "category": "Editorial",
+      "style": "Brutalist",
+      "palette": [
+        "#FE90E8",
+        "#C0F7FE",
+        "#99E885",
+        "#F7CB46"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "block-frame",
+        "zhangzara-block-frame",
+        "BlockFrame"
+      ],
+      "slidesCount": 10,
+      "tags": [
+        "block-frame",
+        "zhangzara-block-frame",
+        "blockframe"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-block-frame"
+    },
+    {
+      "id": "blue-professional",
+      "name": "Zhangzara Blue Professional",
+      "tagline": "Blue Professional — Cream paper background with electric cobalt blue accents; clean modern professional.",
+      "category": "Editorial",
+      "style": "Professional",
+      "palette": [
+        "#fdfae7",
+        "#1e2bfa",
+        "#111111",
+        "#6b6b6b"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "blue-professional",
+        "zhangzara-blue-professional",
+        "Blue Professional"
+      ],
+      "slidesCount": 25,
+      "tags": [
+        "blue-professional",
+        "zhangzara-blue-professional",
+        "blue-professional"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-blue-professional"
+    },
+    {
+      "id": "bold-poster",
+      "name": "Zhangzara Bold Poster",
+      "tagline": "Bold Poster — Editorial poster aesthetic with massive Shrikhand display and a single fire-engine red accent.",
+      "category": "Editorial",
+      "style": "Editorial",
+      "palette": [
+        "#FFFFFF",
+        "#1C1410",
+        "#D8000F",
+        "#F5F2EF"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "bold-poster",
+        "zhangzara-bold-poster",
+        "Bold Poster"
+      ],
+      "slidesCount": 10,
+      "tags": [
+        "bold-poster",
+        "zhangzara-bold-poster",
+        "bold-poster"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-bold-poster"
+    },
+    {
+      "id": "broadside",
+      "name": "Zhangzara Broadside",
+      "tagline": "Broadside — Dark editorial canvas with a single fire orange accent and bilingual Latin/Chinese type stack.",
+      "category": "Editorial",
+      "style": "Editorial",
+      "palette": [
+        "#111111",
+        "#1a1a18",
+        "#e85d26",
+        "#f0ece5"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "broadside",
+        "zhangzara-broadside",
+        "editorial"
+      ],
+      "slidesCount": 16,
+      "tags": [
+        "broadside",
+        "zhangzara-broadside",
+        "editorial"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-broadside"
+    },
+    {
+      "id": "capsule",
+      "name": "Zhangzara Capsule",
+      "tagline": "Capsule — Modular pill-shaped cards on warm bone with a full pastel-pop palette.",
+      "category": "Editorial",
+      "style": "Warm",
+      "palette": [
+        "#F5F5F0",
+        "#1A1A1A",
+        "#E85D4E",
+        "#C4D94E"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "capsule",
+        "zhangzara-capsule",
+        "playful"
+      ],
+      "slidesCount": 23,
+      "tags": [
+        "capsule",
+        "zhangzara-capsule",
+        "playful"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-capsule"
+    },
+    {
+      "id": "cartesian",
+      "name": "Zhangzara Cartesian",
+      "tagline": "Cartesian — Quiet warm-neutral palette with classical Playfair serifs; tasteful and unhurried.",
+      "category": "Editorial",
+      "style": "Warm",
+      "palette": [
+        "#8a8178",
+        "#ede8e0",
+        "#e2dbd1",
+        "#1a1a1a"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "cartesian",
+        "zhangzara-cartesian",
+        "quiet"
+      ],
+      "slidesCount": 11,
+      "tags": [
+        "cartesian",
+        "zhangzara-cartesian",
+        "quiet"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-cartesian"
+    },
+    {
+      "id": "cobalt-grid",
+      "name": "Zhangzara Cobalt Grid",
+      "tagline": "Cobalt Grid — Electric cobalt italic serifs on a graph-paper canvas, anchored by stair-stepped pixel-glitch decorations and sli...",
+      "category": "Editorial",
+      "style": "Grid",
+      "palette": [
+        "#F0EBDE",
+        "#E6E0CE",
+        "#1F2BE0",
+        "#5560E5"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "cobalt-grid",
+        "zhangzara-cobalt-grid",
+        "Cobalt Grid"
+      ],
+      "slidesCount": 8,
+      "tags": [
+        "cobalt-grid",
+        "zhangzara-cobalt-grid",
+        "cobalt-grid"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-cobalt-grid"
+    },
+    {
+      "id": "coral",
+      "name": "Zhangzara Coral",
+      "tagline": "Coral — Cream and coral on near-black, set in oversized Bebas Neue.",
+      "category": "Editorial",
+      "style": "Custom",
+      "palette": [
+        "#E85D5D",
+        "#D44A4A",
+        "#F5F0E8",
+        "#E8E0D4"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "coral",
+        "zhangzara-coral",
+        "bold"
+      ],
+      "slidesCount": 19,
+      "tags": [
+        "coral",
+        "zhangzara-coral",
+        "bold"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-coral"
+    },
+    {
+      "id": "creative-mode",
+      "name": "Zhangzara Creative Mode",
+      "tagline": "Creative Mode — Cream paper canvas with confident multi-color (green, pink, orange, yellow) accents and Archivo Black display.",
+      "category": "Editorial",
+      "style": "Custom",
+      "palette": [
+        "#EFE9D9",
+        "#E4DCC4",
+        "#1F8A4C",
+        "#136636"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "creative-mode",
+        "zhangzara-creative-mode",
+        "Creative Mode"
+      ],
+      "slidesCount": 8,
+      "tags": [
+        "creative-mode",
+        "zhangzara-creative-mode",
+        "creative-mode"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-creative-mode"
+    },
+    {
+      "id": "daisy-days",
+      "name": "Zhangzara Daisy Days",
+      "tagline": "Daisy Days — Cheerful pastel deck with hand-drawn daisies, stars, and rainbows.",
+      "category": "Editorial",
+      "style": "Pastel",
+      "palette": [
+        "#F5F0E6",
+        "#7ECDC0",
+        "#F7C8D4",
+        "#FDE68A"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "daisy-days",
+        "zhangzara-daisy-days",
+        "Daisy Days"
+      ],
+      "slidesCount": 10,
+      "tags": [
+        "daisy-days",
+        "zhangzara-daisy-days",
+        "daisy-days"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-daisy-days"
+    },
+    {
+      "id": "grove",
+      "name": "Zhangzara Grove",
+      "tagline": "Grove — Forest-green canvas with cream type, classical Playfair serifs, and a single rust accent.",
+      "category": "Editorial",
+      "style": "Custom",
+      "palette": [
+        "#192b1b",
+        "#1e3221",
+        "#e8e4d6",
+        "#dedad0"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "grove",
+        "zhangzara-grove",
+        "organic"
+      ],
+      "slidesCount": 12,
+      "tags": [
+        "grove",
+        "zhangzara-grove",
+        "organic"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-grove"
+    },
+    {
+      "id": "long-table",
+      "name": "Zhangzara Long Table",
+      "tagline": "Long Table — Warm cream and rust-red supper-club aesthetic with bold uppercase grotesk headlines, italic Fraunces, and pill-sha...",
+      "category": "Editorial",
+      "style": "Warm",
+      "palette": [
+        "#FAF1E2",
+        "#F2E5CF",
+        "#E8D7B6",
+        "#B53D2A"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "long-table",
+        "zhangzara-long-table",
+        "Long Table"
+      ],
+      "slidesCount": 8,
+      "tags": [
+        "long-table",
+        "zhangzara-long-table",
+        "long-table"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-long-table"
+    },
+    {
+      "id": "mat",
+      "name": "Zhangzara Mat",
+      "tagline": "Mat — Dark sage canvas with bone paper and burnt-orange accent; mid-century modern with wood undertones.",
+      "category": "Editorial",
+      "style": "Dark",
+      "palette": [
+        "#232e26",
+        "#2e3d30",
+        "#ede6d0",
+        "#e4dac4"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "mat",
+        "zhangzara-mat",
+        "warm-modern"
+      ],
+      "slidesCount": 9,
+      "tags": [
+        "mat",
+        "zhangzara-mat",
+        "warm-modern"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-mat"
+    },
+    {
+      "id": "monochrome",
+      "name": "Zhangzara Monochrome",
+      "tagline": "Monochrome — Ivory ledger paper with all-black type; Lora serif headlines, Jost body, no color at all.",
+      "category": "Editorial",
+      "style": "Monochrome",
+      "palette": [
+        "#fafadf",
+        "#f2f2d2",
+        "#f0f0d4",
+        "#f5f0e4"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "monochrome",
+        "zhangzara-monochrome",
+        "restrained"
+      ],
+      "slidesCount": 16,
+      "tags": [
+        "monochrome",
+        "zhangzara-monochrome",
+        "restrained"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-monochrome"
+    },
+    {
+      "id": "neo-grid-bold",
+      "name": "Zhangzara Neo Grid Bold",
+      "tagline": "Neo-Grid Bold — Editorial neo-brutalism with a single neon yellow accent on off-white paper.",
+      "category": "Editorial",
+      "style": "Editorial",
+      "palette": [
+        "#ECECE8",
+        "#E6FF3D",
+        "#0A0A0A",
+        "#F5F4EF"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "neo-grid-bold",
+        "zhangzara-neo-grid-bold",
+        "Neo-Grid Bold"
+      ],
+      "slidesCount": 12,
+      "tags": [
+        "neo-grid-bold",
+        "zhangzara-neo-grid-bold",
+        "neo-grid-bold"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-neo-grid-bold"
+    },
+    {
+      "id": "pin-and-paper",
+      "name": "Zhangzara Pin And Paper",
+      "tagline": "Pin & Paper — Yellow paper with safety-pin illustrations, ink-blue handwritten Caveat, paper-grain texture.",
+      "category": "Editorial",
+      "style": "Custom",
+      "palette": [
+        "#FFFFFF",
+        "#111216",
+        "#3B6CFF",
+        "#7A5CFF"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "pin-and-paper",
+        "zhangzara-pin-and-paper",
+        "Pin & Paper"
+      ],
+      "slidesCount": 11,
+      "tags": [
+        "pin-and-paper",
+        "zhangzara-pin-and-paper",
+        "pin-&-paper"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-pin-and-paper"
+    },
+    {
+      "id": "pink-script",
+      "name": "Zhangzara Pink Script",
+      "tagline": "Pink Script — After Hours — Black canvas, hot pink accent, pearl-cream paper, Instrument Serif headlines: late-night editorial ...",
+      "category": "Editorial",
+      "style": "Editorial",
+      "palette": [
+        "#060507",
+        "#0F0D11",
+        "#F5EDF1",
+        "#ED3D8C"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "pink-script",
+        "zhangzara-pink-script",
+        "Pink Script — After Hours"
+      ],
+      "slidesCount": 9,
+      "tags": [
+        "pink-script",
+        "zhangzara-pink-script",
+        "pink-script-—-after-hours"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-pink-script"
+    },
+    {
+      "id": "playful",
+      "name": "Zhangzara Playful",
+      "tagline": "Playful — Sun-warm peach background with Syne display: a friendly indie launch deck.",
+      "category": "Editorial",
+      "style": "Warm",
+      "palette": [
+        "#F0C8A0",
+        "#1A1A1A",
+        "#E8B88E",
+        "#F7DEC6"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "playful",
+        "zhangzara-playful",
+        "warm"
+      ],
+      "slidesCount": 11,
+      "tags": [
+        "playful",
+        "zhangzara-playful",
+        "warm"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-playful"
+    },
+    {
+      "id": "raw-grid",
+      "name": "Zhangzara Raw Grid",
+      "tagline": "Raw Grid — Neo-brutalist deck with thick borders, offset shadows, and a pink/sage/ink palette.",
+      "category": "Editorial",
+      "style": "Brutalist",
+      "palette": [
+        "#0a0a0a",
+        "#ffffff",
+        "#f2d4cf",
+        "#e5edd6"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "raw-grid",
+        "zhangzara-raw-grid",
+        "Raw Grid"
+      ],
+      "slidesCount": 21,
+      "tags": [
+        "raw-grid",
+        "zhangzara-raw-grid",
+        "raw-grid"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-raw-grid"
+    },
+    {
+      "id": "retro-windows",
+      "name": "Zhangzara Retro Windows",
+      "tagline": "Retro Windows — Windows 95 chrome: gray title bars, MS Sans Serif, pixel typography, full nostalgia.",
+      "category": "Editorial",
+      "style": "Retro",
+      "palette": [
+        "#c0c0c0",
+        "#d4d0c8",
+        "#808080",
+        "#000080"
+      ],
+      "fonts": [
+        "Press Start 2P"
+      ],
+      "bestFor": [
+        "retro-windows",
+        "zhangzara-retro-windows",
+        "Retro Windows"
+      ],
+      "slidesCount": 11,
+      "tags": [
+        "retro-windows",
+        "zhangzara-retro-windows",
+        "retro-windows"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-retro-windows"
+    },
+    {
+      "id": "retro-zine",
+      "name": "Zhangzara Retro Zine",
+      "tagline": "Retro Zine — Beige paper with green accent and Bebas Neue + Caveat: a riso-printed zine in HTML form.",
+      "category": "Editorial",
+      "style": "Retro",
+      "palette": [
+        "#C8B99A",
+        "#B8A98A",
+        "#008F4D",
+        "#00A85D"
+      ],
+      "fonts": [
+        "Space Grotesk"
+      ],
+      "bestFor": [
+        "retro-zine",
+        "zhangzara-retro-zine",
+        "Retro Zine"
+      ],
+      "slidesCount": 11,
+      "tags": [
+        "retro-zine",
+        "zhangzara-retro-zine",
+        "retro-zine"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-retro-zine"
+    },
+    {
+      "id": "sakura-chroma",
+      "name": "Zhangzara Sakura Chroma",
+      "tagline": "Sakura Chroma — Vintage Japanese cassette-package aesthetic: cream paper, diagonal rainbow ribbons, condensed bold type, JIS-st...",
+      "category": "Editorial",
+      "style": "Retro",
+      "palette": [
+        "#F1E6CB",
+        "#E5D6B0",
+        "#3A2516",
+        "#E5392A"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "sakura-chroma",
+        "zhangzara-sakura-chroma",
+        "Sakura Chroma"
+      ],
+      "slidesCount": 8,
+      "tags": [
+        "sakura-chroma",
+        "zhangzara-sakura-chroma",
+        "sakura-chroma"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-sakura-chroma"
+    },
+    {
+      "id": "scatterbrain",
+      "name": "Zhangzara Scatterbrain",
+      "tagline": "Scatterbrain — Post-it inspired: pastel sticky notes, Caveat handwriting, Shrikhand and Zilla Slab type stack.",
+      "category": "Editorial",
+      "style": "Pastel",
+      "palette": [
+        "#ffe066",
+        "#ffd43b",
+        "#a5d8ff",
+        "#74c0fc"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "scatterbrain",
+        "zhangzara-scatterbrain",
+        "playful"
+      ],
+      "slidesCount": 10,
+      "tags": [
+        "scatterbrain",
+        "zhangzara-scatterbrain",
+        "playful"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-scatterbrain"
+    },
+    {
+      "id": "signal",
+      "name": "Zhangzara Signal",
+      "tagline": "Signal — Deep navy canvas with bone paper and a single muted-gold accent; institutional with quiet weight.",
+      "category": "Editorial",
+      "style": "Custom",
+      "palette": [
+        "#1c2644",
+        "#232f55",
+        "#f0ece3",
+        "#e6e0d4"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "signal",
+        "zhangzara-signal",
+        "institutional"
+      ],
+      "slidesCount": 18,
+      "tags": [
+        "signal",
+        "zhangzara-signal",
+        "institutional"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-signal"
+    },
+    {
+      "id": "soft-editorial",
+      "name": "Zhangzara Soft Editorial",
+      "tagline": "Soft Editorial — Cormorant Garamond serif on warm paper with sage, blush, and lemon accents.",
+      "category": "Editorial",
+      "style": "Editorial",
+      "palette": [
+        "#F2EEDF",
+        "#ECE6D2",
+        "#2A241B",
+        "#5C5345"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "soft-editorial",
+        "zhangzara-soft-editorial",
+        "Soft Editorial"
+      ],
+      "slidesCount": 12,
+      "tags": [
+        "soft-editorial",
+        "zhangzara-soft-editorial",
+        "soft-editorial"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-soft-editorial"
+    },
+    {
+      "id": "stencil-tablet",
+      "name": "Zhangzara Stencil Tablet",
+      "tagline": "Stencil & Tablet — Bone paper with stencil-cut headlines and a six-color earth palette: archaeology meets brand.",
+      "category": "Editorial",
+      "style": "Custom",
+      "palette": [
+        "#E2DCC9",
+        "#000000",
+        "#0A0A0A",
+        "#F4EFE0"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "stencil-tablet",
+        "zhangzara-stencil-tablet",
+        "Stencil & Tablet"
+      ],
+      "slidesCount": 11,
+      "tags": [
+        "stencil-tablet",
+        "zhangzara-stencil-tablet",
+        "stencil-&-tablet"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-stencil-tablet"
+    },
+    {
+      "id": "studio",
+      "name": "Zhangzara Studio",
+      "tagline": "Studio — Black canvas with electric-yellow type; high-voltage design studio aesthetic.",
+      "category": "Editorial",
+      "style": "Custom",
+      "palette": [
+        "#1c1c1c",
+        "#242422",
+        "#f5d200",
+        "#f0cc00"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "studio",
+        "zhangzara-studio",
+        "electric"
+      ],
+      "slidesCount": 12,
+      "tags": [
+        "studio",
+        "zhangzara-studio",
+        "electric"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-studio"
+    },
+    {
+      "id": "vellum",
+      "name": "Zhangzara Vellum",
+      "tagline": "Vellum — Deep navy canvas with warm-yellow italic Cormorant serifs and a single dusty teal accent.",
+      "category": "Editorial",
+      "style": "Warm",
+      "palette": [
+        "#2a3870",
+        "#343f80",
+        "#E8D85C",
+        "#3a7878"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "vellum",
+        "zhangzara-vellum",
+        "scholarly"
+      ],
+      "slidesCount": 9,
+      "tags": [
+        "vellum",
+        "zhangzara-vellum",
+        "scholarly"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "html-ppt-zhangzara-vellum"
+    },
+    {
+      "id": "reveal-black",
+      "name": "Reveal Black",
+      "tagline": "Default dark reveal.js theme — white type on black, blue accent.",
+      "category": "Tech",
+      "style": "Dark",
+      "palette": [
+        "#222222",
+        "#42affa",
+        "#ffffff",
+        "#a2a9b4"
+      ],
+      "fonts": [
+        "Inter",
+        "Opal Sans"
+      ],
+      "bestFor": [
+        "tech-talk",
+        "keynote",
+        "product-demo"
+      ],
+      "slidesCount": 7,
+      "tags": [
+        "revealjs",
+        "tech-talk",
+        "keynote",
+        "product-demo"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "reveal.js theme: black.css",
+      "framework": "reveal.js"
+    },
+    {
+      "id": "reveal-white",
+      "name": "Reveal White",
+      "tagline": "Clean white reveal.js theme — black type on white, muted teal accent.",
+      "category": "Business",
+      "style": "Minimal",
+      "palette": [
+        "#ffffff",
+        "#3b759e",
+        "#222222",
+        "#7a7a7a"
+      ],
+      "fonts": [
+        "Source Sans Pro",
+        "Inter"
+      ],
+      "bestFor": [
+        "pitch-deck",
+        "sales",
+        "investor-deck"
+      ],
+      "slidesCount": 7,
+      "tags": [
+        "revealjs",
+        "pitch-deck",
+        "sales",
+        "investor-deck"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "reveal.js theme: white.css",
+      "framework": "reveal.js"
+    },
+    {
+      "id": "reveal-dracula",
+      "name": "Reveal Dracula",
+      "tagline": "Dracula color scheme — dark purple canvas, pink/green/cyan accents.",
+      "category": "Tech",
+      "style": "Dark",
+      "palette": [
+        "#282a36",
+        "#ff79c6",
+        "#f8f8f2",
+        "#bd93f9"
+      ],
+      "fonts": [
+        "Fira Sans",
+        "Source Code Pro"
+      ],
+      "bestFor": [
+        "dev-tool",
+        "open-source",
+        "indie"
+      ],
+      "slidesCount": 7,
+      "tags": [
+        "revealjs",
+        "dev-tool",
+        "open-source",
+        "indie"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "reveal.js theme: dracula.css",
+      "framework": "reveal.js"
+    },
+    {
+      "id": "reveal-league",
+      "name": "Reveal League",
+      "tagline": "League Gotham — dark gray with cyan accent, condensed sans type.",
+      "category": "Tech",
+      "style": "Dark",
+      "palette": [
+        "#2b2722",
+        "#13daec",
+        "#eee",
+        "#777"
+      ],
+      "fonts": [
+        "Lato",
+        "League Gothic"
+      ],
+      "bestFor": [
+        "meetup",
+        "tech-sharing",
+        "indie-dev"
+      ],
+      "slidesCount": 7,
+      "tags": [
+        "revealjs",
+        "meetup",
+        "tech-sharing",
+        "indie-dev"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "reveal.js theme: league.css",
+      "framework": "reveal.js"
+    },
+    {
+      "id": "reveal-solarized",
+      "name": "Reveal Solarized",
+      "tagline": "Solarized light — warm cream canvas with Ethan Schoonover's palette.",
+      "category": "Education",
+      "style": "Warm",
+      "palette": [
+        "#fdf6e3",
+        "#b58900",
+        "#586e75",
+        "#268bd2"
+      ],
+      "fonts": [
+        "Helvetica Neue",
+        "Lato"
+      ],
+      "bestFor": [
+        "educational",
+        "tutorial",
+        "course"
+      ],
+      "slidesCount": 7,
+      "tags": [
+        "revealjs",
+        "educational",
+        "tutorial",
+        "course"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "reveal.js theme: solarized.css",
+      "framework": "reveal.js"
+    },
+    {
+      "id": "reveal-night",
+      "name": "Reveal Night",
+      "tagline": "Night theme — black canvas, gold accent, serif headings.",
+      "category": "Editorial",
+      "style": "Dark",
+      "palette": [
+        "#111111",
+        "#e7ad52",
+        "#eee",
+        "#888"
+      ],
+      "fonts": [
+        "Open Sans",
+        "Quattrocento"
+      ],
+      "bestFor": [
+        "literary",
+        "essay",
+        "manifesto"
+      ],
+      "slidesCount": 7,
+      "tags": [
+        "revealjs",
+        "literary",
+        "essay",
+        "manifesto"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "reveal.js theme: night.css",
+      "framework": "reveal.js"
+    },
+    {
+      "id": "reveal-moon",
+      "name": "Reveal Moon",
+      "tagline": "Moon — deep blue-gray with muted purple accent, open sans type.",
+      "category": "Business",
+      "style": "Dark",
+      "palette": [
+        "#002b36",
+        "#51498d",
+        "#93a1a1",
+        "#eee"
+      ],
+      "fonts": [
+        "Open Sans",
+        "Montserrat"
+      ],
+      "bestFor": [
+        "report",
+        "review",
+        "internal-update"
+      ],
+      "slidesCount": 7,
+      "tags": [
+        "revealjs",
+        "report",
+        "review",
+        "internal-update"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "reveal.js theme: moon.css",
+      "framework": "reveal.js"
+    },
+    {
+      "id": "impress-spatial",
+      "name": "Impress Spatial",
+      "tagline": "Prezi-style 3D spatial deck — camera flies between positioned/rotated/scaled slides.",
+      "category": "Creative",
+      "style": "3D Spatial",
+      "palette": [
+        "#f8f9fa",
+        "#3b6cff",
+        "#111216",
+        "#ffffff"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "keynote",
+        "spatial",
+        "prezi-style",
+        "3d"
+      ],
+      "slidesCount": 7,
+      "tags": [
+        "impressjs",
+        "keynote",
+        "spatial",
+        "prezi-style",
+        "3d"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "frameworks/impressjs",
+      "framework": "impress.js"
+    },
+    {
+      "id": "impress-dark",
+      "name": "Impress Dark 3D",
+      "tagline": "Dark-themed impress.js deck with 3D camera transitions and electric-cyan accent.",
+      "category": "Tech",
+      "style": "3D Dark",
+      "palette": [
+        "#0a0e1a",
+        "#00d4ff",
+        "#e8eaed",
+        "#ffffff"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "tech-talk",
+        "3d",
+        "keynote",
+        "spatial"
+      ],
+      "slidesCount": 7,
+      "tags": [
+        "impressjs",
+        "tech-talk",
+        "3d",
+        "keynote",
+        "spatial"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "frameworks/impressjs",
+      "framework": "impress.js"
+    },
+    {
+      "id": "shower-ribbon",
+      "name": "Shower Ribbon",
+      "tagline": "Shower's classic Ribbon theme — clean light slides with blue accent stripe.",
+      "category": "Business",
+      "style": "Minimal",
+      "palette": [
+        "#ffffff",
+        "#4a87dd",
+        "#222222",
+        "#666666"
+      ],
+      "fonts": [
+        "PT Sans",
+        "PT Serif"
+      ],
+      "bestFor": [
+        "report",
+        "tutorial",
+        "documentation"
+      ],
+      "slidesCount": 7,
+      "tags": [
+        "shower",
+        "report",
+        "tutorial",
+        "documentation"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "frameworks/shower",
+      "framework": "shower"
+    },
+    {
+      "id": "shower-material",
+      "name": "Shower Material",
+      "tagline": "Google Material Design slides — bold colors, card elevation, Roboto type.",
+      "category": "Business",
+      "style": "Material",
+      "palette": [
+        "#ffffff",
+        "#3f51b5",
+        "#222222",
+        "#666666"
+      ],
+      "fonts": [
+        "Roboto",
+        "Roboto Slab"
+      ],
+      "bestFor": [
+        "product-launch",
+        "google-style",
+        "modern"
+      ],
+      "slidesCount": 7,
+      "tags": [
+        "shower",
+        "product-launch",
+        "google-style",
+        "modern"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "frameworks/shower",
+      "framework": "shower"
+    },
+    {
+      "id": "dzslides-minimal",
+      "name": "DZSlides Minimal",
+      "tagline": "Single-file HTML deck — zero dependencies, plain sections, inlined CSS+JS.",
+      "category": "General",
+      "style": "Minimal",
+      "palette": [
+        "#fafafa",
+        "#e63946",
+        "#1a1a1a",
+        "#ffffff"
+      ],
+      "fonts": [
+        "Inter"
+      ],
+      "bestFor": [
+        "minimal",
+        "single-file",
+        "no-deps",
+        "teaching"
+      ],
+      "slidesCount": 7,
+      "tags": [
+        "dzslides",
+        "minimal",
+        "single-file",
+        "no-deps",
+        "teaching"
+      ],
+      "previewSlide": 0,
+      "sourceFolder": "frameworks/dzslides",
+      "framework": "dzslides"
+    }
+  ],
+  "themes": [
+    {
+      "id": "minimal-white",
+      "name": "Minimal White"
+    },
+    {
+      "id": "aurora",
+      "name": "Aurora"
+    },
+    {
+      "id": "tokyo-night",
+      "name": "Tokyo Night"
+    },
+    {
+      "id": "corporate-clean",
+      "name": "Corporate Clean"
+    },
+    {
+      "id": "pitch-deck-vc",
+      "name": "Pitch Deck VC"
+    },
+    {
+      "id": "neo-brutalism",
+      "name": "Neo Brutalism"
+    },
+    {
+      "id": "xiaohongshu-white",
+      "name": "Xiaohongshu White"
+    }
+  ]
+}

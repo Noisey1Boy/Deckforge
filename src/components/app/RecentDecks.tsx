@@ -10,6 +10,7 @@ import {
 import { toast } from 'sonner';
 import type { Deck } from '@/lib/deck/types';
 import { cn } from '@/lib/utils';
+import { HtmlDeckList } from '@/components/app/HtmlDeckList';
 import {
   Clock, Copy, Trash2, Download, Upload, FolderOpen, Loader2, Layers, Search,
 } from 'lucide-react';
@@ -163,27 +164,35 @@ export function RecentDecks({ onOpen, hideHeading = false }: { onOpen: (d: Recen
 
   if (!loaded) {
     return (
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="h-24 rounded-lg bg-neutral-100 animate-pulse" />
-        ))}
-      </div>
+      <>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-24 rounded-lg bg-neutral-100 animate-pulse" />
+          ))}
+        </div>
+        {/* TEMPLATE DECKS — the HTML Template Studio library lives below the
+            structured-deck archive in every state of this section. */}
+        <HtmlDeckList />
+      </>
     );
   }
 
   if (decks.length === 0) {
     return (
-      <div className="rounded-xl border-2 border-dashed border-neutral-200 p-10 text-center">
-        <FolderOpen className="h-8 w-8 mx-auto text-neutral-300" />
-        <p className="mt-3 text-sm font-medium">No decks yet</p>
-        <p className="text-xs text-muted-foreground mt-1">
-          Generate your first deck above, or import a .deck.json file.
-        </p>
-        <Button variant="outline" size="sm" className="mt-4 gap-1.5" onClick={() => importRef.current?.click()}>
-          <Upload className="h-3.5 w-3.5" /> Import deck JSON
-        </Button>
-        <input ref={importRef} type="file" accept=".json,application/json" hidden onChange={(e) => importJson(e.target.files)} />
-      </div>
+      <>
+        <div className="rounded-xl border-2 border-dashed border-neutral-200 p-10 text-center">
+          <FolderOpen className="h-8 w-8 mx-auto text-neutral-300" />
+          <p className="mt-3 text-sm font-medium">No decks yet</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Generate your first deck above, or import a .deck.json file.
+          </p>
+          <Button variant="outline" size="sm" className="mt-4 gap-1.5" onClick={() => importRef.current?.click()}>
+            <Upload className="h-3.5 w-3.5" /> Import deck JSON
+          </Button>
+          <input ref={importRef} type="file" accept=".json,application/json" hidden onChange={(e) => importJson(e.target.files)} />
+        </div>
+        <HtmlDeckList />
+      </>
     );
   }
 
@@ -333,6 +342,9 @@ export function RecentDecks({ onOpen, hideHeading = false }: { onOpen: (d: Recen
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* TEMPLATE DECKS — HTML Template Studio library, below the archive grid */}
+      <HtmlDeckList />
     </div>
   );
 }

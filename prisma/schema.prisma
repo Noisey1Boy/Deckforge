@@ -18,3 +18,16 @@ model Deck {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+// HTML template-mode decks: AI-filled template decks + from-scratch JS-library decks
+model HtmlDeck {
+  id          String   @id @default(cuid())
+  title       String
+  subtitle    String   @default("")
+  templateId  String   @default("")
+  engine      String   @default("opendesign")
+  html        String
+  outlineJson String   @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
