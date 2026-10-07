@@ -11,7 +11,7 @@ import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
  * The Screen — landing hero specimen.
  * Not a screenshot, not a mock: every frame is a real slide rendered by the
  * same SlideView + theme-token pipeline the app ships, cycling through all
- * sixteen design systems like a projector testing reels before the show.
+ * twenty-four design systems like a projector testing reels before the show.
  */
 
 interface Specimen {
@@ -212,6 +212,99 @@ const SPECIMENS: Specimen[] = [
       layout: 'bullets',
       title: 'Kickoff retro, sticky-wall edition',
       bullets: ['What clicked, and why', 'What stalled, without blame', 'Votes on the next experiment'],
+    },
+  },
+  // ---- wave-2 reels (T-1) ----
+  {
+    themeId: 'tokyo-night',
+    label: 'Tokyo Night',
+    fig: 'chart',
+    slide: {
+      id: 'spec-17',
+      layout: 'chart',
+      title: 'Incident response time',
+      chart: {
+        kind: 'column',
+        data: [
+          { label: 'Q1', value: 41 },
+          { label: 'Q2', value: 33 },
+          { label: 'Q3', value: 26 },
+          { label: 'Q4', value: 19 },
+        ],
+        unit: 'm',
+        insight: 'Median response down 54% year over year.',
+      },
+    },
+  },
+  {
+    themeId: 'pixel-orbit',
+    label: 'Pixel Orbit',
+    fig: 'section',
+    slide: { id: 'spec-18', layout: 'section', title: 'PLAYER TWO HAS ENTERED' },
+  },
+  {
+    themeId: 'vellum',
+    label: 'Vellum',
+    fig: 'quote',
+    slide: {
+      id: 'spec-19',
+      layout: 'quote',
+      quote: 'A gallery wall is a conversation, paused.',
+      attribution: 'Exhibition notes',
+    },
+  },
+  {
+    themeId: 'retro-win95',
+    label: 'Retro Win95',
+    fig: 'bullets',
+    slide: {
+      id: 'spec-20',
+      layout: 'bullets',
+      title: 'System requirements',
+      bullets: ['Runs on any machine, even yours', 'No installer, no reboot', 'One floppy disk of features'],
+    },
+  },
+  {
+    themeId: 'neo-brutalist',
+    label: 'Neo Brutalist',
+    fig: 'section',
+    slide: { id: 'spec-21', layout: 'section', title: 'NO TEMPLATES. ONLY SYSTEMS.' },
+  },
+  {
+    themeId: 'sakura-chroma',
+    label: 'Sakura Chroma',
+    fig: 'title',
+    slide: {
+      id: 'spec-22',
+      layout: 'title',
+      title: 'Spring print fair',
+      subtitle: 'TWO COLORS, ONE PRESS, 500 COPIES',
+    },
+  },
+  {
+    themeId: 'cobalt-grid',
+    label: 'Cobalt Grid',
+    fig: 'stats',
+    slide: {
+      id: 'spec-23',
+      layout: 'stats',
+      title: 'Annual review',
+      stats: [
+        { value: '112%', label: 'Plan attainment', context: 'full-year target' },
+        { value: '37', label: 'New accounts', context: 'net of churn' },
+        { value: '0.8%', label: 'Error rate', context: 'down from 2.1%' },
+      ],
+    },
+  },
+  {
+    themeId: 'pastel-card',
+    label: 'Pastel Card',
+    fig: 'bullets',
+    slide: {
+      id: 'spec-24',
+      layout: 'bullets',
+      title: 'A softer kind of update',
+      bullets: ['New pastel panels shipped', 'Comments got kinder filters', 'Dark mode, gently tinted'],
     },
   },
 ];

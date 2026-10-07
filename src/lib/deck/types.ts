@@ -204,8 +204,21 @@ export interface ThemeTokens {
    * Decorative motif applied by chrome so every layout feels designed.
    * `masthead`, `scanlines` and `tape` were added with the theme expansion
    * (M-b): magazine double rule, CRT scanline overlay, washi-tape strips.
+   * `pixels` and `titlebar` were added with wave 2 (T-1): 8-bit checkerboard
+   * squares, retro window title bar.
    */
-  decor: 'rule-top' | 'bar-left' | 'corner' | 'band' | 'dots' | 'frame' | 'masthead' | 'scanlines' | 'tape';
+  decor:
+    | 'rule-top'
+    | 'bar-left'
+    | 'corner'
+    | 'band'
+    | 'dots'
+    | 'frame'
+    | 'masthead'
+    | 'scanlines'
+    | 'tape'
+    | 'pixels'
+    | 'titlebar';
 }
 
 export interface ThemeManifest {

@@ -48,6 +48,10 @@ function Decor({ theme }: { theme: ThemeManifest }) {
       return <div className="slide-decor decor-scanlines" aria-hidden />;
     case 'tape':
       return <div className="slide-decor decor-tape" aria-hidden />;
+    case 'pixels':
+      return <div className="slide-decor decor-pixels" aria-hidden />;
+    case 'titlebar':
+      return <div className="slide-decor decor-titlebar" aria-hidden />;
     default:
       return null;
   }

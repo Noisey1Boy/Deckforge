@@ -1,20 +1,31 @@
 import type { ThemeManifest } from '@/lib/deck/types';
 
 /**
- * DeckForge theme catalog — 16 design systems.
+ * DeckForge theme catalog — 24 design systems.
  *
  * Original 8 curated from docs/design-analysis.md (open-design +
  * awesome-design-md research): stripe→corporate-clean, vercel→minimal-mono,
  * theverge→bold-impact, nintendo-2001→playful-pop, linear.app→dark-elegant,
  * wired→editorial-serif, raycast→tech-modern, starbucks→warm-earth.
  *
- * Expansion 8 distilled from real source palettes/typography (council
+ * Wave 1 (M-b) distilled from real source palettes/typography (council
  * decision #6): skills/design/design-templates/ppt/guizang-ppt (ink-classic
  * e-ink) → eink-editorial; upload decksmith `monochrome` → ivory-ledger;
  * skills ib-pitch-book → pitch-book-finance; decksmith `signal` →
  * signal-navy; decksmith `grove` → forest-grove; decksmith
  * `hermes-cyber-terminal` → cyber-terminal; zhangzara biennale-yellow →
  * biennale-yellow; decksmith `scatterbrain` → paper-collage.
+ *
+ * Wave 2 (T-1) — 8 more distilled from the decksmith template library at
+ * upload/decksmith-extracted/public/templates (all values read from the
+ * source CSS :root blocks, never guessed): _shared/themes/tokyo-night.css →
+ * tokyo-night; 8-bit-orbit → pixel-orbit; vellum → vellum; retro-windows →
+ * retro-win95; _shared/themes/neo-brutalism.css → neo-brutalist;
+ * sakura-chroma → sakura-chroma; cobalt-grid → cobalt-grid;
+ * xhs-pastel-card → pastel-card. Contrast-verified by
+ * scripts/wave2-contrast-check.cjs (evidence in
+ * tool-results/wave2-contrast-evidence.txt); stepped colors are noted in
+ * each theme description.
  *
  * Every theme declares the FULL token set; slide components read tokens
  * via CSS variables only. All px values are on the fixed 1280x720 canvas.
@@ -26,6 +37,7 @@ const SANS_FALLBACK = `, 'Inter', 'Helvetica Neue', Arial, sans-serif`;
 const SERIF_FALLBACK = `, Georgia, 'Times New Roman', serif`;
 const MONO = `'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace`;
 const JET_FALLBACK = `, 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace`;
+const MONO_BASE = `, ui-monospace, SFMono-Regular, Menlo, monospace`;
 
 export const THEMES: ThemeManifest[] = [
   // ---------------------------------------------------------------- corporate
@@ -655,6 +667,348 @@ export const THEMES: ThemeManifest[] = [
         axis: '#5c5750',
       },
       motion: { style: 'zoom', duration: 0.4 },
+      decor: 'tape',
+    },
+  },
+
+  // ------------------------------------------------------- wave 2 (T-1)
+  // Source: upload/decksmith-extracted/public/templates/_shared/themes/tokyo-night.css
+  {
+    id: 'tokyo-night',
+    name: 'Tokyo Night',
+    tone: 'nocturne',
+    description:
+      'Late-night IDE glow — indigo-slate canvas, soft blue-violet signal colors, hazy surfaces. The Tokyo Night editor palette, made presentable.',
+    bestFor: ['developer', 'startup', 'product', 'saas', 'engineering', 'keynote'],
+    tokens: {
+      colors: {
+        bg: '#1a1b26',
+        bgAlt: '#16161e',
+        surface: '#24283b',
+        text: '#c0caf5',
+        textMuted: '#a9b1d6',
+        primary: '#7aa2f7',
+        primaryContrast: '#1a1b26',
+        accent: '#bb9af7',
+        border: '#2f334d',
+      },
+      fonts: {
+        display: `'Inter Tight'${SANS_FALLBACK}`,
+        body: `'Inter'${SANS_FALLBACK}`,
+        mono: `'JetBrains Mono'${JET_FALLBACK}`,
+      },
+      typeScale: { display: 70, h1: 50, h2: 30, h3: 21, body: 18, caption: 13 },
+      spacing: { slide: 72, gutter: 48, block: 22 },
+      radius: { sm: 8, md: 12, lg: 20 },
+      shadow: { soft: 'none', card: '0 10px 30px rgba(0,0,0,.45)' },
+      chart: {
+        palette: ['#7aa2f7', '#bb9af7', '#7dcfff', '#9ece6a', '#e0af68', '#f7768e'],
+        grid: '#2f334d',
+        axis: '#a9b1d6',
+      },
+      motion: { style: 'rise', duration: 0.45 },
+      decor: 'rule-top',
+    },
+  },
+
+  // Source: upload/decksmith-extracted/public/templates/8-bit-orbit/template.html
+  {
+    id: 'pixel-orbit',
+    name: 'Pixel Orbit',
+    tone: 'arcade',
+    description:
+      'Arcade cabinet in slide form — navy void, neon cyan signal with pink and yellow flares, Tektur pixel-corner display type. Insert coin.',
+    bestFor: ['game', 'launch', 'community', 'fun', 'hackathon', 'brand'],
+    tokens: {
+      colors: {
+        bg: '#0a0e27',
+        bgAlt: '#0f1b3d',
+        surface: '#0f1b3d',
+        text: '#e2d5f2',
+        textMuted: '#8f96c9',
+        primary: '#5edcf4',
+        primaryContrast: '#0a0e27',
+        // Source neon pink — decorative only (9.97:1 non-text here); text uses
+        // primaryText (cyan, 11.8:1 on this bg).
+        accent: '#f0a6ca',
+        border: '#252d55',
+      },
+      fonts: {
+        display: `'Tektur'${SANS_FALLBACK}`,
+        body: `'Chakra Petch'${SANS_FALLBACK}`,
+        mono: `'Space Mono'${MONO_BASE}`,
+      },
+      typeScale: { display: 68, h1: 48, h2: 30, h3: 21, body: 18, caption: 13 },
+      spacing: { slide: 64, gutter: 44, block: 20 },
+      radius: { sm: 0, md: 0, lg: 0 },
+      shadow: { soft: 'none', card: '6px 6px 0 rgba(94,220,244,.28)' },
+      chart: {
+        palette: ['#5edcf4', '#f0a6ca', '#f4d03f', '#e2d5f2', '#9aa8e8', '#b8a6f0'],
+        grid: '#252d55',
+        axis: '#8f96c9',
+      },
+      motion: { style: 'slide', duration: 0.4 },
+      decor: 'pixels',
+    },
+  },
+
+  // Source: upload/decksmith-extracted/public/templates/vellum/template.html
+  {
+    id: 'vellum',
+    name: 'Vellum',
+    tone: 'vellum',
+    description:
+      'Gallery wall at dusk — saturated periwinkle field, warm lemon serif type, dusty-teal accents and Courier marginalia. Unexpected, personal.',
+    bestFor: ['museum', 'editorial', 'fashion', 'story', 'arts', 'essay'],
+    tokens: {
+      colors: {
+        bg: '#2a3870',
+        bgAlt: '#343f80',
+        surface: '#343f80',
+        text: '#e8d85c',
+        textMuted: '#c2bd8c',
+        primary: '#e8d85c',
+        primaryContrast: '#2a3870',
+        // Source dusty teal #3a7878, stepped lighter to #5f9d9d so the quote
+        // glyph keeps ≥3:1 non-text on the periwinkle field; decorative only.
+        accent: '#5f9d9d',
+        border: '#4d578f',
+      },
+      fonts: {
+        display: `'Cormorant Garamond'${SERIF_FALLBACK}`,
+        body: `'DM Sans'${SANS_FALLBACK}`,
+        mono: `'Courier Prime'${MONO_BASE}`,
+      },
+      typeScale: { display: 80, h1: 56, h2: 32, h3: 22, body: 18, caption: 13 },
+      spacing: { slide: 84, gutter: 56, block: 26 },
+      radius: { sm: 2, md: 4, lg: 8 },
+      shadow: { soft: 'none', card: '0 18px 44px rgba(0,0,0,.35)' },
+      chart: {
+        palette: ['#e8d85c', '#9fd8cf', '#f0e6a0', '#c8c4e8', '#7fc8bc', '#e8a4a4'],
+        grid: '#4d578f',
+        axis: '#c2bd8c',
+      },
+      motion: { style: 'fade', duration: 0.55 },
+      decor: 'corner',
+    },
+  },
+
+  // Source: upload/decksmith-extracted/public/templates/retro-windows/template.html
+  {
+    id: 'retro-win95',
+    name: 'Retro Win95',
+    tone: 'retro',
+    description:
+      'Chrome era computing — silver desktop, navy title bars, VGA icon colors and pixel type. Nostalgia with modern contrast discipline.',
+    bestFor: ['retro', 'developer', 'devtools', 'internal', 'fun', 'launch'],
+    tokens: {
+      colors: {
+        bg: '#c0c0c0',
+        bgAlt: '#d4d0c8',
+        surface: '#d4d0c8',
+        text: '#000000',
+        textMuted: '#404040',
+        primary: '#000080',
+        primaryContrast: '#ffffff',
+        // Source desktop teal — decorative only on silver; accent-as-text
+        // routes through primaryText (navy, 8.8:1).
+        accent: '#008080',
+        border: '#808080',
+      },
+      fonts: {
+        display: `'Press Start 2P'${MONO_BASE}`,
+        body: `'Inter'${SANS_FALLBACK}`,
+        mono: `'VT323'${MONO_BASE}`,
+      },
+      typeScale: { display: 46, h1: 38, h2: 26, h3: 20, body: 18, caption: 14 },
+      spacing: { slide: 64, gutter: 44, block: 20 },
+      radius: { sm: 0, md: 0, lg: 0 },
+      shadow: {
+        soft: '1px 1px 0 rgba(0,0,0,.35)',
+        card: 'inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #d4d0c8',
+      },
+      chart: {
+        // Source VGA navy/maroon/green/olive/teal; green, olive and teal
+        // stepped darker (#008000→#007600, #808000→#666600, #008080→#007070)
+        // for ≥3:1 on the silver surface.
+        palette: ['#000080', '#800000', '#007600', '#666600', '#007070', '#222222'],
+        grid: '#808080',
+        axis: '#404040',
+      },
+      motion: { style: 'slide', duration: 0.3 },
+      decor: 'titlebar',
+    },
+  },
+
+  // Source: upload/decksmith-extracted/public/templates/_shared/themes/neo-brutalism.css
+  {
+    id: 'neo-brutalist',
+    name: 'Neo Brutalist',
+    tone: 'brutalist',
+    description:
+      'Thick ink outlines, hard offset shadows, warning-yellow fills — a poster that refuses to whisper. Archivo Black does the shouting.',
+    bestFor: ['campaign', 'event', 'brand', 'poster', 'launch', 'activism'],
+    tokens: {
+      colors: {
+        bg: '#fffef0',
+        bgAlt: '#fffbd0',
+        surface: '#ffffff',
+        text: '#000000',
+        textMuted: '#555555',
+        primary: '#000000',
+        primaryContrast: '#fffef0',
+        // Source signature yellow — decorative only (fills always carry the
+        // 3px black border in-source); text uses primaryText (black).
+        accent: '#ffd400',
+        border: '#000000',
+      },
+      fonts: {
+        display: `'Archivo Black'${SANS_FALLBACK}`,
+        body: `'Space Grotesk'${SANS_FALLBACK}`,
+        mono: MONO,
+      },
+      typeScale: { display: 76, h1: 54, h2: 32, h3: 22, body: 18, caption: 13 },
+      spacing: { slide: 64, gutter: 44, block: 20 },
+      radius: { sm: 4, md: 6, lg: 10 },
+      shadow: { soft: 'none', card: '6px 6px 0 #000000' },
+      chart: {
+        // Source pink/green/orange stepped darker (#ff5ca8→#ec559b,
+        // #00b36b→#00a160, #ff9900→#c96f00) for ≥3:1 on white.
+        palette: ['#000000', '#ec559b', '#3a7cff', '#00a160', '#c96f00', '#555555'],
+        grid: '#d9d6c4',
+        axis: '#555555',
+      },
+      motion: { style: 'zoom', duration: 0.35 },
+      decor: 'frame',
+    },
+  },
+
+  // Source: upload/decksmith-extracted/public/templates/sakura-chroma/template.html
+  {
+    id: 'sakura-chroma',
+    name: 'Sakura Chroma',
+    tone: 'riso',
+    description:
+      'Riso-print poster wall — warm cream stock, brown ink, overprinted red/blue/green and a halftone-dot wash. Big Shoulders does the shouting.',
+    bestFor: ['poster', 'event', 'arts', 'zine', 'campaign', 'community'],
+    tokens: {
+      colors: {
+        bg: '#f1e6cb',
+        bgAlt: '#e5d6b0',
+        surface: '#f6efd9',
+        text: '#3a2516',
+        textMuted: '#71604f',
+        // Source riso red #E5392A stepped ~1 stop darker for 5.1:1 as text.
+        primary: '#b7271b',
+        primaryContrast: '#f6efd9',
+        // Source riso blue #3F8BC4 stepped to #3c84ba (3.25:1 non-text);
+        // decorative only — text uses primaryText.
+        accent: '#3c84ba',
+        border: '#d0c2a0',
+      },
+      fonts: {
+        display: `'Big Shoulders Display'${SANS_FALLBACK}`,
+        body: `'Albert Sans'${SANS_FALLBACK}`,
+        mono: `'JetBrains Mono'${JET_FALLBACK}`,
+      },
+      typeScale: { display: 80, h1: 56, h2: 32, h3: 22, body: 18, caption: 13 },
+      spacing: { slide: 68, gutter: 44, block: 22 },
+      radius: { sm: 2, md: 4, lg: 8 },
+      shadow: { soft: 'none', card: '0 10px 24px rgba(58,37,22,.12)' },
+      chart: {
+        // Riso ink set: red/blue/green/orange/pink stepped darker where
+        // needed (blue→#3c84ba, green #3D9F47→#378f40, orange
+        // #F09131→#c26f0f, pink #E54489→#c22e6f) for ≥3:1 on cream stock.
+        palette: ['#b7271b', '#3c84ba', '#378f40', '#c26f0f', '#c22e6f', '#3a2516'],
+        grid: '#d0c2a0',
+        axis: '#71604f',
+      },
+      motion: { style: 'rise', duration: 0.45 },
+      decor: 'dots',
+    },
+  },
+
+  // Source: upload/decksmith-extracted/public/templates/cobalt-grid/template.html
+  {
+    id: 'cobalt-grid',
+    name: 'Cobalt Grid',
+    tone: 'cobalt',
+    description:
+      'Electric cobalt ink on ivory drawing paper — every rule, numeral and headline printed in the same saturated blue. Newsreader keeps it literary.',
+    bestFor: ['report', 'strategy', 'research', 'education', 'corporate', 'product'],
+    tokens: {
+      colors: {
+        bg: '#f0ebde',
+        bgAlt: '#e6e0ce',
+        surface: '#f5f1e4',
+        text: '#1f2be0',
+        // Source ink-soft #5560E5 stepped darker for 5.7:1 muted text.
+        textMuted: '#454dc2',
+        primary: '#1f2be0',
+        primaryContrast: '#ffffff',
+        accent: '#5560e5',
+        border: '#dcd5c3',
+      },
+      fonts: {
+        display: `'Newsreader'${SERIF_FALLBACK}`,
+        body: `'Hanken Grotesk'${SANS_FALLBACK}`,
+        mono: `'DM Mono'${MONO_BASE}`,
+      },
+      typeScale: { display: 72, h1: 52, h2: 32, h3: 22, body: 18, caption: 13 },
+      spacing: { slide: 76, gutter: 52, block: 24 },
+      radius: { sm: 2, md: 4, lg: 6 },
+      shadow: { soft: 'none', card: '0 12px 28px rgba(31,43,224,.09)' },
+      chart: {
+        // Monochrome cobalt scale (source ink + stepped steps) + one warm
+        // paper-gray; all ≥3:1 on ivory.
+        palette: ['#1f2be0', '#0f1740', '#2e3a9e', '#5560e5', '#454dc2', '#6e6a5a'],
+        grid: '#dcd5c3',
+        axis: '#454dc2',
+      },
+      motion: { style: 'fade', duration: 0.45 },
+      decor: 'rule-top',
+    },
+  },
+
+  // Source: upload/decksmith-extracted/public/templates/xhs-pastel-card/template.html
+  {
+    id: 'pastel-card',
+    name: 'Pastel Card',
+    tone: 'pastel',
+    description:
+      'Soft-share social cards — warm white, deep plum type, five pastel panels (peach/mint/sky/lilac/rose) and washi-tape corners. Friendly, never childish.',
+    bestFor: ['lifestyle', 'community', 'brand', 'social', 'workshop', 'product'],
+    tokens: {
+      colors: {
+        bg: '#fef8f1',
+        bgAlt: '#fff1ea',
+        surface: '#ffffff',
+        text: '#2a2340',
+        textMuted: '#5b5470',
+        // Source lilac-d #7b5dc4 stepped one stop darker for 5.5:1 as text.
+        primary: '#6f54b4',
+        primaryContrast: '#ffffff',
+        // Source peach-d — decorative only (2.29:1); text uses primaryText.
+        accent: '#f48b5c',
+        border: '#eee3d9',
+      },
+      fonts: {
+        display: `'Playfair Display'${SERIF_FALLBACK}`,
+        body: `'Inter'${SANS_FALLBACK}`,
+        mono: `'JetBrains Mono'${JET_FALLBACK}`,
+      },
+      typeScale: { display: 76, h1: 54, h2: 32, h3: 22, body: 18, caption: 13 },
+      spacing: { slide: 72, gutter: 48, block: 24 },
+      radius: { sm: 14, md: 20, lg: 28 },
+      shadow: { soft: '0 4px 14px rgba(42,35,64,.06)', card: '0 14px 34px rgba(42,35,64,.10)' },
+      chart: {
+        // The five deep pastel steps; lemon-d #c8910a→#b48309 and peach-d
+        // #f48b5c→#d96f2f stepped darker for ≥3:1 on white cards.
+        palette: ['#6f54b4', '#4e7ed6', '#2e9d70', '#c94673', '#b48309', '#d96f2f'],
+        grid: '#f0e4d8',
+        axis: '#5b5470',
+      },
+      motion: { style: 'zoom', duration: 0.45 },
       decor: 'tape',
     },
   },

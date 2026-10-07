@@ -831,7 +831,7 @@ export function CreateView() {
                 <div>
                   <p className="stg-label text-[color:var(--stg-ink)]/60">C · Design system</p>
                   <h3 id="systems-h" className="stg-display mt-2 text-2xl uppercase">
-                    Sixteen systems. Zero templates.
+                    Twenty-four systems. Zero templates.
                   </h3>
                 </div>
                 <p className="max-w-xs pb-1 text-sm leading-relaxed text-[color:var(--stg-ink)]/70">

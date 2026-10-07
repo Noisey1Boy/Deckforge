@@ -75,6 +75,38 @@ const SAMPLES: Record<string, Slide> = {
     id: 'sample', layout: 'bullets', title: 'Kickoff retro, sticky-wall edition',
     bullets: ['What clicked, and why', 'What stalled, without blame', 'Votes on the next experiment'],
   },
+  // ---- wave-2 tones (T-1) ----
+  nocturne: {
+    id: 'sample', layout: 'chart',
+    title: 'Incident response time',
+    chart: { kind: 'column', data: [{ label: 'Q1', value: 41 }, { label: 'Q2', value: 33 }, { label: 'Q3', value: 26 }, { label: 'Q4', value: 19 }], unit: 'm', insight: 'Median response down 54% year over year.' },
+  },
+  arcade: {
+    id: 'sample', layout: 'section', title: 'PLAYER TWO HAS ENTERED',
+  },
+  vellum: {
+    id: 'sample', layout: 'quote', quote: 'A gallery wall is a conversation, paused.', attribution: 'Exhibition notes',
+  },
+  retro: {
+    id: 'sample', layout: 'bullets', title: 'System requirements',
+    bullets: ['Runs on any machine, even yours', 'No installer, no reboot', 'One floppy disk of features'],
+  },
+  brutalist: {
+    id: 'sample', layout: 'section', title: 'NO TEMPLATES. ONLY SYSTEMS.',
+  },
+  riso: {
+    id: 'sample', layout: 'title', title: 'Spring print fair', subtitle: 'TWO COLORS, ONE PRESS, 500 COPIES',
+  },
+  cobalt: {
+    id: 'sample', layout: 'stats', title: 'Annual Review',
+    stats: [{ value: '112%', label: 'Plan attainment', context: 'full-year target' },
+      { value: '37', label: 'New accounts', context: 'net of churn' },
+      { value: '0.8%', label: 'Error rate', context: 'down from 2.1%' }],
+  },
+  pastel: {
+    id: 'sample', layout: 'bullets', title: 'A softer kind of update',
+    bullets: ['New pastel panels shipped', 'Comments got kinder filters', 'Dark mode, gently tinted'],
+  },
 };
 
 /** Style group per theme id — drives the filter chips (one group each). */
@@ -82,19 +114,27 @@ const THEME_GROUPS: Record<string, string> = {
   'corporate-clean': 'light',
   'minimal-mono': 'light',
   'pitch-book-finance': 'light',
+  'cobalt-grid': 'light',
   'bold-impact': 'dark',
   'dark-elegant': 'dark',
   'signal-navy': 'dark',
   'forest-grove': 'dark',
+  'tokyo-night': 'dark',
+  'pixel-orbit': 'dark',
+  'vellum': 'dark',
   'tech-modern': 'tech',
   'cyber-terminal': 'tech',
+  'retro-win95': 'tech',
   'editorial-serif': 'editorial',
   'eink-editorial': 'editorial',
   'ivory-ledger': 'editorial',
   'warm-earth': 'warm',
   'biennale-yellow': 'warm',
+  'sakura-chroma': 'warm',
   'playful-pop': 'playful',
   'paper-collage': 'playful',
+  'neo-brutalist': 'playful',
+  'pastel-card': 'playful',
 };
 
 const GROUP_FILTERS = [

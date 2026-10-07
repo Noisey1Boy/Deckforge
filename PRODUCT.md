@@ -4,7 +4,7 @@
 DeckForge AI is a web application that turns a one-sentence brief (or the user's own
 data files: CSV, XLSX, JSON, chart screenshots, Mermaid diagrams, markdown) into a
 fully designed presentation. It drafts an editable outline first, renders every slide
-live from design tokens across 8 curated design systems, computes charts strictly from
+live from design tokens across 24 curated design systems, computes charts strictly from
 user-supplied numbers, and exports editable PPTX, print-ready PDF, standalone HTML,
 and a portable .deck.json. Present mode adds speaker notes, a timer, transitions and
 a presenter view.

@@ -216,6 +216,44 @@
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.07);
 }
 
+/* 8-bit checkerboard squares (Pixel Orbit), static. */
+.decor-pixels {
+  top: 34px;
+  right: 40px;
+  width: 154px;
+  height: 110px;
+  background-image: conic-gradient(
+    var(--s-primary) 90deg,
+    transparent 90deg 180deg,
+    var(--s-primary) 180deg 270deg,
+    transparent 270deg
+  );
+  background-size: 22px 22px;
+  opacity: 0.22;
+}
+
+/* Retro window title bar (Retro Win95): primary gradient bar + bevel buttons,
+   static. */
+.decor-titlebar {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 28px;
+  background: linear-gradient(90deg, var(--s-primary), var(--s-accent));
+}
+
+.decor-titlebar::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 15px;
+  height: 12px;
+  background: var(--s-surface);
+  border: 1px solid var(--s-border);
+  box-shadow: -20px 0 0 var(--s-surface), -40px 0 0 var(--s-surface);
+}
+
 /* ----------------------------------------------------------- slide footer */
 .slide-footer {
   position: absolute;

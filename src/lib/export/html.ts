@@ -24,6 +24,7 @@ const FONT_HREF =
   '&family=Source+Sans+3:wght@400;600;700&family=Sora:wght@400;600;700;800' +
   '&family=Fraunces:wght@500;600;700&family=Work+Sans:wght@400;500;600;700' +
   '&family=IBM+Plex+Mono:wght@400;500;600' +
+  '&family=Big+Shoulders+Display:wght@600;700;800;900' +
   // Theme-expansion families (M-b): serif numerals + editorial + terminal +
   // paper-collage display faces.
   '&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400' +
@@ -34,6 +35,18 @@ const FONT_HREF =
   '&family=Instrument+Serif:ital@0;1' +
   '&family=Shrikhand' +
   '&family=Zilla+Slab:ital,wght@0,400;0,500;0,600;0,700;1,400' +
+  // Wave-2 families (T-1): arcade + retro + gallery + riso + cobalt display
+  // faces and their mono companions.
+  '&family=Tektur:wght@400;700;900' +
+  '&family=Chakra+Petch:wght@400;500;600;700' +
+  '&family=Space+Mono:wght@400;700' +
+  '&family=Press+Start+2P' +
+  '&family=VT323' +
+  '&family=Courier+Prime:wght@400;700' +
+  '&family=Albert+Sans:wght@400;500;600;700' +
+  '&family=Hanken+Grotesk:wght@400;500;600;700' +
+  '&family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500' +
+  '&family=DM+Mono:wght@400;500' +
   '&display=swap';
 
 function escapeHtml(s: string): string {
