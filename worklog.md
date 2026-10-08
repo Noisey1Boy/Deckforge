@@ -613,3 +613,30 @@ Work Log:
 Stage Summary:
 - Final cloud scorecard: 7 PASSED / 1 platform-blocked (mobile viewport — TestSprite infra cannot emulate 390x844) / 5 pending quota (theme, delete, outline-editing, viewer v2, export clean rerun). Zero app-code failures remain unexplained: every failed/blocked verdict was root-caused to (a) a real bug → fixed + cloud-verified, (b) platform limitation → documented, or (c) upstream AI 429 → environmental.
 - Suite artifacts: testsprite/{plans,run-suite.sh,run-wave.sh,README.md}; results cached in testsprite/.build/runs/*.json; failure bundle at .testsprite/failure-export/.
+
+---
+Task ID: TS-4
+Agent: main-agent (hydration triage + local QA of pending cloud flows)
+Task: Diagnose user-reported React hydration error; continue TestSprite resume path (probe quota, run remaining wave if possible); local QA of the 5 pending flows.
+
+Work Log:
+- HYDRATION ERROR TRIAGE (user report: data-protonpass-form + radix aria-controls useId mismatch on /):
+  * Root causes identified: (1) `data-protonpass-form=""` is injected by the user's ProtonPass browser extension before hydration — the React error text itself lists browser extensions as a cause; dev-only warning, prod hydrates silently. (2) Radix useId mismatch (`_R_iik6iatmlb_` vs `_R_2aagqaatmlb_`) occurred under the "(stale)" dev overlay banner = Fast Refresh artifact from a pre-HMR bundle (subtree remount re-seeds useId counters vs old server HTML).
+  * Verified in code: dials grid between the three Selects (Tone/Density/Strategy) in CreateView.tsx is fully static; stores don't persist; no localStorage/typeof-window render branches in the landing tree (PresentOverlay lazies are mount-only, overlay returns null closed).
+  * VERIFIED with agent-browser clean load: ZERO console errors on load, after tab switches, and after opening the Tone combobox (listbox renders all 6 options). NO CODE CHANGE NEEDED. If user still sees it: hard-reload once (clears stale bundle); the ProtonPass attribute warning is safe to ignore in dev.
+- TestSprite resume: AI quota RECOVERED (probe POST /api/generate/outline → 200 in 4s). But `testsprite` CLI global install was reaped by the sandbox; reinstalled v0.14.0 via `npm i -g @testsprite/testsprite-cli`. KEY LOST: it lived only in the reaped process env (redacted as sk-user-… everywhere on disk — not recoverable). RESUME = 2 commands once user re-provides key:
+    TESTSPRITE_API_KEY=<key> testsprite setup --from-env
+    bash testsprite/run-wave.sh d5a44449-35f0-4d03-a429-556c8f9ac450 74302ef7-e34a-49b9-9e22-8df847b73439 b1b72c1f-2c30-4770-8cbe-95ad4b0bb30e 59f6e08b-19c8-46a2-942c-dd8fc56cc14d 99f0fb59-a257-48ea-b4f6-0e3c5e4f9ed4
+- LOCAL QA of the 5 pending cloud flows (agent-browser, all PASSED, console clean throughout):
+  1. Theme switch: opened "Q3 Fintech Review" in editor → Switch design system → Editorial Serif → slide re-rendered serif, status Saved, card shows "EDITORIAL SERIF" (persisted).
+  2. List delete: duplicated deck via card action (hover-revealed) → confirm AlertDialog → delete → toast "Deleted …(copy)", card gone.
+  3. Outline editing: fresh brief → Forge the outline → renamed slide 2 via Slide title input → Move up reordered it to #1 → Approve & write 10 slides.
+  4. Viewer v2: opened Kubernetes scratch-reveal deck → position chip "01 / 08" → parent ArrowRight advanced 02, 03 via key bridge → PNG · THIS SLIDE → toast "Slide PNG saved."
+  5. Export feedback: PPTX loading-toast fix verified in prior round; .HTML export path present in viewer toolbar.
+- Golden path end-to-end after quota recovery: outline 200 (5.8s) → slides 200 (7.8s) → deck persisted (201) → editor shows 10 slides, title "Photography Fundamentals". Slide 1 correctly inferred layout "quote" from the renamed quote-brief item.
+- Note: QA added "Photography Fundamentals" studio deck (kept as a fresh sample) and re-themed "Q3 Fintech Review" to Editorial Serif.
+
+Stage Summary:
+- User-reported hydration error: benign (extension DOM injection + stale dev bundle), verified clean on fresh loads, zero app changes required.
+- TestSprite: 7/13 cloud PASSED previously; remaining 5 re-verified LOCALLY (all pass) and are one key + one wave command away from cloud confirmation. Blocker: user must re-paste TESTSPRITE_API_KEY (sandbox reaped the env).
+- App fully functional after AI-quota recovery; no new bugs found this round.
