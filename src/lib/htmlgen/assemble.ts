@@ -247,9 +247,9 @@ ${sections.map((s) => indent(s, 4)).join('\n')}
   </div>
 </div>
 <script src="/revealjs/dist/reveal.js"></script>
-<script src="/revealjs/dist/plugin/notes/notes.js"></script>
-<script src="/revealjs/dist/plugin/markdown/markdown.js"></script>
-<script src="/revealjs/dist/plugin/highlight/highlight.js"></script>
+<script src="/revealjs/dist/plugin/notes.js"></script>
+<script src="/revealjs/dist/plugin/markdown.js"></script>
+<script src="/revealjs/dist/plugin/highlight.js"></script>
 <script>
   Reveal.initialize({
     controls: true,

@@ -1,0 +1,40 @@
+idempotency-key: cli-run-e7b367f4-7611-4414-b641-9b48067272a1
+Environment "default" is on this machine (http://localhost:3000) — opening a tunnel.
+[tunnel] Minted tunnel client 2dc81222-1f0f-4830-a5e2-4d9cd380b3f2; connecting…
+[tunnel] Reaching http://localhost:3000 through TestSprite (client 2dc81222-1f0f-4830-a5e2-4d9cd380b3f2).
+Run 3eeb11a7-b1c0-41b2-a24b-53fc8cd4b3c2
+Dashboard: https://www.testsprite.com/dashboard-v3/o/1057bd88-70ba-5a4a-ae90-b509b01ef1f1/projects/ad01b47f-dbd2-4157-96ea-451e3efa4b80/test-cases/332236cd-2a85-4dfe-8b3c-30d2f215156d
+{
+  "runId": "3eeb11a7-b1c0-41b2-a24b-53fc8cd4b3c2",
+  "testId": "332236cd-2a85-4dfe-8b3c-30d2f215156d",
+  "testTitle": "Landing page renders and switches between Studio and Template studio",
+  "projectId": "ad01b47f-dbd2-4157-96ea-451e3efa4b80",
+  "userId": "d4880498-70a1-70b7-bd60-78851a1bffa2",
+  "status": "passed",
+  "source": "cli",
+  "createdAt": "2026-10-08T05:47:10.423Z",
+  "startedAt": "2026-10-08T05:47:10.423Z",
+  "finishedAt": "2026-10-08T05:49:56.798Z",
+  "codeVersion": null,
+  "targetUrl": "http://localhost:3000",
+  "environment": {
+    "id": "c544f26e-b958-4f17-bc03-79a2ba61ffc8",
+    "name": "default"
+  },
+  "createdFrom": null,
+  "failedStepIndex": null,
+  "failureKind": null,
+  "error": "",
+  "videoUrl": "https://testsprite-videos.s3.us-east-1.amazonaws.com/20261008-054956-f9e56991.webm?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIAZQ3DRZAIBXUG2P5O%2F20261008%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261008T054956Z&X-Amz-Expires=604800&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEFYaCXVzLWVhc3QtMSJGMEQCIAu9MCe%2FvU7ycVs5KXSra7PTGMxP9wKSKuhjoijIb4%2F4AiBYmmVYITTEmGqqJgCNXsYUs9Dhz%2By%2FBonmUOzKHclKhSr7AwgeEAAaDDY1NDY1NDQyNTEwNCIMq3IlXTKkQPd5VevfKtgDrT0zQzSgUbC17cWEa8%2BX7dgcq%2FpkKTVpMAxL87TufctnOAHvgrIu80AsbIrrDbF2uEUtQ%2FUS1JXfMB7qtoZdeohTJ0wHB3Al2gUR%2Bmzu5RGOc8378MZ5qvRlML37S3ig0YLdm1U4TgA1UD%2FtJsigpX1yy6gZODmoMBkWwT%2FWQdPgUKwheiepyIoeFQsFevLrZFuhf1DI%2BN%2FWCGp0bX7DLKsd3THVKPWvRBTN0cXge6f%2FRDgMXwuTP87NO1uaFGGfboot4hcp19BesgcBCv5JI4IXz%2B2O0EictUUZw%2BK%2BcE1gHFw06OCesQWmQ8o4agACEu3NgMliW858QYkoOeAsIxRoM4DcZTtphqvLQ5KMXk7nmfaZd91Jiz8NoWRVaPA%2F%2BPDHBq8wSo5qRg%2BOXQlfLBsxIoZRhMB4U%2F6O9ViHoL3k%2Fbt1RC4pJvp9p%2F3eIpsGuHJO0KgBxxkawaJTbTdJV4QxgyPtwnbTM1bBWSBeBFxT127UYr3D0dI9w24ZCX1gfLy%2F0tYwy2C63wY7h1gO2cx6W%2BSfnjr8T1bVWmE4xFg1IXRpdTgqRys3iB3G1qF7PhwGKg2%2FwPkUTtNUbzez7%2FXPhr0O%2BM%2FXmPnSi2Dr%2BS7PvNHI3Ry5jTDIz5zWBjqmAYJZArhSB%2BJu0l0d%2B6%2BX3CHmt4RKCG9I95Vkm346iDGW1yhLgvXxyzkmwwi%2FruNUcL4cp1KtQdd%2FkRWWfaoguYBuH20VNxNwDuAFY9sT8mwCUeHO0nAviQSfb%2FtgVIzDfzQkKFMnrealzJcOHZg3XWYUQTloejwOOnj6Ra4DkN7LT%2FGOha8E9WI5qG5ti53yOtDIAWLxtsA883R5l5xTLhH%2FXj7vxcc%3D&X-Amz-Signature=3592c5c524e8ec4ac5939c6abbf36df02953ab7f6ecfd0629f615ec320f810ca&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+  "stepSummary": {
+    "total": 9,
+    "completed": 9,
+    "passedCount": 9,
+    "failedCount": 0
+  },
+  "dashboardUrl": "https://www.testsprite.com/dashboard-v3/o/1057bd88-70ba-5a4a-ae90-b509b01ef1f1/projects/ad01b47f-dbd2-4157-96ea-451e3efa4b80/test-cases/332236cd-2a85-4dfe-8b3c-30d2f215156d",
+  "executionUrl": "https://www.testsprite.com/dashboard-v3/o/1057bd88-70ba-5a4a-ae90-b509b01ef1f1/projects/ad01b47f-dbd2-4157-96ea-451e3efa4b80/execution/e70fbcb7-4042-4291-9a97-ccc921970130",
+  "apiOutput": null,
+  "trace": null
+}
+requestId: cli_1a201eff-1b1c-4d0a-9a68-4a11af787544

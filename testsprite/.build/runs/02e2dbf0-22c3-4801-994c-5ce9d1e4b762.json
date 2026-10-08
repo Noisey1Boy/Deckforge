@@ -1,0 +1,50 @@
+idempotency-key: cli-run-fdb0f13f-3ee0-481a-bab4-3a1f6aac7d42
+Environment "default" is on this machine (http://localhost:3000) — opening a tunnel.
+[tunnel] Minted tunnel client 7faf85e7-0913-4290-8612-0d6166d258d7; connecting…
+[tunnel] Reaching http://localhost:3000 through TestSprite (client 7faf85e7-0913-4290-8612-0d6166d258d7).
+Run 42d1fde7-5046-4979-a4f8-696ac0d48553
+Dashboard: https://www.testsprite.com/dashboard-v3/o/1057bd88-70ba-5a4a-ae90-b509b01ef1f1/projects/ad01b47f-dbd2-4157-96ea-451e3efa4b80/test-cases/02e2dbf0-22c3-4801-994c-5ce9d1e4b762
+{
+  "runId": "42d1fde7-5046-4979-a4f8-696ac0d48553",
+  "testId": "02e2dbf0-22c3-4801-994c-5ce9d1e4b762",
+  "testTitle": "HTML deck viewer navigates slides, presents fullscreen and exports PNG",
+  "projectId": "ad01b47f-dbd2-4157-96ea-451e3efa4b80",
+  "userId": "d4880498-70a1-70b7-bd60-78851a1bffa2",
+  "status": "blocked",
+  "source": "cli",
+  "createdAt": "2026-10-08T07:19:52.402Z",
+  "startedAt": "2026-10-08T07:19:52.402Z",
+  "finishedAt": "2026-10-08T07:27:13.928Z",
+  "codeVersion": null,
+  "targetUrl": "http://localhost:3000",
+  "environment": {
+    "id": "c544f26e-b958-4f17-bc03-79a2ba61ffc8",
+    "name": "default"
+  },
+  "createdFrom": null,
+  "failedStepIndex": 10,
+  "failureKind": null,
+  "error": "TEST BLOCKED\n\nThe test could not be run to completion — repeated DOM/stale-element issues prevented clicking the 'PNG · this slide' button to verify PNG export.\n\nObservations:\n- The generated-deck viewer loaded a saved deck ('Art in Bloom Exhibition'); arrow navigation (after focusing the iframe) advanced the slide counter to '03 / 08'.\n- Presentation mode entered fullscreen and was exited with Escape; the viewer returned to normal view and the toolbar was visible.\n- The 'PNG · this slide' button is visible in the toolbar, but multiple attempts to locate and click it failed due to stale element indexes and identical DOM snapshots; no 'Slide PNG saved.' success toast was observed.",
+  "videoUrl": "https://testsprite-videos.s3.us-east-1.amazonaws.com/20261008-072711-be64e24d.webm?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIAZQ3DRZAIDCOX5TY4%2F20261008%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261008T072714Z&X-Amz-Expires=604800&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEFYaCXVzLWVhc3QtMSJIMEYCIQCmcDeqso3w3fNAJ%2F%2FIBwZUyqpWR9uyMwV2CkzBAK%2F2AQIhAJ749nSKkJsYxeE8pvRJJQ5oCsQ8POCcOLdQFZN1OHDlKvsDCB8QABoMNjU0NjU0NDI1MTA0Igw1ifOBgtBZLuYNXP8q2AN%2BNBEB7SxPeiUtJQ6EOy08wqzji%2BY1ZroW8VzkDS28rsjq3Oxll%2BrJBHOIe3jyngskiWWMI%2BlDYMAih%2ByAwt57w2iAKJrsHFXPyusY4GYPSvNkew2K5oyYxuqGtMxaCibojy%2FW7ogncrdRzm2HnP7E%2FSSqLIrYs5Tca9QJjLQVRPpSNfaFlYun7iYyNe2zzsuH7yYyB7ghWQSF59ahG82IO6kENEHNwrMmDwZbnxttZ6rLftNhSWjSMInGFmS6h%2BA3RXT4mwwCXHohkqkmT0DtI3S1xA2aTF92YnnwoKdrabZP1%2FMj7ES%2BJjIKSo1dS7UBK7phYAQNaK5ssQZo1Yzyc5Pg%2B48Ywu0XYr7oEzp9Bg%2FO5KOfi6Ux8y6N7Hue6EGCoF1YGhvjepEX3IW3zqVvidoX6icx%2FQLF9sSW%2B2vM9%2FEHP4NbbKDr5k9eyvDwBlgzxsZY6Gx36%2F3xo5qT5nMigUuHAa36H2sr%2Fhudq2v2jt0vuMvxxlGQN9Z00nhJYHbBk5%2Brdu33xnZAAApcELDq2Ztnf73mKUDmnHMDb%2FX3AUJhmbyvtfMd%2B29nZf8%2B%2FP%2B7XSJtwdPjULDV2VbYpbUf%2Bk2qbvHAcjcPeTZUKZVf0tYIHlR0yqsOMJjWnNYGOqQB7WXbIEvG%2BiYjKzY9cCYK5151Lb3y%2F1pPPW2Zt2AaMqeffo5%2FYnwTW19GRZQu9YzGecUvCeDR7iTLKbqYrZ0PqVSbV0JmyGqTNOR1rhlAC%2FWRqVDWMN7nzra4tSbgS9txt6Fes4f611df1xw%2FrwzCFb1OfAzOPCL1mYQkoh2B9etpBfRe%2FAzjfIRMWBnTjQrMB%2BkHqy5AjU7oOPKynhCM0SWidXE%3D&X-Amz-Signature=c3359203a201ce1b4a2782e4ab11d45b5cb8d562dc1014c9bd19421e0e27ff73&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+  "stepSummary": {
+    "total": 13,
+    "completed": 13,
+    "passedCount": 9,
+    "failedCount": 4
+  },
+  "dashboardUrl": "https://www.testsprite.com/dashboard-v3/o/1057bd88-70ba-5a4a-ae90-b509b01ef1f1/projects/ad01b47f-dbd2-4157-96ea-451e3efa4b80/test-cases/02e2dbf0-22c3-4801-994c-5ce9d1e4b762",
+  "executionUrl": "https://www.testsprite.com/dashboard-v3/o/1057bd88-70ba-5a4a-ae90-b509b01ef1f1/projects/ad01b47f-dbd2-4157-96ea-451e3efa4b80/execution/82016f5c-3f7c-4097-9a2b-46ac3ff58437",
+  "apiOutput": null,
+  "trace": null
+}
+requestId: cli_3ebab6c6-b03b-4574-b99f-e101ea3a0b71
+Run finished with status: blocked. Use 'testsprite test artifact get 42d1fde7-5046-4979-a4f8-696ac0d48553' to download the failure bundle.
+{
+  "error": {
+    "code": "CLI_ERROR",
+    "message": "Run 42d1fde7-5046-4979-a4f8-696ac0d48553 finished with status: blocked",
+    "nextAction": "",
+    "requestId": "local",
+    "details": {}
+  }
+}

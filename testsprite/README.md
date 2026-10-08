@@ -9,7 +9,27 @@
 | CLI installed (`npm i -g @testsprite/testsprite-cli`) | ✅ v0.14.0, Node 24 |
 | 13 frontend test plans authored (`plans/*.json`) | ✅ **13/13 pass TestSprite's own validator** (`testsprite test lint --plan-from-dir ./plans`) |
 | Create path proven offline (`--dry-run` canned contract) | ✅ |
-| Real cloud runs | ⏳ **needs your API key** — cloud execution and the localhost tunnel are authenticated services; the key is created from your dashboard (account-bound), so it cannot be minted from here |
+| Real cloud runs (2026-10-08, key provided) | ✅ **7/13 PASSED** · 1 platform-blocked (mobile viewport — TestSprite's hosted browser cannot emulate 390×844) · 5 pending upstream-AI-quota recovery (the test battery exhausted Z.ai 429 budget; app's "AI may be busy" fallback worked as designed) |
+
+## Results & fixes delivered by this suite
+
+| Finding | Severity | Outcome |
+| --- | --- | --- |
+| Scratch-reveal decks rendered blank (reveal plugins 404 → `Reveal.initialize` never ran) | **P0** | Fixed in `assemble.ts`; cloud test now **PASSES** |
+| PPTX export gave zero feedback during the multi-second build | UX/automation | Instant loading toast + busy guard; verified locally |
+| Viewer had no parent-side slide indicator | robustness | New `viewer-position` chip (polls deck doc, mirrors "03 / 08") |
+| Arrow keys dead unless iframe focused | UX | Parent→iframe key bridge in the viewer |
+| Mobile-viewport test | infra | Blocked by TestSprite hosted browser (no viewport emulation) — not an app issue |
+
+**Resume the last 5 runs** (theme `d5a44449…`, delete `74302ef7…`, outline-editing `b1b72c1f…`, viewer-v2 `59f6e08b…`, export clean rerun `99f0fb59…`) once a manual probe returns 200:
+
+```bash
+curl -s -X POST http://localhost:3000/api/generate/outline -H 'Content-Type: application/json' \
+  -d '{"prompt":"probe","slideCount":5}'   # expect 200, not "AI may be busy"
+bash testsprite/run-wave.sh d5a44449-35f0-4d03-a429-556c8f9ac450 74302ef7-e34a-49b9-9e22-8df847b73439
+bash testsprite/run-wave.sh b1b72c1f-2c30-4770-8cbe-95ad4b0bb30e 59f6e08b-19c8-46a2-942c-dd8fc56cc14d
+bash testsprite/run-wave.sh 99f0fb59-a257-48ea-b4f6-0e3c5e4f9ed4
+```
 
 ## Run everything (one command)
 

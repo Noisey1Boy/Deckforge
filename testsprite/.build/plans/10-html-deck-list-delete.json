@@ -1,0 +1,21 @@
+{
+  "$schema": "https://raw.githubusercontent.com/TestSprite/testsprite-cli/v0.14.0/schemas/plan.schema.json",
+  "projectId": "ad01b47f-dbd2-4157-96ea-451e3efa4b80",
+  "type": "frontend",
+  "name": "Generated template deck appears in the deck list and can be deleted with confirmation",
+  "description": "A newly generated template deck shows up in the Template studio deck list with an engine badge, and deleting it asks for confirmation then removes it.",
+  "priority": "p1",
+  "planSteps": [
+    { "type": "action", "description": "Navigate to the app root URL / and click the 'Template studio — HTML decks' mode switch tab." },
+    { "type": "action", "description": "Select any available template card, type the brief 'Podcast launch plan: format, episodes, distribution' and click the generate button." },
+    { "type": "action", "description": "Wait for the deck viewer to open (allow up to 180 seconds), note the deck title, then return to the Template studio landing area (use back/landing navigation, not the browser back button away from the app)." },
+    { "type": "action", "description": "Scroll to the template decks list section on the Template studio page." },
+    { "type": "assertion", "description": "Verify the deck list contains the newly generated deck (its title matches what was noted) and shows an engine/template badge on the card." },
+    { "type": "action", "description": "Click the delete control on that deck's card." },
+    { "type": "assertion", "description": "Verify a confirmation dialog appears with 'Cancel' and confirm options." },
+    { "type": "action", "description": "Click 'Cancel' first." },
+    { "type": "assertion", "description": "Verify the deck is still in the list after cancelling." },
+    { "type": "action", "description": "Click delete again and this time confirm the deletion." },
+    { "type": "assertion", "description": "Verify the deck disappears from the list." }
+  ]
+}

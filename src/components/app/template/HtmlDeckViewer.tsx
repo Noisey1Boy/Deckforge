@@ -80,6 +80,7 @@ export function HtmlDeckViewer({
   const [exporting, setExporting] = useState<'png' | 'pptx' | null>(null);
   const [exportNote, setExportNote] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deckPos, setDeckPos] = useState<{ index: number; total: number } | null>(null);
 
   const stageRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -114,6 +115,39 @@ export function HtmlDeckViewer({
     return () => window.clearTimeout(t);
   }, [iframeLoaded]);
 
+  /* ---- position chip: read the deck document's active slide (same-origin).
+   * Decks own their chrome, so many templates have no counter at all — and
+   * automation observing the parent DOM cannot see inside the frame. Poll
+   * the active section read-only and mirror it next to the toolbar. ---- */
+  useEffect(() => {
+    if (!iframeLoaded) return;
+    const read = () => {
+      try {
+        const doc = iframeRef.current?.contentDocument;
+        if (!doc) return;
+        const revealSections = doc.querySelectorAll('.reveal .slides > section');
+        let total = 0;
+        let index = 0;
+        if (revealSections.length > 0) {
+          total = revealSections.length;
+          index = Array.prototype.findIndex.call(revealSections, (s) => s.classList.contains('present'));
+        } else {
+          const slides = doc.querySelectorAll('.deck > .slide, .deck .slide');
+          if (slides.length > 0) {
+            total = slides.length;
+            index = Array.prototype.findIndex.call(slides, (s) => s.classList.contains('is-active'));
+          }
+        }
+        if (total > 0) setDeckPos({ index: Math.max(index, 0), total });
+      } catch {
+        /* frame not ready or cross-origin — keep last known position */
+      }
+    };
+    read();
+    const t = window.setInterval(read, 400);
+    return () => window.clearInterval(t);
+  }, [iframeLoaded, deckId]);
+
   /* ---- fullscreen tracking ---- */
   useEffect(() => {
     const onChange = () => {
@@ -123,6 +157,48 @@ export function HtmlDeckViewer({
     };
     document.addEventListener('fullscreenchange', onChange);
     return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+
+  /* ---- key forwarding: deck documents carry their own keyboard nav, but a
+   * keydown only ever reaches the frame that has focus. When the parent page
+   * holds focus (the common case outside Present mode), arrow/space/page keys
+   * did nothing. Mirror nav keys into the deck document (same-origin) so the
+   * deck responds no matter which frame is focused. Parent inputs keep keys. ---- */
+  useEffect(() => {
+    const NAV: Record<string, number> = {
+      ArrowRight: 39,
+      ArrowLeft: 37,
+      ArrowDown: 40,
+      ArrowUp: 38,
+      PageDown: 34,
+      PageUp: 33,
+      Home: 36,
+      End: 35,
+      ' ': 32,
+    };
+    const onKey = (e: KeyboardEvent) => {
+      const keyCode = NAV[e.key];
+      if (!keyCode || !iframeRef.current) return;
+      const active = document.activeElement as HTMLElement | null;
+      const tag = (active?.tagName ?? '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select' || active?.isContentEditable) return;
+      const frame = iframeRef.current;
+      const win = frame.contentWindow;
+      const doc = frame.contentDocument;
+      if (!win || !doc || !doc.body) return;
+      const ev = new win.KeyboardEvent('keydown', {
+        key: e.key,
+        code: e.code,
+        keyCode,
+        which: keyCode,
+        bubbles: true,
+        cancelable: true,
+      });
+      doc.body.dispatchEvent(ev);
+      e.preventDefault();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
 
   const engine = deck?.engine;
@@ -315,8 +391,18 @@ export function HtmlDeckViewer({
 
       {/* Actions */}
       <div className="flex flex-wrap items-center gap-2">
+        {deckPos && (
+          <span
+            data-testid="viewer-position"
+            aria-label={`Slide ${deckPos.index + 1} of ${deckPos.total}`}
+            className="stg-label inline-flex items-center gap-1 border border-[color:var(--stg-ink)]/25 bg-[color:var(--stg-cream-2)] px-2 py-1 font-mono text-[10px] text-[color:var(--stg-ink)]/80"
+          >
+            {String(deckPos.index + 1).padStart(2, '0')} / {String(deckPos.total).padStart(2, '0')}
+          </span>
+        )}
         <Button
           onClick={present}
+          data-testid="viewer-present"
           className={cn(actionBtn, 'bg-[color:var(--stg-yellow)] text-[color:var(--stg-ink)] hover:bg-[color:var(--stg-yellow-deep)]')}
         >
           <Presentation className="h-4 w-4" aria-hidden /> Present
@@ -335,6 +421,7 @@ export function HtmlDeckViewer({
           variant="outline"
           onClick={exportPng}
           disabled={!deck || !!exporting}
+          data-testid="viewer-png-export"
           className={cn(actionBtn, 'bg-[color:var(--stg-cream)] text-[color:var(--stg-ink)] hover:bg-[color:var(--stg-ink)] hover:text-[color:var(--stg-yellow)]')}
         >
           {exporting === 'png' ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <ImageIcon className="h-3.5 w-3.5" aria-hidden />}

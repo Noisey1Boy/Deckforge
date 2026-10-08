@@ -1,0 +1,29 @@
+idempotency-key: cli-run-47799859-0f72-4fde-88c1-ac62f205aacf
+Environment "default" is on this machine (http://localhost:3000) — opening a tunnel.
+[tunnel] Minted tunnel client fbd8127d-86b9-4345-9f49-e734e5461148; connecting…
+[tunnel] Reaching http://localhost:3000 through TestSprite (client fbd8127d-86b9-4345-9f49-e734e5461148).
+Run bfad2e70-0fbe-46ea-8ba5-5c9668d9bf97
+Dashboard: https://www.testsprite.com/dashboard-v3/o/1057bd88-70ba-5a4a-ae90-b509b01ef1f1/projects/ad01b47f-dbd2-4157-96ea-451e3efa4b80/test-cases/74302ef7-e34a-49b9-9e22-8df847b73439
+{
+  "runId": "bfad2e70-0fbe-46ea-8ba5-5c9668d9bf97",
+  "status": "cancelled",
+  "enqueuedAt": "2026-10-08T07:38:39.464Z",
+  "codeVersion": "v1",
+  "targetUrl": "http://localhost:3000"
+}
+Timed out waiting for run bfad2e70-0fbe-46ea-8ba5-5c9668d9bf97. Run bfad2e70-0fbe-46ea-8ba5-5c9668d9bf97 was reaching your machine through a tunnel that closes with this process.
+  Cancelled it. The run may already have been billed; a cancelled run's verdict is discarded.
+  Start a new run with: testsprite test run 74302ef7-e34a-49b9-9e22-8df847b73439 --timeout 1800.
+  Passing --no-cancel-on-interrupt keeps the run going in the cloud, and it is still billed. The tunnel is closed, so steps that still need your machine will fail; the run can still pass if it no longer needs to load anything from your machine.
+{
+  "error": {
+    "code": "UNSUPPORTED",
+    "message": "Timed out after 500s waiting for run bfad2e70-0fbe-46ea-8ba5-5c9668d9bf97, which could not have finished without this process holding its tunnel open.",
+    "nextAction": "Start a new run with: testsprite test run 74302ef7-e34a-49b9-9e22-8df847b73439 --timeout 1800 (or raise --timeout up to 3600); a retry mints a fresh tunnel.",
+    "requestId": "local",
+    "details": {
+      "runId": "bfad2e70-0fbe-46ea-8ba5-5c9668d9bf97",
+      "timeoutSeconds": 500
+    }
+  }
+}

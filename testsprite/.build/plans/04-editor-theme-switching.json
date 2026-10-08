@@ -1,0 +1,19 @@
+{
+  "$schema": "https://raw.githubusercontent.com/TestSprite/testsprite-cli/v0.14.0/schemas/plan.schema.json",
+  "projectId": "ad01b47f-dbd2-4157-96ea-451e3efa4b80",
+  "type": "frontend",
+  "name": "Editor switches deck theme instantly without losing slide content",
+  "description": "Changing the Theme select in the editor re-renders the slide canvas with the new theme while all slide text stays intact.",
+  "priority": "p0",
+  "planSteps": [
+    { "type": "action", "description": "Navigate to the app root URL /, stay on the 'Studio — structured' tab, type the brief 'Product launch plan for a mobile fitness app' into the 'A · Brief' textarea and click 'Forge the outline'." },
+    { "type": "action", "description": "Wait for the 'Outline proposal' view, then click 'Approve & write N slides' and wait until the editor/board view opens with a rendered slide (allow up to 120 seconds)." },
+    { "type": "assertion", "description": "Verify the editor shows a slide canvas, a slide navigation or board area, a 'Theme' selector and an Export menu button." },
+    { "type": "action", "description": "Read the currently selected value of the Theme selector, then open the Theme selector and choose a DIFFERENT theme from the list." },
+    { "type": "assertion", "description": "Verify the slide canvas re-renders with visibly different colors or typography, and the previously visible slide title text is still present on the canvas (content preserved)." },
+    { "type": "action", "description": "Navigate to the next slide using the slide navigation (next arrow or clicking a slide in the board)." },
+    { "type": "assertion", "description": "Verify the canvas now shows the next slide and the new theme is still applied (theme applies deck-wide)." },
+    { "type": "action", "description": "Open the Theme selector again and switch back to the original theme." },
+    { "type": "assertion", "description": "Verify the canvas re-renders with the original theme styling and content is still intact." }
+  ]
+}

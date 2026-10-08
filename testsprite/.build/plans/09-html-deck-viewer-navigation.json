@@ -1,0 +1,21 @@
+{
+  "$schema": "https://raw.githubusercontent.com/TestSprite/testsprite-cli/v0.14.0/schemas/plan.schema.json",
+  "projectId": "ad01b47f-dbd2-4157-96ea-451e3efa4b80",
+  "type": "frontend",
+  "name": "HTML deck viewer navigates slides, presents fullscreen and exports PNG",
+  "description": "In the generated-deck viewer, arrow navigation updates the slide counter, Present opens fullscreen and PNG export saves the current slide.",
+  "priority": "p1",
+  "planSteps": [
+    { "type": "action", "description": "Navigate to the app root URL / and click the 'Template studio — HTML decks' mode switch tab." },
+    { "type": "action", "description": "Keep the default/first available template selected (or click any template card if none is selected), type the brief 'Team offsite agenda for a 20-person design team: schedule, workshops, logistics' and click the generate button." },
+    { "type": "action", "description": "Wait for the deck viewer to open with the finished deck (allow up to 180 seconds) and note the total slide count shown in the slide counter." },
+    { "type": "action", "description": "Click the next-slide control (or press the ArrowRight key) twice." },
+    { "type": "assertion", "description": "Verify the slide counter advanced (e.g. from '01 / N' to '03 / N') and the visible slide content changed." },
+    { "type": "action", "description": "Click the 'Present' button." },
+    { "type": "assertion", "description": "Verify the deck enters fullscreen presentation mode (the stage fills the screen; an Escape hint may appear)." },
+    { "type": "action", "description": "Press the Escape key to exit presentation mode." },
+    { "type": "assertion", "description": "Verify the viewer returns to the normal view with the toolbar visible again." },
+    { "type": "action", "description": "Click 'PNG · this slide'." },
+    { "type": "assertion", "description": "Verify a success toast like 'Slide PNG saved.' appears and no error toast appears (allow up to 60 seconds for the snapshot)." }
+  ]
+}

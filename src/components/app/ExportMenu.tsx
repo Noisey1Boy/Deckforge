@@ -39,12 +39,17 @@ export function useExportActions() {
   const pptx = async () => {
     if (!deck) return;
     setBusy('pptx');
+    // Acknowledge instantly: building the file blocks the tab for a few
+    // seconds, and a silent click reads as a dead button (to humans and to
+    // automated QA alike). Yield one frame first so the spinner paints.
+    const busyToast = toast.loading(`Building editable PPTX — ${visibleSlides(deck.slides).length} slides…`);
+    await new Promise((r) => setTimeout(r, 80));
     try {
       await exportPptx(deck);
-      toast.success('PPTX downloaded.');
+      toast.success('PPTX downloaded.', { id: busyToast });
     } catch (e) {
       console.error(e);
-      toast.error('PPTX export failed.');
+      toast.error('PPTX export failed.', { id: busyToast });
     } finally {
       setBusy(null);
     }
@@ -174,8 +179,8 @@ export function ExportMenu() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-neutral-400">Present &amp; share</DropdownMenuLabel>
-        <DropdownMenuItem onClick={pptx} className="gap-2">
-          <Presentation className="h-4 w-4 text-neutral-500" /> PPTX (editable)
+        <DropdownMenuItem onClick={pptx} disabled={!!busy} className="gap-2">
+          <Presentation className="h-4 w-4 text-neutral-500" /> {busy === 'pptx' ? 'Building PPTX…' : 'PPTX (editable)'}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={pdf} className="gap-2">
           <FileText className="h-4 w-4 text-neutral-500" /> PDF (print dialog)

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://raw.githubusercontent.com/TestSprite/testsprite-cli/v0.14.0/schemas/plan.schema.json",
+  "projectId": "ad01b47f-dbd2-4157-96ea-451e3efa4b80",
+  "type": "frontend",
+  "name": "Studio outline view supports editing, adding and removing slides before approval",
+  "description": "In Edit mode on the outline proposal, the user can rename the deck title, edit a slide title, add a slide and remove a slide, and the final CTA label reflects the updated slide count.",
+  "priority": "p1",
+  "planSteps": [
+    { "type": "action", "description": "Navigate to the app root URL /, stay on the 'Studio — structured' tab, type the brief 'Content marketing strategy for a B2B SaaS: pillars, calendar, distribution, KPIs' and click 'Forge the outline'." },
+    { "type": "action", "description": "Wait for the 'Outline proposal' view and note the number of slides (the final button says 'Approve & write N slides')." },
+    { "type": "action", "description": "Click 'Edit mode'." },
+    { "type": "action", "description": "In the deck title input (aria-label 'Deck title'), append the text ' - 2025'." },
+    { "type": "assertion", "description": "Verify the deck title now ends with ' - 2025'." },
+    { "type": "action", "description": "Edit the first slide title input (aria-label 'Slide title') to read 'Executive summary'." },
+    { "type": "assertion", "description": "Verify the first slide row now shows 'Executive summary'." },
+    { "type": "action", "description": "Click the 'Add slide' button." },
+    { "type": "assertion", "description": "Verify a new slide row is appended and the final CTA now says 'Approve & write N+1 slides' (count increased by one)." },
+    { "type": "action", "description": "Click the 'Remove slide' (trash) control on that newly added last slide row." },
+    { "type": "assertion", "description": "Verify the slide count returns to N and the CTA label shows the original count again." }
+  ]
+}
