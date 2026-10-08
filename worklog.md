@@ -554,3 +554,23 @@ Stage Summary:
 - The app now has BOTH modes: Studio (structured, token themes, editable PPTX) + Template Studio (57 real HTML templates incl. reveal.js/impress.js/shower/dzslides JS-library decks, AI-filled, snapshot exports, from-scratch mode). All routes under /api/htmlgen/** + /api/htmldecks/**; DB: HtmlDeck model.
 - lint clean; hydration/cssRules console errors proven stale-session artifacts (fresh-load console: 0 entries).
 - Risks/next: impress/shower/dzslides engines have no PPTX snapshot (PNG/HTML only, button disabled w/ tooltip); scratch decks from AI may still @import fonts (prompt now bans it — verify on next scratch runs); 57 template iframes add ~2.6MB + runtimes ~7MB static weight (acceptable); template gallery could gain category filter persistence; HtmlDeckList polls via htmldecks:changed event.
+
+---
+Task ID: TS-1
+Agent: main-agent (testsprite-integration)
+Task: Integrate TestSprite CLI (https://github.com/TestSprite/testsprite-cli) as the cloud verification layer for DeckForge and prepare a runnable test suite.
+
+Work Log:
+- Researched testsprite-cli via GitHub README/DOCUMENTATION: cloud browser-agent testing; plan files = plain-language action/assertion steps (frontend-only via --plan-from); real runs require a dashboard API key (sk-user-/sk-member-/tsp_); localhost apps reached via automatic TLS tunnel; FE run = 0.5 credits; credentialless mode supports --dry-run / test lint offline validation only.
+- Installed @testsprite/testsprite-cli globally (v0.14.0; Node 24.21.0 in supported range). Verified: testsprite --version, test create --plan-template (official schema), test create --dry-run (canned contract, no auth), doctor (all green except credentials — expected).
+- Authored 13 frontend test plans in testsprite/plans/*.json against the REAL UI labels (verified via source grep + live snapshot): 01 landing+mode-switch (p0), 02 brief validation (p2), 03 studio outline→approve→editor (p0), 04 editor theme switching (p0), 05 export menu PPTX/HTML (p1), 06 deck persistence across reload (p1), 07 template picker search 57 cards (p1), 08 template AI fill → SSE → viewer (p0), 09 viewer navigation/Present/PNG (p1), 10 deck list delete w/ confirm (p1), 11 from-scratch reveal.js generation (p1), 12 mobile 390px responsive (p2), 13 outline editing add/remove/count (p1). Plans use __PROJECT_ID__ placeholder substituted by runner.
+- Validation: testsprite test lint --plan-from-dir ./plans → 13/13 valid, 0 problems (offline, no credits). Dry-run create OK.
+- Attempted real setup: setup --from-env with dummy key → clean error stating key must begin sk-user-/sk-member-/tsp_ from the dashboard. Cloud execution + tunnel are account-bound; only the user can mint the key. Documented as the single blocking step.
+- Built testsprite/run-suite.sh (bash -n OK): app health check :3000 → idempotent setup → find-or-create "DeckForge" frontend project (--local 3000, auto-tunnel) → render plans w/ real projectId → lint → create-batch --run --wait max-concurrency 3 (respects app AI rate limits) → results to testsprite/.build/last-run.json → prints failure-triage commands. Prints testsprite usage (credit balance) before spending.
+- testsprite/README.md: status table, one-command usage, cost (~6.5 credits/full pass), test matrix.
+- Local pre-flight smoke via agent-browser so the suite should pass when credits are spent: landing renders (hero/tabs/Forge the Outline), mode switch to Template studio (PICK A TEMPLATE / FROM SCRATCH / Brief), console 0 errors/warnings.
+
+Stage Summary:
+- TestSprite is fully integrated and key-ready: 13/13 plans validate offline; one command (TESTSPRITE_API_KEY=sk-user-… bash testsprite/run-suite.sh) runs the whole cloud suite against localhost:3000 via auto-tunnel and returns per-test failure bundles.
+- ONLY blocker for real runs: user-created API key (https://www.testsprite.com/dashboard/settings/apikey) — cannot be minted from the sandbox; everything else is automated.
+- Suite files are additive; no app code touched. Dev server healthy (GET / 200, normal logs).

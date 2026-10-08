@@ -1,0 +1,19 @@
+{
+  "$schema": "https://raw.githubusercontent.com/TestSprite/testsprite-cli/v0.14.0/schemas/plan.schema.json",
+  "projectId": "__PROJECT_ID__",
+  "type": "frontend",
+  "name": "Template studio generates a reveal.js deck from scratch without a template",
+  "description": "The 'From scratch' mode with the reveal.js engine generates a standalone HTML deck and opens it in the viewer with working keyboard navigation.",
+  "priority": "p1",
+  "planSteps": [
+    { "type": "action", "description": "Navigate to the app root URL / and click the 'Template studio — HTML decks' mode switch tab." },
+    { "type": "action", "description": "Find and enable the 'From scratch' mode toggle in the Template studio panel." },
+    { "type": "action", "description": "If an engine choice is offered, pick the reveal.js engine option." },
+    { "type": "action", "description": "In the Brief textarea type: 'Introduction to Kubernetes for backend engineers: pods, services, deployments and rolling updates'." },
+    { "type": "action", "description": "Click the generate button (its label mentions generating a reveal.js deck, like 'Generate reveal.js deck')." },
+    { "type": "assertion", "description": "Verify a progress indicator appears while the deck is generated." },
+    { "type": "assertion", "description": "Within 180 seconds verify the deck viewer opens with the generated deck: a slide counter, navigation controls and visible slide content with styled formatting (dark or themed background is common for reveal decks)." },
+    { "type": "action", "description": "Press the ArrowRight key to advance a slide." },
+    { "type": "assertion", "description": "Verify the slide counter advances and a new slide is displayed." }
+  ]
+}

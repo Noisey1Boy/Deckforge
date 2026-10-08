@@ -1,0 +1,18 @@
+{
+  "$schema": "https://raw.githubusercontent.com/TestSprite/testsprite-cli/v0.14.0/schemas/plan.schema.json",
+  "projectId": "__PROJECT_ID__",
+  "type": "frontend",
+  "name": "Landing page is usable at mobile viewport width",
+  "description": "At a 390px-wide mobile viewport the landing renders without horizontal overflow and the mode switch plus primary CTA remain reachable.",
+  "priority": "p2",
+  "planSteps": [
+    { "type": "action", "description": "Set the browser viewport to a mobile size (390x844) and navigate to the app root URL /." },
+    { "type": "assertion", "description": "Verify the page renders with the hero content visible and no horizontal scrollbar/overflow (content fits the viewport width)." },
+    { "type": "action", "description": "Scroll through the landing page from top to bottom." },
+    { "type": "assertion", "description": "Verify sections and the footer render without overlapping or cut-off text." },
+    { "type": "action", "description": "Tap the 'Template studio — HTML decks' mode switch tab." },
+    { "type": "assertion", "description": "Verify the Template studio view renders correctly at mobile width with the template gallery and brief area usable." },
+    { "type": "action", "description": "Tap back to the 'Studio — structured' tab." },
+    { "type": "assertion", "description": "Verify the Studio workbench renders at mobile width and the 'Forge the outline' button is visible and tappable." }
+  ]
+}

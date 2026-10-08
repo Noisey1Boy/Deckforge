@@ -1,0 +1,18 @@
+{
+  "$schema": "https://raw.githubusercontent.com/TestSprite/testsprite-cli/v0.14.0/schemas/plan.schema.json",
+  "projectId": "__PROJECT_ID__",
+  "type": "frontend",
+  "name": "Landing page renders and switches between Studio and Template studio",
+  "description": "The landing page loads with hero, navigation sections and footer, and the mode switch tabs change the visible workbench between the structured Studio and the HTML Template studio.",
+  "priority": "p0",
+  "planSteps": [
+    { "type": "action", "description": "Navigate to the app root URL / and wait for the page to fully load." },
+    { "type": "assertion", "description": "Verify the DeckForge hero is visible with the app branding 'DeckForge AI' and a primary call-to-action to create a presentation." },
+    { "type": "assertion", "description": "Verify the landing page contains the sections 'Systems', 'Method', 'Workbench' and 'Decks', and a footer." },
+    { "type": "action", "description": "Find the mode switch near the top with two tabs: 'Studio — structured' and 'Template studio — HTML decks'. Confirm 'Studio — structured' is the default active tab." },
+    { "type": "action", "description": "Click the 'Template studio — HTML decks' tab." },
+    { "type": "assertion", "description": "Verify the Template studio view appears, including a 'Pick a template' section and a Brief input area." },
+    { "type": "action", "description": "Click back to the 'Studio — structured' tab." },
+    { "type": "assertion", "description": "Verify the Studio create workbench is visible again, including the 'A · Brief' label area and the 'Forge the outline' button." }
+  ]
+}
