@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getSessionUser } from '@/lib/auth'
 import { HTML_CAP, serializeHtmlDeck } from '@/lib/htmlgen/decks'
 
 export const runtime = 'nodejs'
 
-/** GET /api/htmldecks — list HTML decks (metadata only, NO html field). */
+/** GET /api/htmldecks — list HTML decks (metadata only, NO html field), scoped to the session user. */
 export async function GET() {
   try {
+    const sessionUser = await getSessionUser()
     const decks = await db.htmlDeck.findMany({
+      where: { userId: sessionUser?.id ?? null },
       orderBy: { updatedAt: 'desc' },
       take: 100,
       select: {
@@ -68,6 +71,7 @@ export async function POST(req: NextRequest) {
       typeof body.templateId === 'string' && /^[a-z0-9-]{0,64}$/.test(body.templateId) ? body.templateId : ''
     const engine = typeof body.engine === 'string' && body.engine ? body.engine.slice(0, 32) : 'opendesign'
 
+    const sessionUser = await getSessionUser()
     const created = await db.htmlDeck.create({
       data: {
         title: title.slice(0, 200),
@@ -76,6 +80,7 @@ export async function POST(req: NextRequest) {
         engine,
         html,
         outlineJson,
+        userId: sessionUser?.id ?? null,
       },
     })
     return NextResponse.json(serializeHtmlDeck(created), { status: 201 })

@@ -1,17 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getSessionUser } from '@/lib/auth'
 import { HTML_CAP, serializeHtmlDeck } from '@/lib/htmlgen/decks'
 
 export const runtime = 'nodejs'
 
 type Ctx = { params: Promise<{ id: string }> }
 
-/** GET /api/htmldecks/:id — full deck (incl. html). */
+/**
+ * GET /api/htmldecks/:id — full deck (incl. html).
+ * Guest-owned decks (userId null) stay public; foreign decks look like 404.
+ */
 export async function GET(_req: NextRequest, ctx: Ctx) {
   try {
     const { id } = await ctx.params
-    const deck = await db.htmlDeck.findUnique({ where: { id } })
+    const [deck, sessionUser] = await Promise.all([
+      db.htmlDeck.findUnique({ where: { id } }),
+      getSessionUser(),
+    ])
     if (!deck) return NextResponse.json({ error: 'Deck not found' }, { status: 404 })
+    if (deck.userId && deck.userId !== sessionUser?.id) {
+      return NextResponse.json({ error: 'Deck not found' }, { status: 404 })
+    }
     return NextResponse.json(serializeHtmlDeck(deck))
   } catch (err) {
     console.error('GET /api/htmldecks/:id failed', err)
@@ -53,6 +63,18 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
       data.html = body.html
     }
 
+    const [existing, sessionUser] = await Promise.all([
+      db.htmlDeck.findUnique({ where: { id }, select: { userId: true } }),
+      getSessionUser(),
+    ])
+    if (!existing) {
+      // Preserve the pre-scoping behavior for missing decks (update threw → 500).
+      return NextResponse.json({ error: 'Failed to update deck' }, { status: 500 })
+    }
+    if (existing.userId && existing.userId !== sessionUser?.id) {
+      return NextResponse.json({ error: 'Deck not found' }, { status: 404 })
+    }
+
     const updated = await db.htmlDeck.update({ where: { id }, data })
     return NextResponse.json(serializeHtmlDeck(updated))
   } catch (err) {
@@ -65,6 +87,17 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
 export async function DELETE(_req: NextRequest, ctx: Ctx) {
   try {
     const { id } = await ctx.params
+    const [deck, sessionUser] = await Promise.all([
+      db.htmlDeck.findUnique({ where: { id }, select: { userId: true } }),
+      getSessionUser(),
+    ])
+    if (!deck) {
+      // Preserve the pre-scoping behavior for missing decks (delete threw → 500).
+      return NextResponse.json({ error: 'Failed to delete deck' }, { status: 500 })
+    }
+    if (deck.userId && deck.userId !== sessionUser?.id) {
+      return NextResponse.json({ error: 'Deck not found' }, { status: 404 })
+    }
     await db.htmlDeck.delete({ where: { id } })
     return NextResponse.json({ ok: true })
   } catch {

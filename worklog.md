@@ -640,3 +640,59 @@ Stage Summary:
 - User-reported hydration error: benign (extension DOM injection + stale dev bundle), verified clean on fresh loads, zero app changes required.
 - TestSprite: 7/13 cloud PASSED previously; remaining 5 re-verified LOCALLY (all pass) and are one key + one wave command away from cloud confirmation. Blocker: user must re-paste TESTSPRITE_API_KEY (sandbox reaped the env).
 - App fully functional after AI-quota recovery; no new bugs found this round.
+
+---
+Task ID: IA-a
+Agent: full-stack-developer (auth backend)
+Task: Auth backend (email/password + cookie sessions) + per-user deck scoping across Deck/HtmlDeck APIs
+
+Work Log:
+- Read worklog tail (HT-b/c, TS-1..4) + prisma/schema.prisma + all deck/htmldecks/htmlgen routes to map the existing contract before touching anything.
+- prisma/schema.prisma: added `User` (cuid id, name, unique email, passwordHash, timestamps) and `Session` (id = raw random token, userId FK cascade, expiresAt); added `userId String?` + optional cascade relation to BOTH `Deck` and `HtmlDeck`. Ran `bun run db:push` EARLY (before route code) → "Your database is now in sync", Prisma Client 6.19.2 regenerated; all existing rows kept (userId NULL = guest-owned).
+- src/lib/auth.ts (new, server-only helpers): hashPassword (scryptSync, 16-byte random salt → `salt:hexhash`), verifyPassword (timingSafeEqual), SESSION_COOKIE='df_session', 30-day TTL; createSession(userId) (randomBytes(32).hex token stored AS the Session row id + httpOnly/sameSite-lax/path-/secure-in-prod cookie via `await cookies()`); getSessionUser() (cookie → session incl. user; expired row deleted eagerly; returns {id,name,email,createdAt:ISO}, never passwordHash); destroySession() (delete row + expire cookie). No new npm packages (server-only pkg not installed → dropped the import).
+- Auth routes (all runtime nodejs, NextResponse.json): POST /api/auth/signup (name 1..60, email regex+lowercase, password ≥8, 409 'An account with this email already exists', creates user + session cookie, returns {user:{id,name,email,createdAt}}); POST /api/auth/login (lowercase lookup, 401 'Incorrect email or password' for miss/bad-pw, session on success); POST /api/auth/logout (destroySession → {ok:true}); GET /api/auth/me ({user:null} or {user}); POST /api/auth/password (401 without session, 400 'Current password is incorrect' / ≥8-char next, rotates hash → {ok:true}).
+- Deck scoping (response shapes UNCHANGED): GET /api/decks + GET /api/htmldecks → `where: { userId: sessionUser?.id ?? null }` (guests see unowned only); POST /api/decks + POST /api/htmldecks attach `userId: sessionUser?.id ?? null`; htmlgen slides/scratch capture `const ownerId = (await getSessionUser())?.id ?? null` BEFORE the ReadableStream (cookies() unusable inside the stream) and stamp it on db.htmlDeck.create (slides/route.ts:190, scratch/route.ts:184).
+- [id] routes (decks + htmldecks + htmldecks/[id]/raw): fetch → if `row.userId && row.userId !== sessionUser?.id` → 404 {error:'Deck not found'}; guest-owned (null) rows stay public for everyone. PUT/DELETE fetch-first for the check; missing-row behavior preserved exactly (pre-scoping Prisma throw → same 500 messages). PUT /api/decks/[id] upsert-create now stamps userId (autosave-created decks get an owner).
+- OPS INCIDENT: first curl wave hit 500s — the RUNNING dev server held the STALE pre-migration Prisma Client (db.user undefined, `userId` unknown arg) despite on-disk regen. Fixed by restarting the dev server (had to kill the old process; platform did not auto-restart; relaunched detached). Re-verified everything on the fresh client. NOTE: sandbox reaps detached dev servers between Bash tool calls — the platform's own supervised launch is the one that persists.
+- bun run lint: ZERO findings anywhere (my files clean; no parallel-agent errors at check time).
+
+Verification (curl, cookie jar, against :3000):
+- signup → 200 {user:{id,name,email,createdAt}} (no passwordHash) | duplicate signup (case-diff email) → 409 exact message | short pw → 400 | bad email → 400
+- me (authed) → 200 user | me (after logout) → 200 {user:null}
+- POST /api/decks (authed) → 201 {id} | GET /api/decks (authed) → ONLY the new deck (legacy unowned decks correctly hidden) | guest GET /api/decks → 8 legacy decks, owned deck 404 for guests
+- logout → {ok:true} | login → 200 {user}
+- GET /api/htmldecks (authed) → 200 {decks:[]} | guest GET /api/htmldecks → 3 legacy decks | authed GET unowned htmldeck by id → 200 (guest-owned stays public)
+- password: change → {ok:true}; old pw login → 401; new pw login → 200; wrong current → 400 'Current password is incorrect'; unauthenticated → 401
+- dev.log after restart: zero errors/⨯; every route compiled and served.
+
+Stage Summary:
+- Auth backend live: email/password accounts (scrypt, no new deps), opaque 30-day cookie sessions (`df_session`, Session.id = raw token), signup/login/logout/me/password endpoints all verified end-to-end.
+- Per-user scoping enforced on Deck + HtmlDeck (list/create/[id] GET/PUT/DELETE/raw + both htmlgen SSE creators) with identical response shapes; guests keep full access to unowned (legacy) decks — guest mode unaffected.
+- Test account left for IA-b: ia-a-test@deckforge.dev (password now `newersecret456` after the password-change test) + 1 owned studio deck "IA-a Auth Verification Deck". Legacy decks remain unowned → visible to guests, hidden from signed-in users (per `where: { userId: sessionUser?.id ?? null }`).
+- Notes for IA-b: /api/auth/me returns {user:null} for guests — drive the header/account UI off it; 401 comes ONLY from /api/auth/password; foreign owned decks masquerade as 404 'Deck not found'; cookie is httpOnly so auth state must come from /api/auth/me, never document.cookie; SSE htmlgen decks created while signed in are owned (invisible to other signed-in users).
+- Risk/ops: if the dev server is down, the platform supervisor must relaunch `bun run dev` (sandbox reaps detached processes; code on disk compiles clean — verified before each reap).
+
+---
+Task ID: IA-c
+Agent: main-agent (integration + E2E verification of the page split)
+Task: Verify IA-a (auth backend) + IA-b (pages split) end-to-end in the browser; fix issues found.
+
+Work Log:
+- IA-b subagent exceeded its context limit AFTER writing all files (5 routes + LandingPage + SettingsView + AuthProvider + SiteHeader/SiteFooter + ModeSwitch + EditorView/RecentDecks nav edits); nothing was missing on inspection — completed its QA myself.
+- Lint: clean across the repo.
+- E2E via agent-browser (all PASSED, console clean):
+  * Landing: hero + specimen + "TWO WAYS TO FORGE A DECK" cards + CTAs → /create, /signup, /login.
+  * Signup: fresh user (qa-tester@deckforge.dev) → auto-signed-in → redirected to /create ("Signed in as QA Tester" in header).
+  * Settings: Account card (name/email/member since), Change password, Preferences (default design system — THEMES select + reduce-motion switch, localStorage-persisted), Danger zone (delete-all). Sign out → landing shows "Browsing as guest".
+  * Scoping: guest /decks shows 11 legacy (unowned) decks; logged-in user sees ONLY owned decks (IA-a test account: exactly its 1 deck). Response shapes unchanged.
+  * /create: studio/template tabs render; ?tab=template preselect support present.
+  * /decks → open studio deck → router.push('/create') renders EditorView (Undo/Redo/Export/Present + slide board verified).
+  * Mobile 390×844: no horizontal overflow, hamburger nav, sections stack, footer pushed naturally on long pages.
+- FIXES made during integration:
+  1. IA-a's curl-created test deck had a slide with NO id → React "unique key" warning in EditorView slide board. Patched the deck data via PUT (slide id assigned s_fix…). Root cause is malformed test data only — the real pipeline always assigns newSlideId().
+  2. "1 slides" grammar → "{n} {n===1?'slide':'slides'}" in RecentDecks card meta.
+
+Stage Summary:
+- The app is now a true multi-page app: / (landing w/ login+signup), /login, /signup, /create (studio + template flows), /decks (both libraries), /settings (account/preferences/danger zone). Per-user deck scoping live (guest decks = unowned legacy rows).
+- Full E2E green: signup→create→decks→settings→signout→guest→login; editor handoff clean; zero console errors; lint clean.
+- Note: TestSprite plans authored against the old single-page IA may need locator updates before the next cloud wave (suite still paused pending user TESTSPRITE_API_KEY).

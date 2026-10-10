@@ -7,6 +7,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  decks        Deck[]
+  htmlDecks    HtmlDeck[]
+  sessions     Session[]
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
 model Deck {
   id          String   @id @default(cuid())
   title       String
@@ -17,6 +37,8 @@ model Deck {
   metaJson    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // HTML template-mode decks: AI-filled template decks + from-scratch JS-library decks
@@ -30,4 +52,6 @@ model HtmlDeck {
   outlineJson String   @default("[]")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

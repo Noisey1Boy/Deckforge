@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { getSessionUser } from '@/lib/auth';
 import type { Deck, DeckMeta, DeckOutline, Slide } from '@/lib/deck/types';
 import { getTheme } from '@/lib/design/themes';
 
-/** GET /api/decks — list recent decks (metadata only). */
+/** GET /api/decks — list recent decks (metadata only), scoped to the session user. */
 export async function GET() {
   try {
+    const sessionUser = await getSessionUser();
     const decks = await db.deck.findMany({
+      where: { userId: sessionUser?.id ?? null },
       orderBy: { updatedAt: 'desc' },
       take: 24,
     });
@@ -53,6 +56,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Decks are limited to 60 slides' }, { status: 400 });
     }
     const themeId = getTheme(body.themeId).id;
+    const sessionUser = await getSessionUser();
     const created = await db.deck.create({
       data: {
         title: body.title.slice(0, 200),
@@ -60,6 +64,7 @@ export async function POST(req: NextRequest) {
         themeId,
         slidesJson: JSON.stringify(slides),
         metaJson: JSON.stringify((body.meta ?? {}) as DeckMeta),
+        userId: sessionUser?.id ?? null,
       },
     });
     return NextResponse.json({ id: created.id }, { status: 201 });

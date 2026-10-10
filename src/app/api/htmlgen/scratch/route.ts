@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { clientKey, getZAI, rateLimit, sanitizeText } from '@/lib/ai/helpers'
 import { db } from '@/lib/db'
+import { getSessionUser } from '@/lib/auth'
 import {
   buildScratchSystemPrompt,
   buildScratchUserPrompt,
@@ -74,6 +75,10 @@ export async function POST(req: NextRequest) {
   const slides = outline.slides
   const total = slides.length
   const deckTitle = sanitizeText(outline.title, 200) || 'Untitled Deck'
+  // Capture the owner while still inside the request scope (cookies() is not
+  // available inside the SSE stream callback below).
+  const sessionUser = await getSessionUser()
+  const ownerId = sessionUser?.id ?? null
   const encoder = new TextEncoder()
   let clientClosed = false
   req.signal.addEventListener('abort', () => {
@@ -184,6 +189,7 @@ export async function POST(req: NextRequest) {
             engine: engine === 'reveal' ? 'scratch-reveal' : 'scratch-plain',
             html,
             outlineJson: JSON.stringify(outline),
+            userId: ownerId,
           },
         })
 

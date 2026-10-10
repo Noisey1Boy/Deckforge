@@ -40,8 +40,10 @@ function timeAgo(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
-/** Landing-page deck library: open, duplicate, export JSON, delete, import. */
-export function RecentDecks({ onOpen, hideHeading = false }: { onOpen: (d: RecentDeck) => void; hideHeading?: boolean }) {
+/** Landing-page deck library: open, duplicate, export JSON, delete, import.
+ *  `hideHtmlList` lets pages that render <HtmlDeckList /> in their own section
+ *  (e.g. /decks) suppress the built-in copy below the grid. */
+export function RecentDecks({ onOpen, hideHeading = false, hideHtmlList = false }: { onOpen: (d: RecentDeck) => void; hideHeading?: boolean; hideHtmlList?: boolean }) {
   const [decks, setDecks] = useState<RecentDeck[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
@@ -172,7 +174,7 @@ export function RecentDecks({ onOpen, hideHeading = false }: { onOpen: (d: Recen
         </div>
         {/* TEMPLATE DECKS — the HTML Template Studio library lives below the
             structured-deck archive in every state of this section. */}
-        <HtmlDeckList />
+        {!hideHtmlList && <HtmlDeckList />}
       </>
     );
   }
@@ -191,7 +193,7 @@ export function RecentDecks({ onOpen, hideHeading = false }: { onOpen: (d: Recen
           </Button>
           <input ref={importRef} type="file" accept=".json,application/json" hidden onChange={(e) => importJson(e.target.files)} />
         </div>
-        <HtmlDeckList />
+        {!hideHtmlList && <HtmlDeckList />}
       </>
     );
   }
@@ -265,7 +267,7 @@ export function RecentDecks({ onOpen, hideHeading = false }: { onOpen: (d: Recen
                 </div>
                 <div className="flex items-center gap-2 mt-2.5 text-[11px] text-muted-foreground">
                   <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 font-medium">
-                    <Layers className="h-3 w-3" /> {d.slideCount} slides
+                    <Layers className="h-3 w-3" /> {d.slideCount} {d.slideCount === 1 ? "slide" : "slides"}
                   </span>
                   <span
                     className="inline-flex items-center gap-1.5 min-w-0 text-[10px] uppercase tracking-wider font-medium"
@@ -344,7 +346,7 @@ export function RecentDecks({ onOpen, hideHeading = false }: { onOpen: (d: Recen
       </AlertDialog>
 
       {/* TEMPLATE DECKS — HTML Template Studio library, below the archive grid */}
-      <HtmlDeckList />
+      {!hideHtmlList && <HtmlDeckList />}
     </div>
   );
 }

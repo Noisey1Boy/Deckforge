@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAppStore, useAppStoreDebug, newSlideId } from '@/lib/store/deck-store';
 import { THEMES, deckTheme, getTheme } from '@/lib/design/themes';
 import { deckFooterText } from '@/lib/deck/types';
@@ -150,6 +151,7 @@ function SlideCard({
 
 export function EditorView() {
   useAppStoreDebug();
+  const router = useRouter();
   const deck = useAppStore((s) => s.deck);
   const patchDeck = useAppStore((s) => s.patchDeck);
   const currentSlideIndex = useAppStore((s) => s.currentSlideIndex);
@@ -530,7 +532,7 @@ export function EditorView() {
           variant="ghost"
           size="icon"
           className="h-9 w-9 shrink-0 text-neutral-500 hover:text-neutral-900"
-          onClick={() => setView('create')}
+          onClick={() => router.push('/decks')}
           aria-label="Back to all decks"
           title="Back to all decks"
         >

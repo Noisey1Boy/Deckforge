@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/components/auth/AuthProvider";
 
 /**
  * Theme fonts are loaded once, globally, from Google Fonts (client-side).
@@ -59,14 +61,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="stylesheet" href={FONTS_HREF} crossOrigin="anonymous" />
       </head>
       <body className="antialiased bg-background text-foreground min-h-screen flex flex-col">
-        <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
+        <AuthProvider>
+          <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
+          {/* app feedback flows through `toast` from 'sonner' (was mounted by
+              the old single-page HomePage; now global for every route) */}
+          <SonnerToaster position="bottom-right" />
+        </AuthProvider>
         <Toaster />
       </body>
     </html>
