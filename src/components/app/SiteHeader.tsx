@@ -32,6 +32,7 @@ import { LayoutGrid, LogOut, Menu, Presentation, Settings as SettingsIcon } from
  */
 
 const NAV_ITEMS = [
+  { href: '/pitch', label: 'Pitch' },
   { href: '/create', label: 'Create' },
   { href: '/decks', label: 'My decks' },
   { href: '/settings', label: 'Settings' },

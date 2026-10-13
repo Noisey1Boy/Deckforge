@@ -6,7 +6,7 @@ import { SiteHeader } from '@/components/app/SiteHeader';
 import { SiteFooter } from '@/components/app/SiteFooter';
 import { HeroSpecimen } from '@/components/app/landing/HeroSpecimen';
 import { useMotionPreference } from '@/components/app/settings/useMotionPreference';
-import { Hammer, Layers, ListTree, MonitorPlay, Palette, PenLine } from 'lucide-react';
+import { Hammer, Layers, ListTree, MonitorPlay, Palette, PenLine, Play } from 'lucide-react';
 
 /**
  * LandingPage — the public marketing page (route '/').
@@ -109,6 +109,13 @@ export function LandingPage() {
                     className="stg-label inline-flex h-12 items-center border-2 border-white/25 px-6 text-[color:var(--stg-cream)] transition-colors hover:border-[color:var(--stg-yellow)] hover:text-[color:var(--stg-yellow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--stg-ink)]"
                   >
                     Sign up — it&apos;s free
+                  </Link>
+                  <Link
+                    href="/pitch"
+                    className="stg-label inline-flex h-12 items-center gap-2 border-2 border-white/25 px-6 text-[color:var(--stg-cream)] transition-colors hover:border-[color:var(--stg-yellow)] hover:text-[color:var(--stg-yellow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--stg-ink)]"
+                  >
+                    <Play className="h-4 w-4" aria-hidden />
+                    Watch the 4-min pitch
                   </Link>
                   <Link
                     href="/login"

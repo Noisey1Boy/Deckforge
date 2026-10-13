@@ -286,3 +286,52 @@ html {
   html { scroll-behavior: auto; }
   .stg-link::after { transition: none; }
 }
+
+/* ============================================================
+   Pitch deck animations (voice-agent pitch /demo /pitch)
+   ============================================================ */
+
+/* robot / human mouths */
+@keyframes stg-mouth {
+  from { transform: scaleY(0.35); }
+  to { transform: scaleY(1.25); }
+}
+@keyframes stg-talk {
+  from { transform: scaleY(0.55); }
+  to { transform: scaleY(1.5); }
+}
+/* robot blink */
+@keyframes stg-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.08); }
+}
+.stg-blink { animation: stg-blink 3.4s ease-in-out infinite; transform-origin: center; }
+
+/* audio waveform bars */
+@keyframes stg-wave {
+  from { transform: scaleY(0.45); }
+  to { transform: scaleY(1.15); }
+}
+
+/* pipeline flow dot */
+@keyframes stg-flow {
+  from { left: -20%; }
+  to { left: 110%; }
+}
+.stg-flow-dot { animation: stg-flow 1.6s linear infinite; }
+
+/* dark-on-light scroll areas used by the pitch/demo panels */
+.stg-scroll { scrollbar-width: thin; scrollbar-color: rgba(0, 0, 0, 0.35) transparent; }
+.stg-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.stg-scroll::-webkit-scrollbar-track { background: transparent; }
+.stg-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.28);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.stg-scroll::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.45); background-clip: content-box; }
+
+@media (prefers-reduced-motion: reduce) {
+  .stg-blink, .stg-flow-dot { animation: none; }
+}

@@ -32,6 +32,12 @@ export function SiteFooter() {
             </p>
             <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-1" aria-label="Footer">
               <Link
+                href="/pitch"
+                className="stg-link py-1 text-[10px] text-white/55 transition-colors hover:text-[color:var(--stg-cream)]"
+              >
+                Pitch
+              </Link>
+              <Link
                 href="/create"
                 className="stg-link py-1 text-[10px] text-white/55 transition-colors hover:text-[color:var(--stg-cream)]"
               >
