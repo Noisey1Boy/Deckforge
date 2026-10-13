@@ -1,0 +1,842 @@
+     1→### Purpose
+     2→
+     3→Resolve one stable target, run two independent assessments, synthesize a design critique, persist a snapshot, and ask the user what to improve next. The chat response is the primary deliverable; the snapshot is an archive of that run.
+     4→
+     5→### Hard Invariants
+     6→
+     7→- Assessment A (design review) and Assessment B (detector/browser evidence) are both required.
+     8→- Assessment A and B MUST run as two isolated sub-agents whenever a sub-agent/Task tool is exposed. Running them inline in this context is "possible" but is NOT permitted; it is a degraded run. Inline is allowed ONLY when no sub-agent tool exists (or the user declined, on harnesses that ask).
+     9→- If you degrade for any reason, the report's first line MUST be a banner: `⚠️ DEGRADED: single-context (<reason>)`. A silent degraded critique is a failed critique.
+    10→- Assessment A must finish before detector findings enter the parent synthesis context. Detector output is deterministic, but it still anchors judgment.
+    11→- A skipped detector is a failed critique run unless `impeccable detect` is missing or crashes after a real attempt.
+    12→- Viewable targets require browser inspection when available.
+    13→- Any local server started only for critique visualization must run in the background, have a recorded stop method, and be stopped before final reporting unless the user asks to keep it.
+    14→- Do not claim a user-visible overlay exists unless script injection succeeded and the detector ran in the page.
+    15→- The question is the LAST thing in the response. Write the entire report out first, then ask; nothing follows the question. Prose emitted after a structured question is withheld until the user answers it, so a report written after the question reads as if the critique never ran.
+    16→- A run that ends with neither the targeted questions nor a literal `Questions skipped: <reason>` line is an incomplete run. The report is not the finish; the close is.
+    17→
+    18→### Setup
+    19→
+    20→1. **Resolve the target** to a concrete file path or URL. Prefer a source path over a dev-server URL when both identify the same surface; ports drift, paths do not.
+    21→   - "the homepage" -> `site/pages/index.astro` or `index.html`
+    22→   - "the settings modal" -> the primary component file
+    23→   - "this page" -> the current URL or source file
+    24→2. **Confirm the target slugs cleanly**:
+    25→   ```bash
+    26→   {{scripts_path}}/impeccable critique-storage slug "<resolved-path-or-url>"
+    27→   ```
+    28→   Every later command also accepts the resolved target directly and derives the same slug internally; never hand-write a slug. If this exits non-zero, skip persistence and trend for this run, but continue the critique.
+    29→3. **Read `.impeccable/critique/ignore.md`** if it exists. Drop matching findings silently; it is the only prior-run input critique consumes.
+    30→
+    31→### Assessment Orchestration
+    32→
+    33→Delegate Assessment A and Assessment B to separate sub-agents. They must not see each other's output. Do not show findings to the user until synthesis.
+    34→
+    35→Sub-agent gate (all harnesses):
+    36→- Unless a harness-specific gate below overrides this, spawn A and B as two isolated, parallel sub-agents whenever a sub-agent/Task tool is exposed. This is the default and is mandatory; do not run them inline because it is faster.
+    37→- "Unavailable" means exactly one thing: no sub-agent/Task tool is exposed in this session (or, on harnesses that ask, the user declined). It does not mean inconvenient.
+    38→- If and only if sub-agents are unavailable, fall back sequentially: finish and record Assessment A, then run Assessment B, then synthesize, and emit the degraded banner.
+    39→- Whichever path you take, declare it in the report header (see Report header provenance). Skipping sub-agents without the banner is the most common failure of this command.
+    40→
+    41→<codex>
+    42→Codex sub-agent gate (overrides the default above; Codex's permission model requires asking before spawning):
+    43→- Asking is the normal path, not a degradation. Approving and spawning is the dual-agent path; do not emit the degraded banner just for asking.
+    44→- If `spawn_agent` is exposed and the user explicitly allowed sub-agents, delegation, or parallel agent work, spawn A and B immediately.
+    45→- If `spawn_agent` is exposed but the user did not explicitly allow sub-agents, ask exactly once: "Impeccable critique is designed to run two independent sub-agents for an unanchored assessment. May I use sub-agents for this critique?" Then stop until the user answers.
+    46→- If allowed, spawn A and B. If declined, run sequentially and lead the report with `⚠️ DEGRADED: single-context (sub-agents declined by user)`.
+    47→- If `spawn_agent` is not exposed, do not ask; run sequentially and lead with `⚠️ DEGRADED: single-context (spawn_agent unavailable in this session)`.
+    48→- If spawning fails after permission, run sequentially and lead with `⚠️ DEGRADED: single-context (sub-agent spawn failed: <exact error>)`.
+    49→Prefer `fork_context: false` with self-contained prompts containing cwd, target, live URL, references, product context, and output contract. If using `fork_context: true`, omit `agent_type`, `model`, and `reasoning_effort`.
+    50→</codex>
+    51→
+    52→If browser automation is available, each assessment creates its own new tab. Never reuse an existing tab, even if it is already at the right URL.
+    53→
+    54→### Assessment A: Design Review
+    55→
+    56→Read relevant source files and visually inspect the live page when browser automation is available. Think like a design director.
+    57→
+    58→Evaluate:
+    59→- **Design specificity**: Is the composition, interaction, and visual language grounded in this product, or could an unrelated product use it unchanged? Make this judgment before seeing detector output.
+    60→- **Holistic design**: hierarchy, IA, emotional fit, discoverability, composition, typography, color, accessibility, states, copy, and edge cases.
+    61→- **Cognitive load**: consult the [Cognitive Load Assessment](#cognitive-load-assessment) section below; report checklist failures and decision points with >4 visible options.
+    62→- **Emotional journey**: peak-end rule, emotional valleys, reassurance at high-stakes moments.
+    63→- **Nielsen heuristics**: consult the [Heuristics Scoring Guide](#heuristics-scoring-guide) section below; score all 10 heuristics 0-4, marking any heuristic the mode-applicability rule allows as `n/a` instead of forcing a number.
+    64→
+    65→Return: design-specificity verdict, heuristic scores, cognitive load, emotional journey, 2-3 strengths, 3-5 priority issues, persona red flags, minor observations, and provocative questions.
+    66→
+    67→### Assessment B: Detector + Browser Evidence
+    68→
+    69→Run the bundled detector and browser visualization evidence. Assessment B is mandatory and must remain isolated from Assessment A until both are complete.
+    70→
+    71→CLI scan:
+    72→```bash
+    73→{{scripts_path}}/impeccable detect --json [target]
+    74→```
+    75→
+    76→- Pass markup files/directories as `[target]`; do not pass CSS-only files.
+    77→- For URLs, skip CLI scan and use browser visualization.
+    78→- For very large trees (500+ scannable files), narrow scope or ask.
+    79→- Exit code 0 = clean; 2 = findings.
+    80→- If the detector entrypoint is missing or fails to load, report deterministic scan unavailable and continue with browser/manual review.
+    81→
+    82→Browser visualization is required for a viewable target when browser automation is available. Use a localhost dev/static URL for local files; avoid `file://` unless the available browser explicitly supports this workflow. Overlay flow:
+    83→
+    84→1. Create a fresh tab and navigate. Prefer the harness's native/browser-canvas screenshot path before hand-rolling a Playwright/Puppeteer script; only fall back to a custom script when no native browser tool is exposed.
+    85→2. Preflight mutable injection by setting `document.title` and appending a `<script>` tag. Read-only evaluate APIs do not count.
+    86→3. If mutation is unavailable, skip live server, browser presentation, and injection; report fallback signal.
+    87→4. If mutation is available, start `{{scripts_path}}/impeccable live-server --background`, present the browser if supported, label `[Human]`, scroll top, inject `http://localhost:PORT/detect.js`, wait 2-3 seconds, read `impeccable` console messages, then stop the live server.
+    88→5. For multi-view targets, inject on 3-5 representative pages.
+    89→
+    90→<codex>
+    91→Codex Browser note: Use the Browser skill. Do not spend a Browser attempt on `file://`. Only call `visibility.set(true)` after mutable script injection is confirmed for the `[Human]` overlay path; verify with `get()`. Use `tab.dev.logs({ filter: "impeccable" })` for console results. Its Playwright `evaluate(...)` surface is read-only; do not rely on it for mutation.
+    92→</codex>
+    93→
+    94→Return: CLI findings JSON/counts, browser console findings if applicable, false positives, and skipped/failed browser steps with concrete reasons.
+    95→
+    96→After Assessment B returns usable CLI findings, reuse them. Do not rerun `impeccable detect` in the parent unless Assessment B failed, was truncated, or omitted count, rule names, or file locations.
+    97→
+    98→<codex>
+    99→Codex failure accounting: final Run Notes must include target slug, ignore list, assessment independence, CLI detector, browser visibility, overlay injection, live-server cleanup, temp-file cleanup, and any fallback signal used. Do not run repo status checks, late API spelunking, or unrelated verification after the report is assembled.
+   100→</codex>
+   101→
+   102→### Generate Combined Critique Report
+   103→
+   104→Synthesize both assessments into a single report. Do NOT simply concatenate. Weave the findings together, noting where the LLM review and detector agree, where the detector caught issues the LLM missed, and where detector findings are false positives.
+   105→
+   106→The chat response is the primary user-facing deliverable. Present the full structured critique below in chat; do not replace it with a summary and a link. The persisted snapshot is an archive of that run.
+   107→
+   108→<codex>
+   109→Codex final-answer note: `$impeccable critique` produces a report artifact, so the final chat response should intentionally exceed the usual concise close-out style. Do not title the final response "Critique Summary" unless the user explicitly asked for a summary.
+   110→</codex>
+   111→
+   112→Structure your feedback as a design director would:
+   113→
+   114→#### Report header provenance
+   115→
+   116→The report's first line MUST declare how the assessments were run, so a degraded run is never silent:
+   117→- Dual-agent: `Method: dual-agent (A: <agent-id> · B: <agent-id>)`
+   118→- Degraded: `⚠️ DEGRADED: single-context (<reason, e.g. no sub-agent tool exposed>)`
+   119→
+   120→#### Design Health Score
+   121→> *Consult the [Heuristics Scoring Guide](#heuristics-scoring-guide) section below.*
+   122→
+   123→Present the Nielsen's 10 heuristics scores as a table:
+   124→
+   125→| # | Heuristic | Score | Key Issue |
+   126→|---|-----------|-------|-----------|
+   127→| 1 | Visibility of System Status | ? | [specific finding or "n/a" if solid] |
+   128→| 2 | Match System / Real World | ? | |
+   129→| 3 | User Control and Freedom | ? | |
+   130→| 4 | Consistency and Standards | ? | |
+   131→| 5 | Error Prevention | ? | |
+   132→| 6 | Recognition Rather Than Recall | ? | |
+   133→| 7 | Flexibility and Efficiency | ? | |
+   134→| 8 | Aesthetic and Minimalist Design | ? | |
+   135→| 9 | Error Recovery | ? | |
+   136→| 10 | Help and Documentation | ? | |
+   137→| **Total** | | **??/[applicable max]** | **[Rating band]** |
+   138→
+   139→The applicable maximum is 4 times the number of heuristics you actually scored: **/40** when all ten apply, **/32** when two are `n/a`. Never print `/40` over a partial set.
+   140→
+   141→Be honest with scores. A 4 means genuinely excellent. Most real interfaces score 20-32 out of 40.
+   142→
+   143→**Mode applicability**: heuristics 7 (Flexibility and Efficiency) and 10 (Help and Documentation) may be scored `n/a` on Persuade and Experience surfaces (landing pages, campaigns, portfolios, bodies of work), as may any other heuristic that genuinely cannot apply to the surface under review. Write `n/a` in the Score cell with a one-line reason, and renormalize the total to the applicable maximum (e.g. **24/32** when two heuristics are n/a) so the rating band stays proportional. The persisted snapshot must record the applicable maximum and which heuristics were scored n/a.
+   144→
+   145→#### Design Specificity Verdict
+   146→
+   147→**Start here.** Does the result feel authored for this product, or category-interchangeable?
+   148→
+   149→**LLM assessment**: Your unanchored evaluation of design specificity. Cover overall coherence, structural sameness, category-interchangeable choices, and missed opportunities for product character.
+   150→
+   151→**Deterministic scan**: Summarize what the automated detector found, with counts and file locations. Note any additional issues the detector caught that you missed, and flag any false positives.
+   152→
+   153→**Visual overlays** (if injection succeeded): Tell the user that overlays are now visible in the **[Human]** tab in their browser, highlighting the detected issues. Summarize what the console output reported. If browser visualization was attempted but injection failed, say that no reliable user-visible overlay is available and report the fallback signal instead.
+   154→
+   155→#### Overall Impression
+   156→A brief gut reaction: what works, what doesn't, and the single biggest opportunity.
+   157→
+   158→#### What's Working
+   159→Highlight 2-3 things done well. Be specific about why they work.
+   160→
+   161→#### Priority Issues
+   162→The 3-5 most impactful design problems, ordered by importance.
+   163→
+   164→For each issue, tag with **P0-P3 severity** (see [Issue Severity below](#issue-severity-p0p3) for definitions):
+   165→- **[P?] What**: Name the problem clearly
+   166→- **Why it matters**: How this hurts users or undermines goals
+   167→- **Fix**: What to do about it (be concrete)
+   168→- **Suggested command**: Which command could address this (from: {{available_commands}})
+   169→
+   170→#### Persona Red Flags
+   171→> *Consult the [Personas reference](#persona-based-design-testing) below.*
+   172→
+   173→Auto-select 2-3 personas most relevant to this interface type (use the selection table in the reference). If `{{config_file}}` contains a `## Design Context` section from `impeccable init`, also generate 1-2 project-specific personas from the audience/brand info.
+   174→
+   175→For each selected persona, walk through the primary user action and list specific red flags found:
+   176→
+   177→**Alex (Power User)**: No keyboard shortcuts detected. Form requires 8 clicks for primary action. Forced modal onboarding. High abandonment risk.
+   178→
+   179→**Jordan (First-Timer)**: Icon-only nav in sidebar. Technical jargon in error messages ("404 Not Found"). No visible help. Will abandon at step 2.
+   180→
+   181→Be specific. Name the exact elements and interactions that fail each persona. Don't write generic persona descriptions; write what broke for them.
+   182→
+   183→#### Minor Observations
+   184→Quick notes on smaller issues worth addressing.
+   185→
+   186→#### Questions to Consider
+   187→Provocative questions that might unlock better solutions:
+   188→- "What if the primary action were more prominent?"
+   189→- "Does this need to feel this complex?"
+   190→- "What would a confident version of this look like?"
+   191→
+   192→<codex>
+   193→#### Run Notes
+   194→Keep this compact. Include status for target slug, ignore list, assessment independence, CLI detector, browser visibility, overlay injection, live server cleanup, and temp-file cleanup. For failed or skipped steps, give the concrete observed reason and the fallback signal used. In the final chat response, also include snapshot write and trend read status after persistence has run.
+   195→
+   196→Codex Run Notes are final-chat only. Do not include this section in the persisted snapshot body, because persistence, trend read, and temp cleanup happen after the snapshot write and would otherwise archive stale status such as "pending after persistence."
+   197→</codex>
+   198→
+   199→**Remember**:
+   200→- Be direct. Vague feedback wastes everyone's time.
+   201→- Be specific. "The submit button," not "some elements."
+   202→- Say what's wrong AND why it matters to users.
+   203→- Give concrete suggestions. Cut "consider exploring..." entirely.
+   204→- Prioritize ruthlessly. If everything is important, nothing is.
+   205→- Don't soften criticism. Developers need honest feedback to ship great design.
+   206→
+   207→### Deliver the Report
+   208→
+   209→Write the full report into the chat response now, before any persistence work. This is the deliverable; everything below it is bookkeeping.
+   210→
+   211→Do this first because the alternative is the most common way this command fails: the report gets composed once, straight into the persistence heredoc, and the run ends with a perfect archive nobody has read. Composing it into a file is not delivering it. If the report exists only in `.impeccable/critique/`, the run produced nothing.
+   212→
+   213→Persistence is not the end of the run. After it, the response continues with the trend line and the close.
+   214→
+   215→### Persist the Snapshot
+   216→
+   217→Once the report above is finalized, write it to `.impeccable/critique/` so the user can refer back, and so `{{command_prefix}}impeccable polish` can pick up the priority issues without a copy-paste.
+   218→
+   219→Skip this step if the Setup slug was null (vague or root-level target).
+   220→
+   221→1. **Write the body to a temp file** so you can pipe it to the helper. Use the full critique report (heuristic table, design-specificity verdict, priority issues, persona red flags, minor observations, and questions), but stop before the "Ask the User" / "Recommended Actions" sections that come later.
+   222→
+   223→   This is a copy of the report you already delivered above, for later commands to read. It is not delivery. If you find yourself composing the report for the first time inside this heredoc, you have skipped Deliver the Report; go back and send it.
+   224→
+   225→   <codex>
+   226→   Codex: exclude Run Notes from the temp body file; Run Notes are final-chat only because persistence, trend read, and temp cleanup happen after the snapshot write.
+   227→   </codex>
+   228→
+   229→2. **Pass the structured metadata** through `IMPECCABLE_CRITIQUE_META` (JSON), then run the write command:
+   230→   ```bash
+   231→   IMPECCABLE_CRITIQUE_META='{"target":"<user phrasing>","total_score":<n>,"max_score":<n>,"na_heuristics":"<comma-separated numbers, or empty>","p0_count":<n>,"p1_count":<n>}' \
+   232→     {{scripts_path}}/impeccable critique-storage write "<resolved target>" <body-file>
+   233→   ```
+   234→   `max_score` is the applicable maximum from the heuristic table (40 when every heuristic applied), so a later run can tell a renormalized total from a full one. For a local file target, the helper also records an exact content fingerprint so polish can distinguish the assessed bytes from later edits without relying on Git state or timestamps. The helper prints the absolute path it wrote. Leave that file on disk. Polish closes it; this run does not.
+   235→
+   236→3. **Delete the temp body file** after the write attempt completes, whether the write succeeded or failed. If deletion fails, mention `temp-file cleanup failed: <reason>` briefly in the final output, but do not block the critique.
+   237→
+   238→4. **Read the trend** for context:
+   239→   ```bash
+   240→   {{scripts_path}}/impeccable critique-storage trend "<resolved target>" 5
+   241→   ```
+   242→   This returns a JSON array of the last 5 frontmatter entries (including the one you just wrote).
+   243→
+   244→5. **Append a single line to the user-visible output**, after the report and before the questions:
+   245→
+   246→   > **Trend for `<slug>` (last 5 runs): 24 → 28 → 32 → 29 → 32 (out of 40)**
+   247→   > Wrote `.impeccable/critique/<filename>`.
+   248→
+   249→   Read `max_score` on each trend entry. When every entry shares one maximum, state it once as above. When they differ, print each score with its own denominator (`24/32 → 30/40`) and note that the runs scored different heuristic sets, so the line is not a like-for-like comparison. Treat a missing `max_score` on an older entry as 40.
+   250→
+   251→   If this is the first run for the slug, the trend is just one score; say so: "First run for this target, no trend yet."
+   252→
+   253→6. **Close the run.** Go to Ask the User below and emit the questions, or the `Questions skipped: <reason>` line when the count allows it. The run is not complete until you do. Persistence is bookkeeping and cleanup is not an ending; stopping here leaves the user with a report and no way forward, and leaves `{{command_prefix}}impeccable polish` with no priorities to inherit.
+   254→
+   255→This is fire-and-forget. Do not show the user the helper's JSON output; only the human-readable trend line and the written path. Failures here should not block the rest of the flow; print the error and move on.
+   256→
+   257→### Ask the User
+   258→
+   259→**After presenting findings**, use targeted questions based on what was actually found. {{ask_instruction}} These answers will shape the action plan.
+   260→
+   261→Ask in the same message that carries the report, with the report written out first and the question last. Do not split the two across turns: a turn that ends on the report is a turn that ends, and the questions never arrive. Order within the message is what matters, because prose emitted after a structured question is withheld until the user answers.
+   262→
+   263→Ask questions along these lines (adapt to the specific findings; do NOT ask generic questions):
+   264→
+   265→1. **Priority direction**: Based on the issues found, ask which category matters most to the user right now. For example: "I found problems with visual hierarchy, color usage, and information overload. Which area should we tackle first?" Offer the top 2-3 issue categories as options.
+   266→
+   267→2. **Design intent**: If the critique found a tonal mismatch, ask whether it was intentional. For example: "The interface feels clinical and corporate. Is that the intended tone, or should it feel warmer/bolder/more playful?" Offer 2-3 tonal directions as options based on what would fix the issues found.
+   268→
+   269→3. **Scope**: Ask how much the user wants to take on. For example: "I found N issues. Want to address everything, or focus on the top 3?" Offer scope options like "Top 3 only", "All issues", "Critical issues only".
+   270→
+   271→4. **Constraints** (optional; only ask if relevant): If the findings touch many areas, ask if anything is off-limits. For example: "Should any sections stay as-is?" This prevents the plan from touching things the user considers done.
+   272→
+   273→**Rules for questions**:
+   274→- Every question must reference specific findings from the report. Never ask generic "who is your audience?" questions.
+   275→- Keep it to 2-4 questions maximum. Respect the user's time.
+   276→- Offer concrete options, not open-ended prompts.
+   277→- Skipping is allowed only when the report listed **fewer than 3 Priority Issues**. Count them; do not judge the findings "straightforward" by feel. At 3 or more, the questions are required.
+   278→
+   279→**Final-question gate.** The user-visible response must either include the targeted questions or carry the literal line `Questions skipped: <reason>` naming the count that permitted the skip. Each question must include 2-3 concrete answer options tied to the actual critique findings. Do not end with only open-ended questions, and do not end with neither: stopping after the report, having asked nothing and printed no skip line, is the most common way this command fails.
+   280→
+   281→### Recommended Actions
+   282→
+   283→**After receiving the user's answers**, present a prioritized action summary reflecting the user's priorities and scope from Ask the User.
+   284→
+   285→#### Action Summary
+   286→
+   287→List recommended commands in priority order, based on the user's answers:
+   288→
+   289→1. **`{{command_prefix}}command-name`**: Brief description of what to fix (specific context from critique findings)
+   290→2. **`{{command_prefix}}command-name`**: Brief description (specific context)
+   291→...
+   292→
+   293→**Rules for recommendations**:
+   294→- Only recommend commands from: {{available_commands}}
+   295→- Order by the user's stated priorities first, then by impact
+   296→- Each item's description should carry enough context that the command knows what to focus on
+   297→- Map each Priority Issue to the appropriate command
+   298→- Skip commands that would address zero issues
+   299→- If the user chose a limited scope, only include items within that scope
+   300→- If the user marked areas as off-limits, exclude commands that would touch those areas
+   301→- End with `{{command_prefix}}impeccable polish` as the final step if any fixes were recommended
+   302→
+   303→After presenting the summary, tell the user:
+   304→
+   305→> You can ask me to run these one at a time, all at once, or in any order you prefer.
+   306→>
+   307→> Re-run `{{command_prefix}}impeccable critique` after fixes to see your score improve.
+   308→
+   309→---
+   310→
+   311→## Reference Material
+   312→
+   313→The sections below were previously separate reference files (`cognitive-load.md`, `heuristics-scoring.md`, `personas.md`). They live inline now so the critique flow has all its deep context in one place.
+   314→
+   315→### Cognitive Load Assessment
+   316→
+   317→Cognitive load is the total mental effort required to use an interface. Overloaded users make mistakes, get frustrated, and leave. This reference helps identify and fix cognitive overload.
+   318→
+   319→---
+   320→
+   321→#### Three Types of Cognitive Load
+   322→
+   323→##### Intrinsic Load: The Task Itself
+   324→Complexity inherent to what the user is trying to do. You can't eliminate this, but you can structure it.
+   325→
+   326→**Manage it by**:
+   327→- Breaking complex tasks into discrete steps
+   328→- Providing scaffolding (templates, defaults, examples)
+   329→- Progressive disclosure: show what's needed now, hide the rest
+   330→- Grouping related decisions together
+   331→
+   332→##### Extraneous Load: Bad Design
+   333→Mental effort caused by poor design choices. **Eliminate this ruthlessly.** It's pure waste.
+   334→
+   335→**Common sources**:
+   336→- Confusing navigation that requires mental mapping
+   337→- Unclear labels that force users to guess meaning
+   338→- Visual clutter competing for attention
+   339→- Inconsistent patterns that prevent learning
+   340→- Unnecessary steps between user intent and result
+   341→
+   342→##### Germane Load: Learning Effort
+   343→Mental effort spent building understanding. This is *good* cognitive load; it leads to mastery.
+   344→
+   345→**Support it by**:
+   346→- Progressive disclosure that reveals complexity gradually
+   347→- Consistent patterns that reward learning
+   348→- Feedback that confirms correct understanding
+   349→- Onboarding that teaches through action, not walls of text
+   350→
+   351→---
+   352→
+   353→#### Cognitive Load Checklist
+   354→
+   355→Evaluate the interface against these 8 items:
+   356→
+   357→- [ ] **Single focus**: Can the user complete their primary task without distraction from competing elements?
+   358→- [ ] **Chunking**: Is information presented in digestible groups (≤4 items per group)?
+   359→- [ ] **Grouping**: Are related items visually grouped together (proximity, borders, shared background)?
+   360→- [ ] **Visual hierarchy**: Is it immediately clear what's most important on the screen?
+   361→- [ ] **One thing at a time**: Can the user focus on a single decision before moving to the next?
+   362→- [ ] **Minimal choices**: Are decisions simplified (≤4 visible options at any decision point)?
+   363→- [ ] **Working memory**: Does the user need to remember information from a previous screen to act on the current one?
+   364→- [ ] **Progressive disclosure**: Is complexity revealed only when the user needs it?
+   365→
+   366→**Scoring**: Count the failed items. 0–1 failures = low cognitive load (good). 2–3 = moderate (address soon). 4+ = high cognitive load (critical fix needed).
+   367→
+   368→---
+   369→
+   370→#### The Working Memory Rule
+   371→
+   372→**Humans can hold ≤4 items in working memory at once** (Miller's Law revised by Cowan, 2001).
+   373→
+   374→At any decision point, count the number of distinct options, actions, or pieces of information a user must simultaneously consider:
+   375→- **≤4 items**: Within working memory limits, manageable
+   376→- **5–7 items**: Pushing the boundary; consider grouping or progressive disclosure
+   377→- **8+ items**: Overloaded; users will skip, misclick, or abandon
+   378→
+   379→**Practical applications**:
+   380→- Action buttons: 1 primary, 1–2 secondary, group the rest in a menu
+   381→- Navigation menus: ≤5 top-level items (group the rest under clear categories)
+   382→- Long-form articles: one reading path; gather related links into a single block at the end instead of scattering them mid-flow
+   383→- Documentation sidebars: ≤4 sibling choices visible per level before grouping kicks in
+   384→- Portfolio and gallery indexes: one decision per screen (which piece to open), not filter, sort, and tag controls all at once
+   385→
+   386→---
+   387→
+   388→#### Common Cognitive Load Violations
+   389→
+   390→##### 1. The Wall of Options
+   391→**Problem**: Presenting 10+ choices at once with no hierarchy.
+   392→**Fix**: Group into categories, highlight recommended, use progressive disclosure.
+   393→
+   394→##### 2. The Memory Bridge
+   395→**Problem**: User must remember info from step 1 to complete step 3.
+   396→**Fix**: Keep relevant context visible, or repeat it where it's needed.
+   397→
+   398→##### 3. The Hidden Navigation
+   399→**Problem**: User must build a mental map of where things are.
+   400→**Fix**: Always show current location (breadcrumbs, active states, progress indicators).
+   401→
+   402→##### 4. The Jargon Barrier
+   403→**Problem**: Technical or domain language forces translation effort.
+   404→**Fix**: Use plain language. If domain terms are unavoidable, define them inline.
+   405→
+   406→##### 5. The Visual Noise Floor
+   407→**Problem**: Every element has the same visual weight; nothing stands out.
+   408→**Fix**: Establish clear hierarchy: one primary element, 2–3 secondary, everything else muted.
+   409→
+   410→##### 6. The Inconsistent Pattern
+   411→**Problem**: Similar actions work differently in different places.
+   412→**Fix**: Standardize interaction patterns. Same type of action = same type of UI.
+   413→
+   414→##### 7. The Multi-Task Demand
+   415→**Problem**: Interface requires processing multiple simultaneous inputs (reading + deciding + navigating).
+   416→**Fix**: Sequence the steps. Let the user do one thing at a time.
+   417→
+   418→##### 8. The Context Switch
+   419→**Problem**: User must jump between screens/tabs/modals to gather info for a single decision.
+   420→**Fix**: Co-locate the information needed for each decision. Reduce back-and-forth.
+   421→
+   422→---
+   423→
+   424→### Heuristics Scoring Guide
+   425→
+   426→Score each of Nielsen's 10 Usability Heuristics on a 0–4 scale. Be honest: a 4 means genuinely excellent, not "good enough."
+   427→
+   428→#### Nielsen's 10 Heuristics
+   429→
+   430→##### 1. Visibility of System Status
+   431→
+   432→Keep users informed about what's happening through timely, appropriate feedback.
+   433→
+   434→**Check for**:
+   435→- Loading indicators during async operations
+   436→- Confirmation of user actions (save, submit, delete)
+   437→- Progress indicators for multi-step processes
+   438→- Current location in navigation (breadcrumbs, active states)
+   439→- Form validation feedback (inline, not just on submit)
+   440→
+   441→**Scoring**:
+   442→| Score | Criteria |
+   443→|-------|----------|
+   444→| 0 | No feedback; user is guessing what happened |
+   445→| 1 | Rare feedback; most actions produce no visible response |
+   446→| 2 | Partial; some states communicated, major gaps remain |
+   447→| 3 | Good; most operations give clear feedback, minor gaps |
+   448→| 4 | Excellent; every action confirms, progress is always visible |
+   449→
+   450→##### 2. Match Between System and Real World
+   451→
+   452→Speak the user's language. Follow real-world conventions. Information appears in natural, logical order.
+   453→
+   454→**Check for**:
+   455→- Familiar terminology (no unexplained jargon)
+   456→- Logical information order matching user expectations
+   457→- Recognizable icons and metaphors
+   458→- Domain-appropriate language for the target audience
+   459→- Natural reading flow (left-to-right, top-to-bottom priority)
+   460→
+   461→**Scoring**:
+   462→| Score | Criteria |
+   463→|-------|----------|
+   464→| 0 | Pure tech jargon, alien to users |
+   465→| 1 | Mostly confusing; requires domain expertise to navigate |
+   466→| 2 | Mixed; some plain language, some jargon leaks through |
+   467→| 3 | Mostly natural; occasional term needs context |
+   468→| 4 | Speaks the user's language fluently throughout |
+   469→
+   470→##### 3. User Control and Freedom
+   471→
+   472→Users need a clear "emergency exit" from unwanted states without extended dialogue.
+   473→
+   474→**Check for**:
+   475→- Undo/redo functionality
+   476→- Cancel buttons on forms and modals
+   477→- Clear navigation back to safety (home, previous)
+   478→- Easy way to clear filters, search, selections
+   479→- Escape from long or multi-step processes
+   480→
+   481→**Scoring**:
+   482→| Score | Criteria |
+   483→|-------|----------|
+   484→| 0 | Users get trapped; no way out without refreshing |
+   485→| 1 | Difficult exits; must find obscure paths to escape |
+   486→| 2 | Some exits; main flows have escape, edge cases don't |
+   487→| 3 | Good control; users can exit and undo most actions |
+   488→| 4 | Full control; undo, cancel, back, and escape everywhere |
+   489→
+   490→##### 4. Consistency and Standards
+   491→
+   492→Users shouldn't wonder whether different words, situations, or actions mean the same thing.
+   493→
+   494→**Check for**:
+   495→- Consistent terminology throughout the interface
+   496→- Same actions produce same results everywhere
+   497→- Platform conventions followed (standard UI patterns)
+   498→- Visual consistency (colors, typography, spacing, components)
+   499→- Consistent interaction patterns (same gesture = same behavior)
+   500→
+   501→**Scoring**:
+   502→| Score | Criteria |
+   503→|-------|----------|
+   504→| 0 | Inconsistent everywhere; feels like different products stitched together |
+   505→| 1 | Many inconsistencies; similar things look/behave differently |
+   506→| 2 | Partially consistent; main flows match, details diverge |
+   507→| 3 | Mostly consistent; occasional deviation, nothing confusing |
+   508→| 4 | Fully consistent; cohesive system, predictable behavior |
+   509→
+   510→##### 5. Error Prevention
+   511→
+   512→Better than good error messages is a design that prevents problems in the first place.
+   513→
+   514→**Check for**:
+   515→- Confirmation before destructive actions (delete, overwrite)
+   516→- Constraints preventing invalid input (date pickers, dropdowns)
+   517→- Smart defaults that reduce errors
+   518→- Clear labels that prevent misunderstanding
+   519→- Autosave and draft recovery
+   520→
+   521→**Scoring**:
+   522→| Score | Criteria |
+   523→|-------|----------|
+   524→| 0 | Errors easy to make; no guardrails anywhere |
+   525→| 1 | Few safeguards; some inputs validated, most aren't |
+   526→| 2 | Partial prevention; common errors caught, edge cases slip |
+   527→| 3 | Good prevention; most error paths blocked proactively |
+   528→| 4 | Excellent; errors nearly impossible through smart constraints |
+   529→
+   530→##### 6. Recognition Rather Than Recall
+   531→
+   532→Minimize memory load. Make objects, actions, and options visible or easily retrievable.
+   533→
+   534→**Check for**:
+   535→- Visible options (not buried in hidden menus)
+   536→- Contextual help when needed (tooltips, inline hints)
+   537→- Recent items and history
+   538→- Autocomplete and suggestions
+   539→- Labels on icons (not icon-only navigation)
+   540→
+   541→**Scoring**:
+   542→| Score | Criteria |
+   543→|-------|----------|
+   544→| 0 | Heavy memorization; users must remember paths and commands |
+   545→| 1 | Mostly recall; many hidden features, few visible cues |
+   546→| 2 | Some aids; main actions visible, secondary features hidden |
+   547→| 3 | Good recognition; most things discoverable, few memory demands |
+   548→| 4 | Everything discoverable; users never need to memorize |
+   549→
+   550→##### 7. Flexibility and Efficiency of Use
+   551→
+   552→Accelerators, invisible to novices, speed up expert interaction.
+   553→
+   554→**Check for**:
+   555→- Keyboard shortcuts for common actions
+   556→- Customizable interface elements
+   557→- Recent items and favorites
+   558→- Bulk/batch actions
+   559→- Power user features that don't complicate the basics
+   560→
+   561→**Scoring**:
+   562→| Score | Criteria |
+   563→|-------|----------|
+   564→| 0 | One rigid path; no shortcuts or alternatives |
+   565→| 1 | Limited flexibility; few alternatives to the main path |
+   566→| 2 | Some shortcuts; basic keyboard support, limited bulk actions |
+   567→| 3 | Good accelerators; keyboard nav, some customization |
+   568→| 4 | Highly flexible; multiple paths, power features, customizable |
+   569→
+   570→##### 8. Aesthetic and Minimalist Design
+   571→
+   572→Interfaces should not contain irrelevant or rarely needed information. Every element should serve a purpose.
+   573→
+   574→**Check for**:
+   575→- Only necessary information visible at each step
+   576→- Clear visual hierarchy directing attention
+   577→- Purposeful use of color and emphasis
+   578→- No decorative clutter competing for attention
+   579→- Focused, uncluttered layouts
+   580→
+   581→**Scoring**:
+   582→| Score | Criteria |
+   583→|-------|----------|
+   584→| 0 | Overwhelming; everything competes for attention equally |
+   585→| 1 | Cluttered; too much noise, hard to find what matters |
+   586→| 2 | Some clutter; main content clear, periphery noisy |
+   587→| 3 | Mostly clean; focused design, minor visual noise |
+   588→| 4 | Perfectly minimal; every element earns its pixel |
+   589→
+   590→##### 9. Help Users Recognize, Diagnose, and Recover from Errors
+   591→
+   592→Error messages should use plain language, precisely indicate the problem, and constructively suggest a solution.
+   593→
+   594→**Check for**:
+   595→- Plain language error messages (no error codes for users)
+   596→- Specific problem identification ("Email is missing @" not "Invalid input")
+   597→- Actionable recovery suggestions
+   598→- Errors displayed near the source of the problem
+   599→- Non-blocking error handling (don't wipe the form)
+   600→
+   601→**Scoring**:
+   602→| Score | Criteria |
+   603→|-------|----------|
+   604→| 0 | Cryptic errors; codes, jargon, or no message at all |
+   605→| 1 | Vague errors; "Something went wrong" with no guidance |
+   606→| 2 | Clear but unhelpful; names the problem but not the fix |
+   607→| 3 | Clear with suggestions; identifies problem and offers next steps |
+   608→| 4 | Perfect recovery; pinpoints issue, suggests fix, preserves user work |
+   609→
+   610→##### 10. Help and Documentation
+   611→
+   612→Even if the system is usable without docs, help should be easy to find, task-focused, and concise.
+   613→
+   614→**Check for**:
+   615→- Searchable help or documentation
+   616→- Contextual help (tooltips, inline hints, guided tours)
+   617→- Task-focused organization (not feature-organized)
+   618→- Concise, scannable content
+   619→- Easy access without leaving current context
+   620→
+   621→**Scoring**:
+   622→| Score | Criteria |
+   623→|-------|----------|
+   624→| 0 | No help available anywhere |
+   625→| 1 | Help exists but hard to find or irrelevant |
+   626→| 2 | Basic help; FAQ or docs exist, not contextual |
+   627→| 3 | Good documentation; searchable, mostly task-focused |
+   628→| 4 | Excellent contextual help; right info at the right moment |
+   629→
+   630→---
+   631→
+   632→#### Score Summary
+   633→
+   634→**Total possible**: 40 points (10 heuristics × 4 max)
+   635→
+   636→| Score Range | Rating | What It Means |
+   637→|-------------|--------|---------------|
+   638→| 36–40 | Excellent | Minor polish only; ship it |
+   639→| 28–35 | Good | Address weak areas, solid foundation |
+   640→| 20–27 | Acceptable | Significant improvements needed before users are happy |
+   641→| 12–19 | Poor | Major UX overhaul required; core experience broken |
+   642→| 0–11 | Critical | Redesign needed; unusable in current state |
+   643→
+   644→When heuristics were scored `n/a`, the maximum is lower than 40; read the band off the percentage instead of the raw number (90%+ Excellent, 70%+ Good, 50%+ Acceptable, 30%+ Poor, below that Critical). 24/32 is 75%, so Good.
+   645→
+   646→---
+   647→
+   648→#### Issue Severity (P0–P3)
+   649→
+   650→Tag each individual issue found during scoring with a priority level:
+   651→
+   652→| Priority | Name | Description | Action |
+   653→|----------|------|-------------|--------|
+   654→| **P0** | Blocking | Prevents task completion entirely | Fix immediately; this is a showstopper |
+   655→| **P1** | Major | Causes significant difficulty or confusion | Fix before release |
+   656→| **P2** | Minor | Annoyance, but workaround exists | Fix in next pass |
+   657→| **P3** | Polish | Nice-to-fix, no real user impact | Fix if time permits |
+   658→
+   659→**Tip**: If you're unsure between two levels, ask: "Would a user contact support about this?" If yes, it's at least P1.
+   660→
+   661→---
+   662→
+   663→### Persona-Based Design Testing
+   664→
+   665→Test the interface through the eyes of 5 distinct user archetypes. Each persona exposes different failure modes that a single "design director" perspective would miss.
+   666→
+   667→**How to use**: Select 2–3 personas most relevant to the interface being critiqued. Walk through the primary user action as each persona. Report specific red flags, not generic concerns.
+   668→
+   669→---
+   670→
+   671→#### 1. Impatient Power User: "Alex"
+   672→
+   673→
+   674→**Profile**: Expert with similar products. Expects efficiency, hates hand-holding. Will find shortcuts or leave.
+   675→
+   676→**Behaviors**:
+   677→- Skips all onboarding and instructions
+   678→- Looks for keyboard shortcuts immediately
+   679→- Tries to bulk-select, batch-edit, and automate
+   680→- Gets frustrated by required steps that feel unnecessary
+   681→- Abandons if anything feels slow or patronizing
+   682→
+   683→**Test Questions**:
+   684→- Can Alex complete the core task in under 60 seconds?
+   685→- Are there keyboard shortcuts for common actions?
+   686→- Can onboarding be skipped entirely?
+   687→- Do modals have keyboard dismiss (Esc)?
+   688→- Is there a "power user" path (shortcuts, bulk actions)?
+   689→
+   690→**Red Flags** (report these specifically):
+   691→- Forced tutorials or unskippable onboarding
+   692→- No keyboard navigation for primary actions
+   693→- Slow animations that can't be skipped
+   694→- One-item-at-a-time workflows where batch would be natural
+   695→- Redundant confirmation steps for low-risk actions
+   696→
+   697→---
+   698→
+   699→#### 2. Confused First-Timer: "Jordan"
+   700→
+   701→**Profile**: Never used this type of product. Needs guidance at every step. Will abandon rather than figure it out.
+   702→
+   703→**Behaviors**:
+   704→- Reads all instructions carefully
+   705→- Hesitates before clicking anything unfamiliar
+   706→- Looks for help or support constantly
+   707→- Misunderstands jargon and abbreviations
+   708→- Takes the most literal interpretation of any label
+   709→
+   710→**Test Questions**:
+   711→- Is the first action obviously clear within 5 seconds?
+   712→- Are all icons labeled with text?
+   713→- Is there contextual help at decision points?
+   714→- Does terminology assume prior knowledge?
+   715→- Is there a clear "back" or "undo" at every step?
+   716→
+   717→**Red Flags** (report these specifically):
+   718→- Icon-only navigation with no labels
+   719→- Technical jargon without explanation
+   720→- No visible help option or guidance
+   721→- Ambiguous next steps after completing an action
+   722→- No confirmation that an action succeeded
+   723→
+   724→---
+   725→
+   726→#### 3. Accessibility-Dependent User: "Sam"
+   727→
+   728→**Profile**: Uses screen reader (VoiceOver/NVDA), keyboard-only navigation. May have low vision, motor impairment, or cognitive differences.
+   729→
+   730→**Behaviors**:
+   731→- Tabs through the interface linearly
+   732→- Relies on ARIA labels and heading structure
+   733→- Cannot see hover states or visual-only indicators
+   734→- Needs adequate color contrast (4.5:1 minimum)
+   735→- May use browser zoom up to 200%
+   736→
+   737→**Test Questions**:
+   738→- Can the entire primary flow be completed keyboard-only?
+   739→- Are all interactive elements focusable with visible focus indicators?
+   740→- Do images have meaningful alt text?
+   741→- Is color contrast WCAG AA compliant (4.5:1 for text)?
+   742→- Does the screen reader announce state changes (loading, success, errors)?
+   743→
+   744→**Red Flags** (report these specifically):
+   745→- Click-only interactions with no keyboard alternative
+   746→- Missing or invisible focus indicators
+   747→- Meaning conveyed by color alone (red = error, green = success)
+   748→- Unlabeled form fields or buttons
+   749→- Time-limited actions without extension option
+   750→- Custom components that break screen reader flow
+   751→
+   752→---
+   753→
+   754→#### 4. Deliberate Stress Tester: "Riley"
+   755→
+   756→**Profile**: Methodical user who pushes interfaces beyond the happy path. Tests edge cases, tries unexpected inputs, and probes for gaps in the experience.
+   757→
+   758→**Behaviors**:
+   759→- Tests edge cases intentionally (empty states, long strings, special characters)
+   760→- Submits forms with unexpected data (emoji, RTL text, very long values)
+   761→- Tries to break workflows by navigating backwards, refreshing mid-flow, or opening in multiple tabs
+   762→- Looks for inconsistencies between what the UI promises and what actually happens
+   763→- Documents problems methodically
+   764→
+   765→**Test Questions**:
+   766→- What happens at the edges (0 items, 1000 items, very long text)?
+   767→- Do error states recover gracefully or leave the UI in a broken state?
+   768→- What happens on refresh mid-workflow? Is state preserved?
+   769→- Are there features that appear to work but produce broken results?
+   770→- How does the UI handle unexpected input (emoji, special chars, paste from Excel)?
+   771→
+   772→**Red Flags** (report these specifically):
+   773→- Features that appear to work but silently fail or produce wrong results
+   774→- Error handling that exposes technical details or leaves UI in a broken state
+   775→- Empty states that show nothing useful ("No results" with no guidance)
+   776→- Workflows that lose user data on refresh or navigation
+   777→- Inconsistent behavior between similar interactions in different parts of the UI
+   778→
+   779→---
+   780→
+   781→#### 5. Distracted Mobile User: "Casey"
+   782→
+   783→**Profile**: Using phone one-handed on the go. Frequently interrupted. Possibly on a slow connection.
+   784→
+   785→**Behaviors**:
+   786→- Uses thumb only; prefers bottom-of-screen actions
+   787→- Gets interrupted mid-flow and returns later
+   788→- Switches between apps frequently
+   789→- Has limited attention span and low patience
+   790→- Types as little as possible, prefers taps and selections
+   791→
+   792→**Test Questions**:
+   793→- Are primary actions in the thumb zone (bottom half of screen)?
+   794→- Is state preserved if the user leaves and returns?
+   795→- Does it work on slow connections (3G)?
+   796→- Can forms use autocomplete and smart defaults?
+   797→- Are touch targets at least 44×44pt?
+   798→
+   799→**Red Flags** (report these specifically):
+   800→- Important actions positioned at the top of the screen (unreachable by thumb)
+   801→- No state persistence; progress lost on tab switch or interruption
+   802→- Large text inputs required where selection would work
+   803→- Heavy assets loading on every page (no lazy loading)
+   804→- Tiny tap targets or targets too close together
+   805→
+   806→---
+   807→
+   808→#### Selecting Personas
+   809→
+   810→Choose personas based on the interface type:
+   811→
+   812→| Interface Type | Primary Personas | Why |
+   813→|---------------|-----------------|-----|
+   814→| Landing page / marketing | Jordan, Riley, Casey | First impressions, trust, mobile |
+   815→| Dashboard / admin | Alex, Sam | Power users, accessibility |
+   816→| E-commerce / checkout | Casey, Riley, Jordan | Mobile, edge cases, clarity |
+   817→| Onboarding flow | Jordan, Casey | Confusion, interruption |
+   818→| Data-heavy / analytics | Alex, Sam | Efficiency, keyboard nav |
+   819→| Form-heavy / wizard | Jordan, Sam, Casey | Clarity, accessibility, mobile |
+   820→
+   821→---
+   822→
+   823→#### Project-Specific Personas
+   824→
+   825→If `{{config_file}}` contains a `## Design Context` section (generated by `impeccable init`), derive 1–2 additional personas from the audience and brand information:
+   826→
+   827→1. Read the target audience description
+   828→2. Identify the primary user archetype not covered by the 5 predefined personas
+   829→3. Create a persona following this template:
+   830→
+   831→```
+   832→##### [Role]: "[Name]"
+   833→
+   834→**Profile**: [2-3 key characteristics derived from Design Context]
+   835→
+   836→**Behaviors**: [3-4 specific behaviors based on the described audience]
+   837→
+   838→**Red Flags**: [3-4 things that would alienate this specific user type]
+   839→```
+   840→
+   841→Only generate project-specific personas when real Design Context data is available. Don't invent audience details; use the 5 predefined personas when no context exists.
+   842→

@@ -1,0 +1,74 @@
+# Voice Agent Platform — Idea Pitch (saved package)
+
+The 4-minute interactive idea pitch for the **Voice Agent Platform** (one AI employee
+that answers every channel for a business), plus the interactive product demo.
+Built from the user's own material: `upload/Voice Agent Platform Full Conversation Notes.md`
+(problem, idea, stack, timeline, use cases) and `upload/dentist.wav` (the real 5:16
+"Layla" receptionist call that powers the human × robot conversation slide).
+
+## Where it lives (in the app)
+
+| Route | What |
+|---|---|
+| `/pitch` | The 4-minute pitch — 10 full-screen slides, keyboard-driven (← → space, F = fullscreen), 4:00 pacing timer |
+| `/demo` | The standalone interactive demo ("Talk to Layla") — channel switcher, live call with tool trace, tool playground, dashboard |
+| `/` | Landing → "Watch the 4-min pitch" CTA + header/footer links |
+
+Slide order: Title → Problem → The Idea → **Live recorded call (the proof)** → How it
+works → Use cases (receptionist · scheduler · sales · customer care · FAQ · info
+collector) → Open-source stack → Build timeline → Interactive demo → Close.
+
+## What's in this folder
+
+| Path | Purpose |
+|---|---|
+| `README.md` | This guide |
+| `pitch-script.md` | The full 4-minute narration script + every slide's copy + the call transcript with timestamps — reuse in any tool |
+| `conversation-timings.json` | Machine-readable timeline (17 turns + 6 tool moments) synced to `audio/dentist-booking.mp3`, with the cut math to retiming a NEW recording |
+| `slides/01…10.png` | 1440×900 captures of all 10 slides (share/preview without running the app) |
+| `audio/dentist-booking.mp3` | The 1:50 highlight cut (silence-aligned, 1.38× time-compressed, pitch-preserved) that drives the conversation slide |
+| `audio/dentist-full.mp3` | The full 5:16 original call |
+| `standalone/` | **Offline snapshot of the whole working pitch** — copy the folder anywhere, serve with any static file server, present without DeckForge running (verified: navigation, keyboard, audio playback + bubble/avatar sync all work offline) |
+| `../inline-pitch.ts` | The capture tool — re-run `bun run inline-pitch.ts` (from `exports/`) any time you edit the pitch to refresh `standalone/` |
+
+## Presenting offline (standalone/)
+
+```bash
+# any static server from inside standalone/ works:
+python3 -m http.server 8080        # then open http://localhost:8080
+# or bun: bun -e "Bun.serve({port:8080, fetch:(r)=>new Response(Bun.file('./standalone'+new URL(r.url).pathname))})"
+```
+
+`index.html` behaves exactly like `/pitch`: ← → to navigate, F for fullscreen, press
+PLAY THE CALL on slide 4. Known harmless offline console noise: one HMR/websocket
+warning and a 404 for `/api/auth/me` (auth is an app feature, not needed to present).
+The "OPEN THE LIVE DEMO" and "← DECKFORGE" links only work inside the full app.
+
+## Continue / reuse
+
+**Edit the pitch** (dev app): all copy lives in
+`src/components/pitch/PitchDeck.tsx` (slides 1–3, 5–10), the conversation UI in
+`src/components/pitch/ConversationSlide.tsx`, the demo in
+`src/components/pitch/DemoApp.tsx`, and the dialogue/timings in
+`src/data/pitch/conversation.ts`. Styles use the stg design tokens in
+`src/app/globals.css` (no hard-coded colors).
+
+**Swap in your own recording** (e.g. the voice you plan to record for a slide):
+1. Trim + time-compress your audio (this pipeline used ffmpeg `silencedetect` at
+   −38 dB / 0.4 s to find segment boundaries, then `atempo=1.38` — pitch preserved).
+2. Replace `public/audio/dentist-booking.mp3` (keep the filename, or change
+   `AUDIO_SRC` in `src/data/pitch/conversation.ts`).
+3. Transcribe your recording (the project uses z-ai ASR; files ≤ 30 s → chunk them)
+   and update `TURNS` — each turn's `at` = seconds into YOUR cut where the line starts.
+4. Update `ACTIONS` the same way for the tool-call chips, and `CUT_DURATION`.
+5. Re-run `bun run exports/inline-pitch.ts` to refresh the offline snapshot.
+
+**Reuse the content elsewhere**: `pitch-script.md` is tool-agnostic (script + copy);
+`conversation-timings.json` gives any animation tool the exact sync timeline.
+
+## Known polish notes (impeccable detector, optional next round)
+
+- `hero-eyebrow-chip` pattern flagged on the title slide ("AN IDEA PITCH · 4 MINUTES").
+- Two low-contrast labels on the cream background: `#d9ab00` on `#f3f0e5` (1.9:1,
+  needs 3:1) and `#98968e` on `#f3f0e5` (2.6:1, needs 4.5:1) — both are the brand's
+  tiny uppercase labels; bumping opacity one step fixes AA if you want it stricter.
