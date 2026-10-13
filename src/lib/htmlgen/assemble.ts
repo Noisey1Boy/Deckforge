@@ -225,6 +225,15 @@ export function assembleScratchDeck(params: ScratchAssembleParams): string {
   const styles = styleBlocks.join('\n\n')
   const title = escapeHtml(deckTitle)
 
+  // The scratch prompts tell the model to embed speaker notes as hidden
+  // .notes elements, but the model's style block doesn't always include a
+  // hide rule (and reveal's <aside class="notes"> only applies to the reveal
+  // engine). Inject the hide rule unless the deck already declares one.
+  const hidesNotes = /\.notes\s*[{,]/.test(styles)
+  const notesHideStyle = hidesNotes
+    ? ''
+    : '\n<style>.notes{display:none!important}</style>'
+
   if (engine === 'reveal') {
     const theme = REVEAL_THEMES.includes((params.theme ?? '') as (typeof REVEAL_THEMES)[number])
       ? (params.theme as string)
@@ -277,7 +286,7 @@ ${sections.map((s) => indent(s, 4)).join('\n')}
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${title}</title>
-${styles}
+${styles}${notesHideStyle}
 </head>
 <body>
 <div class="deck">

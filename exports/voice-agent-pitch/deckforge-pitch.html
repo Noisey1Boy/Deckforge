@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One AI Employee. Every Channel.</title>
+<style>
+/* Design Tokens */
+:root {
+  /* Colors */
+  --bg: #0a0a0a;
+  --surface: #1a1a1a;
+  --text-1: #ffffff;
+  --text-2: #b0b0b0;
+  --accent: #3b82f6;
+  --border: #2a2a2a;
+  
+  /* Spacing Scale (4pt base) */
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-48: 48px;
+  --space-64: 64px;
+  --space-96: 96px;
+  
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-mono: 'SF Mono', Monaco, Consolas, 'Roboto Mono', monospace;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+  --font-size-5xl: 3rem;
+  --font-size-6xl: 4rem;
+  
+  /* Line heights */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+}
+
+/* Reset & Base Styles */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  font-family: var(--font-family);
+  background-color: var(--bg);
+  color: var(--text-1);
+  overflow: hidden;
+}
+
+.deck {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: var(--space-64);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.slide.is-active {
+  display: flex;
+}
+
+/* Typography */
+.h1 {
+  font-size: clamp(2rem, 6vw, 4rem);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  letter-spacing: -0.04em;
+  margin-bottom: var(--space-24);
+  text-wrap: balance;
+}
+
+.h2 {
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  letter-spacing: -0.03em;
+  margin-bottom: var(--space-16);
+  text-wrap: balance;
+}
+
+.h3 {
+  font-size: clamp(1.25rem, 3vw, 1.875rem);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  margin-bottom: var(--space-12);
+  text-wrap: balance;
+}
+
+.lede {
+  font-size: var(--font-size-xl);
+  font-weight: 400;
+  line-height: var(--leading-relaxed);
+  max-width: 75ch;
+  margin: 0 auto var(--space-48);
+  text-wrap: pretty;
+}
+
+/* Layout Components */
+.grid {
+  display: grid;
+  gap: var(--space-24);
+  width: 100%;
+  max-width: 1200px;
+}
+
+.g2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.g3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.g4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: var(--space-32);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.card-soft {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: var(--space-24);
+}
+
+.pill {
+  display: inline-block;
+  background: var(--accent);
+  color: var(--text-1);
+  padding: var(--space-8) var(--space-16);
+  border-radius: 9999px;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  align-items: flex-start;
+  text-align: left;
+}
+
+/* Special Elements */
+.quote {
+  font-size: var(--font-size-2xl);
+  font-style: italic;
+  line-height: var(--leading-relaxed);
+  max-width: 75ch;
+  margin: 0 auto;
+  position: relative;
+  padding: 0 var(--space-24);
+}
+
+.quote::before,
+.quote::after {
+  content: '"';
+  font-size: var(--font-size-5xl);
+  position: absolute;
+  opacity: 0.2;
+}
+
+.quote::before {
+  top: -20px;
+  left: 0;
+}
+
+.quote::after {
+  bottom: -40px;
+  right: 0;
+}
+
+.quote-attr {
+  font-size: var(--font-size-sm);
+  opacity: 0.8;
+  margin-top: var(--space-16);
+}
+
+.big-number {
+  font-size: var(--font-size-6xl);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  letter-spacing: -0.05em;
+  margin-bottom: var(--space-12);
+}
+
+.big-label {
+  font-size: var(--font-size-sm);
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.delta.up {
+  color: #10b981;
+}
+
+.delta.down {
+  color: #ef4444;
+}
+
+/* UI Elements */
+.progress-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  z-index: 1100;
+}
+
+.progress-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  width: 0%;
+  transition: width 0.3s ease-out;
+}
+
+.slide-counter {
+  position: fixed;
+  bottom: var(--space-16);
+  right: var(--space-16);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  opacity: 0.6;
+  z-index: 1100;
+}
+
+/* Animations */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes count {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes stagger {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animation classes */
+.fade-up {
+  animation: fade-up 0.6s ease-out forwards;
+}
+
+.scale {
+  animation: scale 0.6s ease-out forwards;
+}
+
+.count {
+  animation: count 0.6s ease-out forwards;
+}
+
+.stagger {
+  animation: stagger 0.6s ease-out forwards;
+}
+
+.stagger-1 { animation-delay: 0ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 200ms; }
+.stagger-4 { animation-delay: 300ms; }
+.stagger-5 { animation-delay: 400ms; }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .fade-up, .scale, .count, .stagger,
+  .fade-up-1, .fade-up-2, .fade-up-3, .fade-up-4, .fade-up-5,
+  .scale-1, .scale-2, .scale-3, .scale-4, .scale-5,
+  .count-1, .count-2, .count-3, .count-4, .count-5,
+  .stagger-1, .stagger-2, .stagger-3, .stagger-4, .stagger-5 {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Two-column layout */
+.two-column .grid.g2 {
+  display: flex;
+  gap: var(--space-48);
+  align-items: center;
+}
+
+.two-column .left-column {
+  flex: 1;
+  text-align: left;
+}
+
+.two-column .right-column {
+  flex: 1;
+}
+
+/* Code block */
+code {
+  font-family: var(--font-mono);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: var(--space-8) var(--space-12);
+  font-size: var(--font-size-sm);
+  display: inline-block;
+  white-space: nowrap;
+}
+</style>
+<style>.notes{display:none!important}</style><style>
+/* slide-4 compact call transcript (bounded layout patch) */
+section.slide[data-title^="The proof"] .two-column .grid.g2{display:grid;grid-template-columns:1.15fr 1fr;gap:40px;width:100%;align-items:start}
+section.slide[data-title^="The proof"] .two-column .left-column,section.slide[data-title^="The proof"] .two-column .right-column{flex:none;width:auto}
+section.slide[data-title^="The proof"] .h2{font-size:26px;margin-bottom:6px}
+section.slide[data-title^="The proof"] .h3{font-size:17px}
+section.slide[data-title^="The proof"] code{white-space:normal;display:block}
+section.slide[data-title^="The proof"] .two-column,section.slide[data-title^="The proof"] .grid{min-height:0;overflow:hidden}
+.call-lines{display:flex;flex-direction:column;gap:7px;margin-top:10px;font-size:14px;line-height:1.4;min-height:0;overflow:hidden}
+.call-lines p{margin:0;padding:6px 11px;border-radius:8px;background:rgba(255,255,255,0.045)}
+.call-lines .who{display:inline-block;margin-right:8px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;vertical-align:1px}
+.call-lines .who.ai{color:var(--accent,#3b82f6)}
+.call-lines .who.caller{color:#9ca3af}</style><style>
+/* slide-7 stack table (bounded layout patch) */
+.st-table{display:flex;flex-direction:column;gap:6px;width:100%;margin-top:14px;min-height:0}
+.st-row{display:grid;grid-template-columns:190px 1fr 1.4fr;gap:14px;padding:8px 14px;border-radius:8px;background:rgba(255,255,255,0.045);font-size:14.5px;line-height:1.35;align-items:baseline}
+.st-row b{font-size:13px}
+.st-head{background:transparent;padding:2px 14px;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#9ca3af}</style></head>
+<body>
+<div class="deck">
+  <section class="slide is-active" data-title="One AI Employee. Every Channel.">
+    <h1 class="h1 fade-up">One AI Employee. Every Channel.</h1>
+    <h2 class="h2 fade-up" style="animation-delay: 0.2s">Voice agents that answer, book, sell and follow up for real businesses</h2>
+    <p class="lede fade-up" style="animation-delay: 0.4s">Phone · WhatsApp · Telegram · Web</p>
+    <p class="lede fade-up" style="animation-delay: 0.6s">Built on open source, self-hosted voices, and one dashboard for everything. A four-minute pitch.</p>
+    
+    <div class="notes">
+      This is a pitch for one AI employee that answers every channel of a real business — phone, WhatsApp, Telegram, web. Four minutes. Let's go.
+    </div>
+  </section>
+  <section class="slide" data-title="Business happens after hours. Staffing doesn't.">
+    <h2 class="h2 fade-up">The 6 PM black hole</h2>
+    <div class="grid g2 fade-up" style="animation-delay: 0.2s">
+      <div class="card">
+        <h3 class="h3">Reception is expensive</h3>
+        <p>A human front desk costs thousands every month — and still has lunch breaks, holidays, sick days and burnout.</p>
+      </div>
+      <div class="card">
+        <h3 class="h3">Today's bots rent, not own</h3>
+        <p>Hosted voice platforms charge per minute, lock your data in, and still leave bookings, sheets and inboxes scattered.</p>
+      </div>
+    </div>
+    <div class="notes">
+      Small businesses lose real customers in the hours they can't staff. Human reception is expensive and still goes offline. And today's hosted bots charge rent per minute, lock your data away, and leave bookings scattered. Every missed call is a customer dialing a competitor.
+    </div>
+  </section>
+  <section class="slide" data-title="One platform. One agent per business. Fully yours.">
+    <h2 class="h2 scale">One platform. One agent per business. Fully yours.</h2>
+    <div class="card scale" style="animation-delay: 0.2s">
+      <div class="stack">
+        <h3 class="h3">In — any channel:</h3>
+        <p>Phone/SIP · WhatsApp · Telegram · Web voice · Social DMs</p>
+        
+        <h3 class="h3">Brain — LLM + tools:</h3>
+        <p>Calendar + invites · Gmail · Google Sheets · CRM/webhooks · follow-ups</p>
+        
+        <h3 class="h3">Out — real actions:</h3>
+        <p>events booked, confirmations sent, clean data logged</p>
+      </div>
+    </div>
+    <div class="stack" style="margin-top: var(--space-24); animation-delay: 0.4s; animation: fade-up 0.6s ease-out forwards;">
+      <div class="pill">self-hosted voices (CosyVoice · Fish Speech · KittenTTS)</div>
+      <div class="pill">one dashboard — calls, transcripts, bookings, costs</div>
+    </div>
+    <div class="notes">
+      The idea: one platform, one agent per business. Customers talk on any channel; the agent acts in your real tools — calendar, email, sheets, CRM — with self-hosted voices, and one dashboard showing every call, transcript, booking and cost.
+    </div>
+  </section>
+  <section class="slide" data-title="The proof: a real call, booked end-to-end">
+    <div class="two-column">
+      <div class="grid g2">
+        <div class="left-column">
+          <h2 class="h2 fade-up">The proof: a real call, booked end-to-end</h2>
+          <div class="card-soft fade-up" style="animation-delay: 0.2s">
+            <h3 class="h3">The call — Robert × Layla, the AI receptionist</h3>
+            <div class="call-lines">
+              <p><b class="who ai">Layla</b>"Hello, this is Layla from Downtown Dentist. How may I help you today?"</p>
+              <p><b class="who caller">Robert</b>"I've been having tooth problems… can you guys help me with that?"</p>
+              <p><b class="who ai">Layla</b>"Could I start with your full name?" … "robertjohn123 at yahoo dot com — is that correct?"</p>
+              <p><b class="who ai">Layla</b>"I see openings at 8:00 AM, 11:30 AM, and 2:00 PM."</p>
+              <p><b class="who caller">Robert</b>"Um yes — 8:00 AM sounds great."</p>
+              <p><b class="who ai">Layla</b>"You're all booked in."</p>
+            </div>
+          </div>
+        </div>
+        <div class="right-column">
+          <div class="card-soft fade-up" style="animation-delay: 0.4s">
+            <h3 class="h3">The agent's tool trace, fired live during the call</h3>
+            <code>read-back confirm → upsert_contact → check_availability → create_event → send_email → send_sms</code>
+            <div style="margin-top: var(--space-24); padding: var(--space-16); background: rgba(59, 130, 246, 0.1); border-radius: 8px; border-left: 4px solid var(--accent);">
+              <div class="big-number" style="font-size: var(--font-size-3xl);">✅</div>
+              <div class="big-label">Appointment booked</div>
+              <p>Dr. Pegel · tomorrow 8:00 AM · email + SMS sent</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      This is a real recording, not a script. Watch Layla book an appointment end-to-end: capture contact details, read them back, check availability, book the slot, confirm by email and SMS. A 1:50 highlight of a 5:16 call.
+    </div>
+  </section>
+  <section class="slide" data-title="Talk in. Action out. Under a second.">
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-marker">1</div>
+        <div class="timeline-content">
+          <h4>Caller speaks</h4>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-marker">2</div>
+        <div class="timeline-content">
+          <h4><strong>STT</strong> — faster-whisper, streaming transcription</h4>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-marker">3</div>
+        <div class="timeline-content">
+          <h4><strong>LLM brain + tools</strong> — calls <code>check_availability()</code>, <code>create_event()</code>, <code>send_email()</code>, <code>update_sheet_row()</code> mid-sentence</h4>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-marker">4</div>
+        <div class="timeline-content">
+          <h4><strong>TTS</strong> — CosyVoice, streaming speech</h4>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-marker">5</div>
+        <div class="timeline-content">
+          <h4>Caller hears the reply</h4>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      Under the hood: speech in, transcribed by faster-whisper; an LLM brain that calls real tools mid-sentence; CosyVoice speaks the reply. The whole loop targets under 800 milliseconds — that latency budget is where the engineering lives.
+    </div>
+  </section>
+  <section class="slide" data-title="Hire it as a receptionist — or the whole front office.">
+    <div class="grid g3">
+      <div class="card">
+        <h4>Receptionist</h4>
+        <p>answers every call on ring 1, greets by name, never puts anyone on hold.</p>
+      </div>
+      <div class="card">
+        <h4>Appointment scheduler</h4>
+        <p>offers real openings, books the right doctor, sends invites + reminders.</p>
+      </div>
+      <div class="card">
+        <h4>Sales person</h4>
+        <p>qualifies inbound leads, answers product questions, books demos, logs everything.</p>
+      </div>
+      <div class="card">
+        <h4>Customer care</h4>
+        <p>order status and common issues on WhatsApp and web; escalates the tricky 5% to humans.</p>
+      </div>
+      <div class="card">
+        <h4>FAQ support</h4>
+        <p>prices, hours, insurance, directions — grounded in the business's own documents.</p>
+      </div>
+      <div class="card">
+        <h4>Info collector</h4>
+        <p>captures names, contacts and requirements conversationally, writes clean rows to Sheets.</p>
+      </div>
+    </div>
+    <div class="notes">
+      Same agent, many hats: receptionist, scheduler, sales, customer care, FAQ, info collector. One deployment per business — switch it on per role.
+    </div>
+  </section>
+  <section class="slide" data-title="$0 in licenses. Every layer swappable.">
+    <div class="content" style="width:100%;max-width:1180px">
+      <h1 class="h1 fade-up" style="font-size:34px">$0 in licenses. Every layer swappable.</h1>
+      <div class="st-table fade-up" style="animation-delay:0.15s">
+        <div class="st-row st-head"><span>Layer</span><span>Picks</span><span>Why</span></div>
+        <div class="st-row"><b>Voice runtime</b><span>LiveKit Agents · Pipecat</span><span>WebRTC + SIP calls, interruptions, turn detection</span></div>
+        <div class="st-row"><b>STT</b><span>faster-whisper</span><span>self-hosted streaming transcription</span></div>
+        <div class="st-row"><b>TTS</b><span>CosyVoice · Fish Speech · KittenTTS</span><span>swappable behind one interface</span></div>
+        <div class="st-row"><b>Tools &amp; glue</b><span>n8n · Activepieces · Composio</span><span>calendar, Gmail, Sheets with OAuth handled</span></div>
+        <div class="st-row"><b>Omnichannel inbox</b><span>Chatwoot</span><span>official WhatsApp API only — bans are real</span></div>
+        <div class="st-row"><b>Data &amp; dashboards</b><span>Postgres + Metabase / Grafana</span><span>calls, transcripts, outcomes, costs</span></div>
+      </div>
+      <p class="lede fade-up" style="animation-delay:0.3s;margin-top:16px">Strategy: validate on a hosted platform in days — then own the voice layer and the margins.</p>
+    </div>
+    <div class="notes">
+      Every layer is open source and swappable — zero license cost. Validate fast on a hosted platform, then own the voice layer and the margins.
+    </div>
+  </section>
+  <section class="slide" data-title="One developer. AI-assisted. Real dates.">
+    <div class="grid g2">
+      <div class="metric">
+        <div class="big-number">1–2</div>
+        <div class="big-label">weeks</div>
+        <div class="metric-desc">working prototype: one agent, self-hosted TTS, 1–2 tools</div>
+      </div>
+      <div class="metric">
+        <div class="big-number">4–8</div>
+        <div class="big-label">weeks</div>
+        <div class="metric-desc">client-ready MVP: phone number, calendar/email/sheets, dashboard</div>
+      </div>
+      <div class="metric">
+        <div class="big-number">3–5</div>
+        <div class="big-label">months</div>
+        <div class="metric-desc">multi-client platform: tenant configs, templates, logging, alerts</div>
+      </div>
+      <div class="metric">
+        <div class="big-number">days</div>
+        <div class="big-label">per client</div>
+        <div class="metric-desc">each new client after: configuration, not a rewrite</div>
+      </div>
+    </div>
+    <div class="notes">
+      One AI-assisted developer: prototype in two weeks, first paying client in under two months, a real platform by month five — and every client after that is configuration, not a rewrite.
+    </div>
+  </section>
+  <section class="slide" data-title="Don't take my word for it — it's clickable.">
+    <div class="content">
+      <h1 class="h1">Don't take my word for it — it's clickable.</h1>
+      <p class="lede">Run the interactive demo: press <em>Call Layla</em> → ringing → live call → booking card.</p>
+      <div class="grid g2">
+        <div class="card">
+          <h3 class="h3">Agent trace</h3>
+          <p>See AI decision-making in real-time</p>
+        </div>
+        <div class="card">
+          <h3 class="h3">Tool playground</h3>
+          <p>check_availability · create_event · send_email</p>
+        </div>
+        <div class="card">
+          <h3 class="h3">Dashboard</h3>
+          <p>Answer rate, bookings, ~700ms response, $0.19/call</p>
+        </div>
+      </div>
+      <div class="stack" style="margin-top: 2rem;">
+        <a href="/demo" class="pill">Live demo</a>
+        <a href="/pitch" class="pill">Full pitch with recorded call</a>
+      </div>
+    </div>
+    <div class="notes">
+      Don't take my word for it — this is clickable. Call her.
+    </div>
+  </section>
+  <section class="slide" data-title="Fewer missed calls. Faster answers. Lower cost per call.">
+    <div class="content">
+      <h1 class="h1">Fewer missed calls. Faster answers. Lower cost per call.</h1>
+      <div class="stack">
+        <span class="pill">24/7 answers</span>
+        <span class="pill">phone + chat + social</span>
+        <span class="pill">self-hosted voices</span>
+        <span class="pill">books while you sleep</span>
+        <span class="pill">recurring revenue per client</span>
+      </div>
+      <p class="lede" style="margin-top: 2rem;">That's the business.</p>
+    </div>
+    <div class="notes">
+      Fewer missed calls, faster answers, lower cost per call — and recurring revenue per client for us. That's the business. Thank you.
+    </div>
+  </section>
+</div>
+<div class="progress-bar"><span></span></div>
+<div class="slide-counter"><span data-current>1</span>/<span data-total>10</span></div>
+<script>
+(function() {
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.deck > section.slide'));
+  var current = 0;
+  var counterCur = document.querySelector('[data-current]');
+  var counterTot = document.querySelector('[data-total]');
+  var bar = document.querySelector('.progress-bar > span');
+  function show(i) {
+    if (i < 0 || i >= slides.length) return;
+    slides.forEach(function(s, idx) { s.classList.toggle('is-active', idx === i); });
+    current = i;
+    if (counterCur) counterCur.textContent = String(i + 1);
+    if (bar) bar.style.width = (((i + 1) / slides.length) * 100) + '%';
+    if (history.replaceState) history.replaceState(null, '', '#/' + (i + 1));
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); show(current + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); show(current - 1); }
+    else if (e.key === 'Home') { e.preventDefault(); show(0); }
+    else if (e.key === 'End') { e.preventDefault(); show(slides.length - 1); }
+  });
+  if (counterTot) counterTot.textContent = String(slides.length);
+  var m = (location.hash || '').match(/#\/(\d+)/);
+  show(m ? Math.min(Math.max(parseInt(m[1], 10) - 1, 0), slides.length - 1) : 0);
+  window.parent.postMessage({type: 'preview-ready', slide: current, count: slides.length}, '*');
+})();
+</script>
+</body>
+</html>

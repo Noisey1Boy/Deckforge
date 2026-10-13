@@ -1,0 +1,550 @@
+     1→/**
+     2→ * HTML Template Studio — prompt builders.
+     3→ *
+     4→ * Ported (near verbatim) from the user's decksmith app:
+     5→ *   upload/decksmith-extracted/src/lib/presentation/system-prompt.ts
+     6→ *   upload/decksmith-extracted/src/lib/presentation/slide-prompt.ts
+     7→ *   upload/decksmith-extracted/src/app/api/generate-outline/route.ts (outline JSON contract)
+     8→ *
+     9→ * Encodes rules distilled from the 4 skill repos (impeccable, ui-ux-pro-max,
+    10→ * ponytail, claude-skills) + the open-design template contract, and adds
+    11→ * scratch-mode prompts (reveal.js on /revealjs/ or hand-rolled plain HTML).
+    12→ */
+    13→
+    14→export type Framework = 'open-design' | 'reveal.js' | 'impress.js' | 'shower' | 'dzslides'
+    15→
+    16→export interface SlideOutline {
+    17→  title: string
+    18→  layout: string
+    19→  content_markdown: string
+    20→  speaker_notes: string
+    21→}
+    22→
+    23→export interface DeckOutlineJson {
+    24→  title: string
+    25→  subtitle?: string
+    26→  slides: SlideOutline[]
+    27→}
+    28→
+    29→/** The only layouts the outline may use (validated server-side). */
+    30→export const OUTLINE_LAYOUTS = [
+    31→  'title', 'problem', 'solution', 'feature-grid', 'metrics', 'comparison',
+    32→  'timeline', 'team', 'quote', 'two-column', 'big-number', 'product-shot',
+    33→  'pricing', 'cta', 'section-divider',
+    34→] as const
+    35→
+    36→/** Vendored reveal.js themes available at /revealjs/dist/theme/<name>.css. */
+    37→export const REVEAL_THEMES = [
+    38→  'black', 'white', 'league', 'beige', 'sky', 'night', 'serif', 'simple',
+    39→  'blood', 'moon', 'solarized', 'dracula', 'black-contrast', 'white-contrast',
+    40→] as const
+    41→
+    42→// ---------------------------------------------------------------------------
+    43→// Shared rule blocks (ported verbatim from decksmith system-prompt.ts)
+    44→// ---------------------------------------------------------------------------
+    45→
+    46→const LAYOUT_CATALOG = `
+    47→LAYOUT CATALOG (use one per slide; do not invent new layouts):
+    48→- title          : Big title + subtitle + author/date. Animation: fade-up.
+    49→- problem        : Headline + 2-3 pain points. Animation: fade-up.
+    50→- solution       : Headline + product description + 3 benefit bullets. Animation: scale.
+    51→- feature-grid   : 3-6 cards in a grid (.grid.g3 or .grid.g4). Animation: stagger.
+    52→- metrics        : 3-4 large KPI numbers with labels and deltas. Animation: count.
+    53→- comparison     : Two-column compare (before/after, us/them). Animation: fade-up.
+    54→- timeline       : Horizontal or vertical timeline with 4-5 milestones. Animation: stagger.
+    55→- team           : 3-6 team member cards with avatar/initials + name + role. Animation: stagger.
+    56→- quote          : Large pull-quote with attribution. Animation: fade-up.
+    57→- two-column     : Headline left, supporting content right. Animation: fade-up.
+    58→- big-number     : Single oversized stat + supporting sentence. Animation: count.
+    59→- product-shot   : Product screenshot or visual + caption. Animation: scale.
+    60→- pricing        : 3 pricing tier cards. Animation: stagger.
+    61→- cta            : Final call-to-action with contact info. Animation: fade-up.
+    62→- section-divider: Minimal slide with just a kicker + huge section number/title. Used to break up sections. Animation: fade-up.
+    63→`.trim()
+    64→
+    65→const STRATEGIES = `
+    66→DECK STRATEGIES (pick based on user intent; if unclear, default to "kawasaki-10"):
+    67→- yc-seed        : 10-12 slides — Cover→Problem→Solution→Traction→Market→Product→Team→Model→Ask→Thanks. Emotion: curiosity→frustration→hope→confidence→trust→urgency.
+    68→- kawasaki-10    : 10 slides — the 10/20/30 rule (10 slides, 20 min, 30pt font). Best default.
+    69→- series-a       : 12-15 slides — adds detailed traction, unit economics, competitive moat, GTM, financials.
+    70→- sales-pitch    : 8-10 slides — PAS (Problem→Agitate→Solve), 3 case studies, pricing, CTA.
+    71→- duarte-sparkline: Pattern-break at 1/3 and 2/3 — alternate "What Is" (pain) ↔ "What Could Be" (hope). For keynotes.
+    72→- qbr            : 8-10 slides — quarterly business review. KPIs, wins/misses, blockers, next-quarter plan.
+    73→- report-weekly  : 6-8 slides — cover, KPI grid, ship list, blockers, next-week plan, thanks.
+    74→- educational    : 8-12 slides — hook, learning objectives, concept slides, examples, exercises, summary, resources.
+    75→- manifesto      : 5-8 slides — bold editorial. Cover, thesis, 3 pillars, call to action.
+    76→- demo-day       : 5-7 slides — Cover→Problem→Solution→Traction→Team→Ask. Ultra-tight.
+    77→`.trim()
+    78→
+    79→const COPYWRITING_FORMULAS = `
+    80→COPYWRITING FORMULAS (apply per slide based on slide type):
+    81→- PAS  (Problem-Agitate-Solve): for problem slides.
+    82→- AIDA (Attention-Interest-Desire-Action): for title and CTA slides.
+    83→- FAB  (Features-Advantages-Benefits): for solution/feature slides.
+    84→- BAB  (Before-After-Bridge): for transformation slides.
+    85→- COI  (Cost of Inaction): for risk/urgency slides.
+    86→`.trim()
+    87→
+    88→const BANS = `
+    89→ABSOLUTE BANS (match-and-refuse; if you find yourself doing any of these, rewrite):
+    90→- No Tailwind, Bootstrap, or any CSS framework. Pure hand-rolled CSS only.
+    91→  (Exception: the chosen presentation framework itself — reveal.js, impress.js, shower, dzslides — is allowed via /revealjs/ or /frameworks/<name>/ paths.)
+    92→- No external JS libraries for slide navigation EXCEPT the chosen framework's own runtime. (No jQuery, no Swiper, no GSAP, no Chart.js.)
+    93→- No side-stripe borders, no gradient text on body, no glassmorphism-as-default.
+    94→- No identical card grids (vary card content density, avoid 4-cards-with-identical-icon-title-text).
+    95→- No "eyebrow" label on EVERY section — use sparingly for hierarchy.
+    96→- No numbered-section markers (e.g. "01", "02") on every slide.
+    97→- No text overflow — if content doesn't fit, split the slide.
+    98→- No hardcoded color values. Use var(--accent), var(--text-1), etc. from :root.
+    99→- No external asset references except: (a) Google Fonts via <link rel="stylesheet" crossorigin="anonymous"> in the head (NEVER @import — snapshot export must be able to read the rules), (b) /revealjs/dist/... when the deck is reveal.js-based, (c) /frameworks/<name>/... when the deck is impress.js/shower/dzslides-based, (d) the template's own assets/ folder. No other CDN scripts.
+   100→- No scrollIntoView() in any runtime — it can scroll the host page.
+   101→- No speaker-only text on the visible slide — wrap in the framework's note tag (<div class="notes">, <aside class="notes">, <div role="note">, or <details class="notes"> depending on framework).
+   102→- No bounce or elastic easing — ease-out exponential only.
+   103→- No animating layout properties (width, height, top, left) — use transform/opacity only.
+   104→`.trim()
+   105→
+   106→const FLOORS = `
+   107→QUALITY FLOORS:
+   108→- Body text contrast >= 4.5:1 against background. Large text >= 3:1.
+   109→- Line length 65-75ch for body, never longer.
+   110→- Headlines use clamp() with max <= 6rem (~96px).
+   111→- Display letter-spacing >= -0.04em (tighter for huge type).
+   112→- Spacing scale: 4 / 8 / 12 / 16 / 24 / 32 / 48 / 64 / 96 px (4pt base). No off-scale values.
+   113→- Touch targets >= 44x44px (nav arrows, CTA buttons).
+   114→- Semantic z-index: dropdown(1000) < sticky(1100) < modal-backdrop(1200) < modal(1300) < toast(1400) < tooltip(1500).
+   115→- prefers-reduced-motion: reduce must disable all non-essential animation.
+   116→- Use text-wrap: balance on h1-h3, text-wrap: pretty on body prose.
+   117→`.trim()
+   118→
+   119→const MOTION_RULES = `
+   120→MOTION RULES:
+   121→- Use only ease-out exponential (cubic-bezier(0.16, 1, 0.3, 1)) or quart/quint variants.
+   122→- Reveal animations must not gate content visibility (slide must be readable without animation).
+   123→- Stagger delays: 0ms, 100ms, 200ms, 300ms, 400ms for staggered children.
+   124→- All animations must respect @media (prefers-reduced-motion: reduce).
+   125→`.trim()
+   126→
+   127→
+   128→
+   129→
+   130→
+   131→
+   132→
+   133→
+   134→const LAYOUT_GUIDANCE: Record<string, string> = {
+   135→  'title': 'Big centered title + subtitle + author/date. Use .h1/.h2/.lede classes. Animation: fade-up.',
+   136→  'problem': 'Headline + 2-3 pain point cards in a .grid.g2 or .grid.g3. Animation: fade-up.',
+   137→  'solution': 'Headline + product description + 3 benefit bullets or .grid.g3 of .card. Animation: scale.',
+   138→  'feature-grid': '3-6 .card elements in .grid.g3 or .grid.g4. Each card has h4 title + 1-line description. Animation: stagger.',
+   139→  'metrics': '3-4 large KPI numbers with .big-number class + .big-label + .delta.up/.down. Animation: count.',
+   140→  'comparison': 'Two-column compare (before/after, us/them) using .grid.g2 with .card-soft. Animation: fade-up.',
+   141→  'timeline': 'Horizontal or vertical timeline with 4-5 milestones. Use .timeline-item with border-left. Animation: stagger.',
+   142→  'team': '3-6 team member cards with avatar/initials + name + role. Animation: stagger.',
+   143→  'quote': 'Large .quote with .quote-attr attribution. Center-aligned. Animation: fade-up.',
+   144→  'two-column': 'Headline left, supporting content right via .grid.g2. Animation: fade-up.',
+   145→  'big-number': 'Single oversized .big-number + supporting sentence. Center-aligned. Animation: count.',
+   146→  'product-shot': 'Product screenshot/visual placeholder + caption. Animation: scale.',
+   147→  'pricing': '3 pricing tier .card elements in .grid.g3 with plan name, price, features list. Animation: stagger.',
+   148→  'cta': 'Final call-to-action with contact info + .pill links. Animation: fade-up.',
+   149→  'section-divider': 'Minimal slide with just a kicker + huge section number/title. Used to break up sections. Animation: fade-up.',
+   150→}
+   151→
+   152→// ---------------------------------------------------------------------------
+   153→// Outline prompts (contract: {title, subtitle, slides:[{title, layout,
+   154→// content_markdown, speaker_notes}]})
+   155→// ---------------------------------------------------------------------------
+   156→
+   157→export interface OutlinePromptParams {
+   158→  brief: string
+   159→  slideCount: number
+   160→  audience?: string
+   161→  tone?: string
+   162→  verbosity?: 'concise' | 'standard' | 'text-heavy'
+   163→  mode?: 'template' | 'scratch'
+   164→  templateId?: string
+   165→}
+   166→
+   167→export function buildOutlineSystemPrompt(params: OutlinePromptParams): string {
+   168→  const aud = params.audience?.trim() || 'general business audience'
+   169→  const tn = params.tone?.trim() || 'professional, confident, clear'
+   170→  const vb = params.verbosity || 'standard'
+   171→  const wordCount = vb === 'concise' ? 20 : vb === 'text-heavy' ? 60 : 40
+   172→  const rendering = params.mode === 'scratch'
+   173→    ? 'The deck will be built FROM SCRATCH on a JS presentation engine (no preset template), so content must work with a generic class vocabulary (.kicker, .h1-.h3, .lede, .card, .pill, .grid, .big-number, .quote).'
+   174→    : `The deck will fill the "${params.templateId || 'chosen'}" HTML template — layouts must map cleanly onto its class vocabulary.`
+   175→
+   176→  return `You are an expert presentation designer. Generate a structured slide outline as JSON.
+   177→
+   178→# TASK
+   179→Read the user's brief and produce exactly ${params.slideCount} slide outlines. Each outline has:
+   180→- title: short slide title (max 60 chars)
+   181→- layout: one of these layout types — title | problem | solution | feature-grid | metrics | comparison | timeline | team | quote | two-column | big-number | product-shot | pricing | cta | section-divider
+   182→- content_markdown: slide body as markdown (~${wordCount} words). Use ## for subheadings, **bold**, - bullets, > blockquotes. Vary density per slide.
+   183→- speaker_notes: 2-3 sentences the presenter would say.
+   184→
+   185→# LAYOUT CATALOG
+   186→${LAYOUT_CATALOG}
+   187→
+   188→# STRATEGIES
+   189→${STRATEGIES}
+   190→
+   191→# COPYWRITING FORMULAS
+   192→${COPYWRITING_FORMULAS}
+   193→
+   194→# CONTEXT
+   195→- Audience: ${aud}
+   196→- Tone: ${tn}
+   197→- Verbosity: ${vb} (~${wordCount} words/slide)
+   198→- Rendering: ${rendering}
+   199→- User brief:
+   200→"""
+   201→${params.brief}
+   202→"""
+   203→
+   204→# LAYOUT GUIDANCE
+   205→- Slide 1 should be "title" layout.
+   206→- Slide 2 should usually be "problem" or "section-divider".
+   207→- Last slide should be "cta" or "title" (thanks).
+   208→- Vary layouts — never 3 feature-grids in a row.
+   209→
+   210→# OUTPUT FORMAT
+   211→Return ONLY valid JSON, no markdown fences, no preamble:
+   212→{"title": "Deck Title (max 80 chars)", "subtitle": "One-line deck subtitle (max 120 chars)", "slides": [{"title": "...", "layout": "...", "content_markdown": "...", "speaker_notes": "..."}, ...]}`
+   213→}
+   214→
+   215→export function buildOutlineUserPrompt(params: OutlinePromptParams): string {
+   216→  return `Generate a ${params.slideCount}-slide outline for: ${params.brief}`
+   217→}
+   218→
+   219→// ---------------------------------------------------------------------------
+   220→// Per-slide prompts (template mode) — ported from decksmith slide-prompt.ts
+   221→// ---------------------------------------------------------------------------
+   222→
+   223→export interface SlidePromptParams {
+   224→  templateId: string
+   225→  templateHtml: string
+   226→  templateCss?: string
+   227→  framework: Framework
+   228→  deckTitle: string
+   229→  slideIndex: number
+   230→  slideTotal: number
+   231→  audience?: string
+   232→  tone?: string
+   233→  verbosity?: string
+   234→}
+   235→
+   236→/**
+   237→ * Detects the framework from the template HTML (mirrors deck-preview logic).
+   238→ */
+   239→export function detectFramework(html: string): Framework {
+   240→  if (/class="reveal"|Reveal\.initialize|\/revealjs\//i.test(html)) return 'reveal.js'
+   241→  if (/id="impress"|impress\(\)\.init|\/frameworks\/impressjs\//i.test(html)) return 'impress.js'
+   242→  if (/class="shower"|\/frameworks\/shower\//i.test(html)) return 'shower'
+   243→  if (/aria-selected="true"|\/frameworks\/dzslides\//i.test(html) && /<section/i.test(html) && !/class="deck"/i.test(html)) return 'dzslides'
+   244→  return 'open-design'
+   245→}
+   246→
+   247→/**
+   248→ * Extracts just the design-relevant parts of the template HTML.
+   249→ * Returns <head> (fonts, tokens, base CSS) + first 2 slides (for class vocabulary).
+   250→ */
+   251→function extractTemplateDigest(html: string, css: string | undefined, framework: Framework): string {
+   252→  const parts: string[] = []
+   253→
+   254→  // <head>
+   255→  const headMatch = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i)
+   256→  if (headMatch) {
+   257→    parts.push('=== TEMPLATE <head> (fonts, tokens, base CSS) ===')
+   258→    parts.push(headMatch[0])
+   259→  }
+   260→
+   261→  // First 2 slide structures (for class vocabulary)
+   262→  let slideMatches: string[] | null = null
+   263→  switch (framework) {
+   264→    case 'reveal.js': {
+   265→      const slidesBlock = html.match(/<div class="slides">([\s\S]*?)<\/div>\s*<\/div>/i)
+   266→      if (slidesBlock) slideMatches = slidesBlock[1].match(/<section[^>]*>[\s\S]*?<\/section>/gi)
+   267→      break
+   268→    }
+   269→    case 'impress.js': {
+   270→      const impressBlock = html.match(/<div id="impress">([\s\S]*?)<\/div>\s*(?:<[^>]+>\s*)*<(?:script|\/body)/i)
+   271→      if (impressBlock) slideMatches = impressBlock[1].match(/<div[^>]*class="[^"]*step[^"]*"[^>]*>[\s\S]*?<\/div>/gi)
+   272→      break
+   273→    }
+   274→    case 'shower':
+   275→      slideMatches = html.match(/<section[^>]*class="[^"]*slide[^"]*"[^>]*>[\s\S]*?<\/section>/gi)
+   276→      break
+   277→    case 'dzslides':
+   278→      slideMatches = html.match(/<section[^>]*>[\s\S]*?<\/section>/gi)
+   279→      break
+   280→    default:
+   281→      slideMatches = html.match(/<section[^>]*class="[^"]*slide[^"]*"[^>]*>[\s\S]*?<\/section>/gi)
+   282→  }
+   283→  if (slideMatches && slideMatches.length > 0) {
+   284→    parts.push('\n=== TEMPLATE first slides (class vocabulary reference; copy class names) ===')
+   285→    parts.push(slideMatches.slice(0, 2).join('\n'))
+   286→  }
+   287→
+   288→  // Runtime scripts (for framework-based templates)
+   289→  if (framework === 'reveal.js' || framework === 'impress.js' || framework === 'shower') {
+   290→    const allScripts = html.match(/<script[^>]*>[\s\S]*?<\/script>/gi)
+   291→    if (allScripts && allScripts.length > 0) {
+   292→      parts.push(`\n=== ${framework} script tags (for context — DO NOT include in slide output) ===`)
+   293→      parts.push(allScripts.join('\n'))
+   294→    }
+   295→  }
+   296→
+   297→  if (css) {
+   298→    parts.push('\n=== TEMPLATE style.css ===')
+   299→    parts.push(css)
+   300→  }
+   301→
+   302→  return parts.join('\n')
+   303→}
+   304→
+   305→/**
+   306→ * Builds the system prompt for a single slide.
+   307→ * Much smaller than the full-deck prompt — focuses on ONE slide's layout + content.
+   308→ */
+   309→export function buildSlideSystemPrompt(params: SlidePromptParams): string {
+   310→  const aud = params.audience?.trim() || 'general business audience'
+   311→  const tn = params.tone?.trim() || 'professional, confident, clear'
+   312→  const vb = params.verbosity?.trim() || 'standard'
+   313→  const digest = extractTemplateDigest(params.templateHtml, params.templateCss, params.framework)
+   314→  const layoutHint = LAYOUT_GUIDANCE['title'] ?? 'Use the template class vocabulary.'
+   315→
+   316→  // Per-framework slide-element contract
+   317→  let slideElementContract = ''
+   318→  let notesTag = '<div class="notes">'
+   319→  switch (params.framework) {
+   320→    case 'reveal.js':
+   321→      slideElementContract = `Output a single <section>...</section> element (NO class="slide", NO wrapping <div class="slides">). reveal.js manages visibility.`
+   322→      notesTag = '<aside class="notes">'
+   323→      break
+   324→    case 'impress.js':
+   325→      slideElementContract = `Output a single <div class="step slide" data-x="..." data-y="..." [data-rotate="..."] [data-scale="..."]>...</div> element. Position it on the 3D canvas — vary data-x by ${1400 * params.slideIndex} from the previous slide, optionally rotate or scale.`
+   326→      notesTag = '<div class="notes">'
+   327→      break
+   328→    case 'shower':
+   329→      slideElementContract = `Output a single <section class="slide">...</section> element. Shower manages visibility.`
+   330→      notesTag = '<details class="notes">'
+   331→      break
+   332→    case 'dzslides':
+   333→      slideElementContract = `Output a single <section>...</section> element. Use aria-selected="true" only if this is slide 0.`
+   334→      notesTag = '<div role="note">'
+   335→      break
+   336→    default:
+   337→      slideElementContract = `Output a single <section class="slide" data-title="...">...</section> element. Use the template's class vocabulary: .kicker, .h1/.h2/.h3, .lede, .card, .pill, .grid.g2/.g3/.g4, .stack, .center, .tc, .big-number, .big-label, .quote, .timeline-item, .delta.up/.down.`
+   338→      notesTag = '<div class="notes">'
+   339→  }
+   340→
+   341→  return `You are an expert presentation designer. Generate the HTML for ONE slide.
+   342→
+   343→# TASK
+   344→Generate exactly one slide element for a ${params.framework} deck titled "${params.deckTitle}".
+   345→This is slide ${params.slideIndex + 1} of ${params.slideTotal}.
+   346→The slide spec (title, layout, content markdown, speaker notes) arrives in the user message.
+   347→
+   348→# CONTEXT
+   349→- Audience: ${aud}
+   350→- Tone: ${tn}
+   351→- Verbosity: ${vb}
+   352→
+   353→# FRAMEWORK CONTRACT (${params.framework})
+   354→${slideElementContract}
+   355→Speaker notes go inside ${notesTag}...</${notesTag.slice(1, -1).split(' ')[0]}> within the slide element.
+   356→
+   357→# TEMPLATE DESIGN DIGEST
+   358→${digest}
+   359→
+   360→# LAYOUT HINT
+   361→${layoutHint}
+   362→
+   363→# QUALITY FLOORS
+   364→${FLOORS}
+   365→
+   366→# RULES
+   367→- Output ONLY the slide element. No <!DOCTYPE>, no <html>, no <head>, no <body>, no <script>.
+   368→- Use the template's CSS class vocabulary verbatim — do NOT invent new classes.
+   369→- Use var(--accent), var(--text-1), etc. — never hardcoded colors.
+   370→- Inline any slide-specific styles in a <style> block BEFORE the slide element if absolutely needed (rare).
+   371→- Keep the slide visually consistent with the template's design language.
+   372→- Do NOT include external <link> or <script src> tags.
+   373→- Honor the content_markdown: convert it to semantic HTML using the template's classes.
+   374→- Add speaker notes (${notesTag}...${notesTag.replace('<', '</').replace('>', '>')}) with the slide's speaker_notes.
+   375→- No text overflow — if content doesn't fit, trim it. No animating layout properties (width/height/top/left) — transform/opacity only.
+   376→
+   377→# OUTPUT FORMAT
+   378→Output ONLY the slide HTML element. No markdown fences. No explanation.`
+   379→}
+   380→
+   381→export function buildSlideUserPrompt(slide: SlideOutline): string {
+   382→  const layoutHint = LAYOUT_GUIDANCE[slide.layout] ?? ''
+   383→  return `Generate slide HTML for:
+   384→
+   385→Title: ${slide.title}
+   386→Layout: ${slide.layout}
+   387→Layout guidance: ${layoutHint}
+   388→
+   389→Content (markdown — convert to semantic HTML using template classes):
+   390→${slide.content_markdown}
+   391→
+   392→Speaker notes:
+   393→${slide.speaker_notes}
+   394→
+   395→Output the slide element now.`
+   396→}
+   397→
+   398→// ---------------------------------------------------------------------------
+   399→// Scratch-mode prompts (chunked full-deck generation, ≤3 calls)
+   400→// ---------------------------------------------------------------------------
+   401→
+   402→export interface ScratchPromptParams {
+   403→  engine: 'reveal' | 'plain'
+   404→  deckTitle: string
+   405→  /** 0-based inclusive index of the first slide in this chunk. */
+   406→  slideStart: number
+   407→  /** 0-based inclusive index of the last slide in this chunk. */
+   408→  slideEnd: number
+   409→  slideTotal: number
+   410→  audience?: string
+   411→  tone?: string
+   412→  verbosity?: 'concise' | 'standard' | 'text-heavy'
+   413→  /** true for the first chunk — it also carries the deck's <style> block(s). */
+   414→  isFirst: boolean
+   415→}
+   416→
+   417→export function buildScratchSystemPrompt(params: ScratchPromptParams): string {
+   418→  const aud = params.audience?.trim() || 'general business audience'
+   419→  const tn = params.tone?.trim() || 'professional, confident, clear'
+   420→  const vb = params.verbosity || 'standard'
+   421→  const wordCount = vb === 'concise' ? 20 : vb === 'text-heavy' ? 60 : 40
+   422→  const count = params.slideEnd - params.slideStart + 1
+   423→
+   424→  const engineContract = params.engine === 'reveal'
+   425→    ? `# ENGINE CONTRACT (reveal.js — vendored runtime at /revealjs/)
+   426→- The assembler builds the full HTML document. You output ONLY slide <section> elements (plus, on the first chunk, ONE <style> block placed before the sections).
+   427→- Each slide is a plain <section>...</section> (NO class="slide", NO <div class="slides"> wrapper — the assembler adds it).
+   428→- NEVER nest <section> inside <section>. One <section> per slide, flat.
+   429→- Speaker notes go inside <aside class="notes">...</aside> within each section.
+   430→- You MAY use reveal.js fragment syntax (<p class="fragment">) and data-background attributes.
+   431→- In your <style> block define scoped helper classes used by sections: .kicker, .lede, .grid-2, .grid-3, .grid-4, .card, .big-number, .big-label, .pill, .quote, .quote-attr, .timeline, .timeline-item, .bullets — style them against reveal's CSS variables (--r-background-color, --r-main-color, --r-heading-color, --r-link-color) and your own var(--accent).
+   432→- On the FIRST chunk only, the very first line of your output must be a theme declaration comment:
+   433→<!-- reveal-theme: NAME -->  where NAME is exactly one of: ${REVEAL_THEMES.join(', ')}.
+   434→Pick the theme whose mood best fits the brief. The assembler wires /revealjs/dist/theme/NAME.css.`
+   435→    : `# ENGINE CONTRACT (plain hand-rolled deck)
+   436→- The assembler builds the full HTML document, the .deck wrapper, progress bar, slide counter and the keyboard-nav runtime. You output ONLY slide <section> elements (plus, on the first chunk, the deck's CSS in ONE <style> block placed before the sections).
+   437→- Each slide is <section class="slide" data-title="Short title">...</section> (data-title REQUIRED; do NOT add is-active — the assembler patches the first slide).
+   438→- NEVER nest <section> inside <section>. One <section> per slide, flat.
+   439→- Speaker notes go inside <div class="notes">...</div> within each slide (hidden by default).
+   440→- Your <style> block (first chunk) must define the complete design system:
+   441→  1. Google Fonts if needed: <link rel="stylesheet" href="https://fonts.googleapis.com/..." crossorigin="anonymous"> in the head (never @import).
+   442→  2. :root tokens — --bg, --surface, --text-1, --text-2, --accent, --border, spacing scale.
+   443→  3. Base reset + .deck/.slide primitives: .deck fills the viewport, exactly one .slide visible (.slide { display:none } .slide.is-active { display:flex } — the runtime toggles .is-active), each .slide a full-viewport flex container with generous (>=64px) padding.
+   444→  4. A shared class vocabulary used across ALL slides: .kicker, .h1, .h2, .h3, .lede, .card, .pill, .grid.g2/.g3/.g4, .stack, .big-number, .big-label, .quote, .timeline-item, .delta.up/.down.
+   445→  5. Chrome styles for .progress-bar (fixed bottom bar; its > span is the fill) and .slide-counter (fixed corner, mono, small).
+   446→  6. @media (prefers-reduced-motion: reduce) disabling animation.
+   447→- Later chunks may add ONE extra small <style> block ONLY for slide-specific styles introduced by their slides (rare).`
+   448→
+   449→  return `You are an expert presentation designer and frontend engineer. You are generating a presentation deck from scratch as HTML — no template, your own hand-rolled CSS.
+   450→
+   451→# IDENTITY
+   452→- You write production-quality HTML/CSS by hand. No frameworks, no build steps.
+   453→- You think in design tokens (CSS variables), a 4pt spacing scale, and Duarte-style narrative arcs.
+   454→
+   455→# TASK
+   456→Generate the slide elements for slides ${params.slideStart + 1}–${params.slideEnd + 1} of ${params.slideTotal} of the deck "${params.deckTitle}".
+   457→${params.isFirst ? 'This is the FIRST chunk: also output the deck-wide <style> block(s) described below.' : 'A previous chunk already defined the deck-wide styles — do NOT redefine the design system.'}
+   458→The slide specs (title, layout, content markdown, speaker notes) arrive in the user message. Honor them in order — one slide element per spec, same order.
+   459→
+   460→# CONTEXT
+   461→- Audience: ${aud}
+   462→- Tone: ${tn}
+   463→- Verbosity: ${vb} (~${wordCount} words of visible text per slide)
+   464→
+   465→${engineContract}
+   466→
+   467→# LAYOUT GUIDANCE (per layout keyword)
+   468→${Object.entries(LAYOUT_GUIDANCE).map(([k, v]) => `- ${k}: ${v}`).join('\n')}
+   469→
+   470→# QUALITY FLOORS
+   471→${FLOORS}
+   472→
+   473→# MOTION RULES
+   474→${MOTION_RULES}
+   475→
+   476→# ABSOLUTE BANS
+   477→${BANS}
+   478→
+   479→# OUTPUT FORMAT
+   480→- Output ONLY ${params.isFirst ? 'the <style> block(s) followed by ' : ''}${count} <section> element(s) — no <!DOCTYPE>, no <html>, no <head>, no <body>, no <script>, no markdown fences, no explanation.
+   481→${params.engine === 'reveal' && params.isFirst ? '- First line: the <!-- reveal-theme: NAME --> comment. Then the <style> block. Then the sections.\n' : ''}- Keep every slide visually consistent — same tokens, same spacing, same type scale.`
+   482→}
+   483→
+   484→export interface ScratchChunkParams extends ScratchPromptParams {
+   485→  slides: SlideOutline[]
+   486→}
+   487→
+   488→export function buildScratchUserPrompt(params: ScratchChunkParams): string {
+   489→  const specs = params.slides.map((s, i) => {
+   490→    const n = params.slideStart + i + 1
+   491→    return `## Slide ${n} of ${params.slideTotal}
+   492→Title: ${s.title}
+   493→Layout: ${s.layout}
+   494→Layout guidance: ${LAYOUT_GUIDANCE[s.layout] ?? ''}
+   495→Content (markdown):
+   496→${s.content_markdown}
+   497→Speaker notes:
+   498→${s.speaker_notes}`
+   499→  })
+   500→  return `${params.isFirst ? 'Start with the theme comment / <style> block(s), then' : 'Output'} the slide element${params.slides.length > 1 ? 's' : ''} for:
+   501→
+   502→${specs.join('\n\n')}
+   503→
+   504→Output the slide element${params.slides.length > 1 ? 's' : ''} now.`
+   505→}
+   506→
+   507→// ---------------------------------------------------------------------------
+   508→// HTML fence stripper (ported from decksmith generate-slide route)
+   509→// ---------------------------------------------------------------------------
+   510→
+   511→/**
+   512→ * Strips markdown fences / preamble and returns just the slide element
+   513→ * (<section ...>, <div class="step"...> or <div class="slide"...>).
+   514→ */
+   515→export function extractHtml(raw: string): string {
+   516→  let out = raw.trim()
+   517→  const fenceMatch = out.match(/```(?:html|HTML)?\s*\n?([\s\S]*?)\n?```/)
+   518→  if (fenceMatch) out = fenceMatch[1].trim()
+   519→  const startIdx = out.search(/<section|<div class="step"|<div class="slide"/i)
+   520→  if (startIdx >= 0) out = out.slice(startIdx)
+   521→  if (out.startsWith('<section')) {
+   522→    const endIdx = out.lastIndexOf('</section>')
+   523→    if (endIdx >= 0) out = out.slice(0, endIdx + '</section>'.length)
+   524→  } else if (out.startsWith('<div class="step')) {
+   525→    const endIdx = out.lastIndexOf('</div>')
+   526→    if (endIdx >= 0) out = out.slice(0, endIdx + '</div>'.length)
+   527→  }
+   528→  return out.trim()
+   529→}
+   530→
+   531→// ---------------------------------------------------------------------------
+   532→// Text helpers
+   533→// ---------------------------------------------------------------------------
+   534→
+   535→/**
+   536→ * Sanitizer for AI text where line breaks matter (markdown bodies):
+   537→ * strips tags + control chars but preserves newlines (unlike helpers.sanitizeText).
+   538→ */
+   539→export function sanitizeMarkdownText(input: unknown, maxLen = 2000): string {
+   540→  if (input == null) return ''
+   541→  return String(input)
+   542→    .replace(/<[^>]*>/g, '')
+   543→    .replace(/\r\n?/g, '\n')
+   544→    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '')
+   545→    .replace(/[ \t]+\n/g, '\n')
+   546→    .replace(/\n{3,}/g, '\n\n')
+   547→    .trim()
+   548→    .slice(0, maxLen)
+   549→}
+   550→

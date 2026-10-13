@@ -735,3 +735,26 @@ Stage Summary:
 - "Continue" path documented: edit PitchDeck.tsx / conversation.ts, swap AUDIO_SRC + retimed TURNS for a new recording, re-run exports/inline-pitch.ts to refresh the standalone.
 - Impeccable answer: context layer (PRODUCT/DESIGN.md) + detector applied (clean); a full dual-agent critique round remains available on request; 3 optional contrast/pattern fixes queued in README.
 - Open: TestSprite cloud wave still waiting on the user's TESTSPRITE_API_KEY (5 pre-verified tests).
+
+---
+Task ID: DF-1
+Agent: main-agent (generate the pitch presentation through DeckForge itself, export as HTML)
+Task: User asked to "generate a presentation using the app deckforge" from the pitch details and "export the ppt in html". Deliver the pitch as a DeckForge-generated HTML deck, exported as a standalone HTML file.
+
+Work Log:
+- Mapped the app's own generation pipeline first: HtmlDeck model, /api/htmlgen/scratch (SSE, AI writes slide sections in ≤3 chunks, assembleScratchDeck wraps them), /api/htmldecks/:id/raw export path, prompt contract (DeckOutlineJson: title/layout from OUTLINE_LAYOUTS/content_markdown/speaker_notes; plain engine = fully inline runtime, zero external deps — chosen over reveal engine which references /revealjs/ assets that break a single-file export).
+- Built the outline from exports/voice-agent-pitch/pitch-script.md (VP-2 package): 10 slides mapped to app layouts (title/problem/solution/two-column/timeline/feature-grid/comparison/metrics/cta×2), all copy taken verbatim from the pitch script incl. real transcript quotes from conversation-timings.json. tmp/pitch-outline.json (+ wrapped {outline, mode:'plain'}).
+- First curl returned 400 — endpoint expects {outline, mode}, not the bare outline; wrapped and retried. POST /api/htmlgen/scratch → all 10 slide events → complete → deckId cmv72s0780001ohu3w3lfe86s, saved via Prisma (55 s, guest-owned so visible in the public library).
+- Exported GET /api/htmldecks/:id/raw → exports/voice-agent-pitch/deckforge-pitch.html (single self-contained file, ~21 KB).
+- BUG 1 (app-level, fixed at the root): scratch-plain assembler never injected the .notes hide rule — the AI's style block didn't always include one, so SPEAKER NOTES RENDERED ON EVERY SLIDE. Fixed src/lib/htmlgen/assemble.ts assembleScratchDeck(): plain branch now injects <style>.notes{display:none!important}</style> unless the deck already declares a .notes rule (mirrors the template-mode assembler's notesHideStyle). Patched the stored deck's html with the identical deterministic rule (no AI re-spend), re-exported. Verified notes display:none in browser.
+- BUG 2 (generated artifact, bounded patch): slide 4 (the proof/two-column) overflowed the viewport by 335 px — the AI's flex two-column (both flex:1) got squeezed by an unbreakable <code> line in the right column. Patched the deck markup deterministically via tmp/patch-deck-slide4.ts (idempotent, updates BOTH the DB row and the export file so they never diverge): compact Layla/Robert chat rows with .who labels (6 short turns incl. real quotes), forced CSS grid 1.15fr/1fr, scoped type-scale overrides, overflow guards. Learned: overflow:hidden on .grid makes scrollHeight checks lie — verified clipping via getBoundingClientRect of last row vs card bottom instead.
+- BUG 3 (generated artifact, bounded patch): slide 7 (stack table) lost its title and rendered the markdown table as stacked centered text. Patched to a real 3-column Layer|Picks|Why grid table (7 rows) + strategy lede + slide title. All patches idempotent (regex + marker checks).
+- Verification (agent-browser, screenshots in /tmp/df-a/): standalone file on :8124 — slide 1 title + counter 1/10; ArrowRight/End/Home nav OK; per-slide overflow sweep all ok (desktop); 390×844 sweep: zero horizontal overflow on all 10 slides; slide 4 chat transcript + tool trace + booked card all visible; slide 7 table clean. In-app: /decks → HTML template decks shows the card ("One AI Employee. Every Channel." · PLAIN HTML · SCRATCH · just now); /api/htmldecks/:id/raw serves the deck with working counter. Dev server got reaped between Bash calls mid-task — relaunched detached (probe-and-relaunch pattern) until the platform supervisor took over again; note: sandbox now reaps detached dev servers between calls, bundle server-dependent work into single calls.
+- Lint: src clean (only pre-existing findings from the vendored chunks inside exports/voice-agent-pitch/standalone/, untouched).
+- docs: exports/voice-agent-pitch/README.md file-map row added for deckforge-pitch.html (what it is, how it was made, how to re-patch).
+
+Stage Summary:
+- The pitch now exists as a DeckForge-generated HTML presentation: in-app library card (guest-visible), raw serve path, and a single-file export at exports/voice-agent-pitch/deckforge-pitch.html that presents anywhere (arrows/space navigate, notes hidden, no external dependencies).
+- App improvement shipped: scratch-plain decks can no longer leak speaker notes (assembler now guarantees the hide rule).
+- Reuse: tmp/patch-deck-slide4.ts re-applies the slide-4/7 layout patches to DB + export idempotently; tmp/pitch-outline.json is the editable source outline (regenerate via POST /api/htmlgen/scratch {outline, mode:'plain'}).
+- Open: TestSprite cloud wave still waiting on the user's TESTSPRITE_API_KEY; user's TESTSPRITE tasks unchanged.
