@@ -10,10 +10,10 @@ export const metadata: Metadata = {
 
 export default function DemoPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-[color:var(--stg-cream)]">
+    <div className="ps-scope flex min-h-screen flex-col bg-[color:var(--stg-cream)]">
       <header className="flex h-12 shrink-0 items-center gap-3 border-b-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-ink)] px-4 text-[color:var(--stg-cream)] sm:px-6">
         <Link href="/pitch" className="stg-label text-[9px] text-white/60 transition-colors hover:text-white">← BACK TO THE PITCH</Link>
-        <span className="stg-label text-[9px] text-[color:var(--stg-yellow)]">LIVE DEMO · THE VOICE AGENT PLATFORM</span>
+        <span className="stg-label text-[9px] text-[color:var(--ps-link-dark)]">LIVE DEMO · THE VOICE AGENT PLATFORM</span>
         <span className="stg-label ml-auto hidden text-[8px] text-white/40 sm:block">SIMULATED UI · REAL RECORDED VOICE · ILLUSTRATIVE DATA</span>
       </header>
       <main className="flex min-h-0 flex-1 flex-col px-4 py-5 sm:px-8">
@@ -32,7 +32,7 @@ export default function DemoPage() {
       </main>
       <footer className="mt-auto border-t-2 border-[color:var(--stg-yellow)] bg-[color:var(--stg-ink)] px-4 py-3 text-center text-[color:var(--stg-cream)] sm:px-6">
         <p className="stg-label text-[8px] text-white/50">
-          VOICE AGENT PLATFORM · CONCEPT DEMO · BUILT WITH DECKFORGE AI — <Link href="/create" className="text-[color:var(--stg-yellow)] hover:underline">MAKE YOUR OWN PITCH</Link>
+          VOICE AGENT PLATFORM · CONCEPT DEMO · BUILT WITH DECKFORGE AI — <Link href="/create" className="text-[color:var(--ps-link-dark)] hover:underline">MAKE YOUR OWN PITCH</Link>
         </p>
       </footer>
     </div>

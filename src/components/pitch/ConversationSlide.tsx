@@ -5,7 +5,7 @@
  * "having a conversation": the real recorded call plays, speech bubbles
  * appear in sync (timeline computed from the ASR transcript + silence-aligned
  * cut math), avatars animate while their side talks, and tool moments pop
- * as action chips.
+ * as action chips. PlayStation palette via the .ps-scope token remap.
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -20,63 +20,59 @@ const ACTION_ICONS = [CheckCheck, UserPlus, CalendarSearch, CalendarCheck, Mail,
 
 /* ---------------------------------- avatars ---------------------------------- */
 
-function RobotAvatar({ talking, active }: { talking: boolean; active: boolean }) {
+/**
+ * Photo avatars (user-supplied): Robert = big.jpg, Layla = OIP-….jpg.
+ * Equal circular area + 2px ink border; while that side SPEAKS the ring
+ * fills with PS Blue (#0070d1) and a soft blue halo appears.
+ */
+function Avatar({
+  src, name, caption, talking, active, position = 'center', side = 'left',
+}: {
+  src: string; name: string; caption: string; talking: boolean; active: boolean; position?: string; side?: 'left' | 'right';
+}) {
   return (
     <motion.div
       animate={talking ? { y: [0, -3, 0] } : { y: 0 }}
       transition={talking ? { repeat: Infinity, duration: 0.5, ease: 'easeInOut' } : {}}
-      className={cn(
-        'relative grid h-16 w-16 place-items-center rounded-2xl border-2 transition-colors sm:h-20 sm:w-20',
-        active ? 'border-[color:var(--stg-yellow)] bg-[color:var(--stg-ink)] shadow-[4px_4px_0_0_var(--stg-yellow)]' : 'border-[color:var(--stg-ink)]/25 bg-[color:var(--stg-ink)]/5',
-      )}
-      aria-label="Layla — the AI receptionist"
+      className="relative flex flex-col items-center"
+      aria-label={`${name} — ${caption}`}
     >
-      <svg viewBox="0 0 64 64" className="h-10 w-10 sm:h-12 sm:w-12" role="img" aria-hidden>
-        <line x1="32" y1="4" x2="32" y2="12" stroke="currentColor" strokeWidth="2.5" className={active ? 'text-[color:var(--stg-yellow)]' : 'text-[color:var(--stg-ink)]/40'} />
-        <circle cx="32" cy="4" r="3" fill="currentColor" className={cn('text-[color:var(--stg-yellow)]', talking && 'animate-pulse')} />
-        <rect x="12" y="12" width="40" height="34" rx="10" className={active ? 'fill-[color:var(--stg-ink)]' : 'fill-[color:var(--stg-ink)]/25'} />
-        <circle cx="24" cy="26" r="3.4" className="fill-[color:var(--stg-cream)] stg-blink" />
-        <circle cx="40" cy="26" r="3.4" className="fill-[color:var(--stg-cream)] stg-blink" />
-        {/* speaker-grill mouth — bars bounce while talking */}
-        <g className={active ? 'text-[color:var(--stg-yellow)]' : 'text-[color:var(--stg-cream)]/50'}>
-          {[24, 29, 34, 39].map((x, i) => (
-            <rect key={x} x={x - 1.4} y={30} width="2.8" height="8" rx="1.4" fill="currentColor"
-              className={talking ? undefined : 'opacity-60'}
-              style={talking ? { transformOrigin: `${x}px 34px`, animation: `stg-mouth 0.42s ease-in-out ${i * 0.09}s infinite alternate` } : undefined}
-            />
-          ))}
-        </g>
-      </svg>
-      <span className="stg-label absolute -bottom-5 text-[8px] text-[color:var(--stg-ink)]/60">LAYLA · AI</span>
+      {/* the ring around the photo — fills PS Blue while this avatar speaks */}
+      <div
+        className={cn(
+          'grid h-16 w-16 place-items-center rounded-full p-[3px] transition-all duration-300 sm:h-20 sm:w-20',
+          active
+            ? 'bg-[color:var(--stg-yellow)] shadow-[0_0_0_4px_rgba(0,112,209,0.25),0_0_18px_rgba(0,112,209,0.45)]'
+            : 'bg-[color:var(--stg-ink)]/10',
+        )}
+      >
+        <img
+          src={src}
+          alt=""
+          className="h-full w-full select-none rounded-full border-2 border-[color:var(--stg-ink)] bg-white object-cover"
+          style={{ objectPosition: position }}
+          draggable={false}
+        />
+      </div>
+      <span
+        className={cn(
+          'stg-label absolute -bottom-5 whitespace-nowrap text-[8px] transition-colors',
+          side === 'right' ? 'right-0' : 'left-0',
+          active ? 'text-[color:var(--stg-yellow-deep)]' : 'text-[color:var(--stg-ink)]/60',
+        )}
+      >
+        {name} · {caption}
+      </span>
     </motion.div>
   );
 }
 
+function RobotAvatar({ talking, active }: { talking: boolean; active: boolean }) {
+  return <Avatar src="/avatars/ai-layla.jpg" name="LAYLA" caption="AI" talking={talking} active={active} position="center top" side="right" />;
+}
+
 function HumanAvatar({ talking, active }: { talking: boolean; active: boolean }) {
-  return (
-    <motion.div
-      animate={talking ? { y: [0, -2.5, 0] } : { y: 0 }}
-      transition={talking ? { repeat: Infinity, duration: 0.55, ease: 'easeInOut' } : {}}
-      className={cn(
-        'relative grid h-16 w-16 place-items-center rounded-2xl border-2 bg-white transition-colors sm:h-20 sm:w-20',
-        active ? 'border-[color:var(--stg-ink)] shadow-[4px_4px_0_0_var(--stg-ink)]' : 'border-[color:var(--stg-ink)]/25',
-      )}
-      aria-label="Robert — the caller"
-    >
-      <svg viewBox="0 0 64 64" className="h-10 w-10 sm:h-12 sm:w-12" role="img" aria-hidden>
-        <circle cx="32" cy="26" r="14" className="fill-[#f2c9a4]" />
-        <path d="M18 24c0-8 6-13 14-13s14 5 14 13c0 2-1 3-1 3 0-6-5-9-13-9s-13 3-13 9c0 0-1-1-1-3z" className="fill-[color:var(--stg-ink)]" />
-        <circle cx="26" cy="26" r="1.8" className="fill-[color:var(--stg-ink)]" />
-        <circle cx="38" cy="26" r="1.8" className="fill-[color:var(--stg-ink)]" />
-        {/* mouth scales while talking */}
-        <ellipse cx="32" cy="33" rx="5" ry={talking ? 3.4 : 1.2} className="fill-[color:var(--stg-ink)]"
-          style={talking ? { transformOrigin: '32px 33px', animation: 'stg-talk 0.38s ease-in-out infinite alternate' } : undefined}
-        />
-        <path d="M14 60c2-10 9-15 18-15s16 5 18 15z" className="fill-[color:var(--stg-yellow)]" />
-      </svg>
-      <span className="stg-label absolute -bottom-5 text-[8px] text-[color:var(--stg-ink)]/60">ROBERT · CALLER</span>
-    </motion.div>
-  );
+  return <Avatar src="/avatars/human-robert.jpg" name="ROBERT" caption="CALLER" talking={talking} active={active} position="center 28%" />;
 }
 
 /* --------------------------------- the slide --------------------------------- */
@@ -186,7 +182,7 @@ export function ConversationSlide() {
                         : 'border-[color:var(--stg-ink)]/30 bg-white text-[color:var(--stg-ink)]',
                       isCurrent && (mine ? 'shadow-[4px_4px_0_0_var(--stg-yellow)]' : 'shadow-[4px_4px_0_0_var(--stg-ink)]'),
                     )}>
-                      <span className={cn('stg-label mr-2 text-[8px]', mine ? 'text-[color:var(--stg-yellow)]' : 'text-[color:var(--stg-ink)]/50')}>
+                      <span className={cn('stg-label mr-2 text-[8px]', mine ? 'text-[color:var(--ps-link-dark)]' : 'text-[color:var(--stg-ink)]/50')}>
                         {mine ? 'LAYLA' : 'ROBERT'}
                       </span>
                       {turn.text}
@@ -222,8 +218,8 @@ export function ConversationSlide() {
           <AnimatePresence>
             {ended && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-2 rounded-lg border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-yellow)] p-2.5">
-                <p className="stg-label text-[9px]">OUTCOME</p>
-                <p className="mt-0.5 text-[11px] font-semibold leading-tight text-[color:var(--stg-ink)]">✅ Appointment booked — Dr. Pegel · tomorrow 8:00 AM · email + SMS sent</p>
+                <p className="stg-label text-[9px] text-white/80">OUTCOME</p>
+                <p className="mt-0.5 text-[11px] font-semibold leading-tight text-white">✅ Appointment booked — Dr. Pegel · tomorrow 8:00 AM · email + SMS sent</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -235,7 +231,7 @@ export function ConversationSlide() {
         <button
           onClick={toggle}
           aria-label={playing ? 'Pause the call' : 'Play the call'}
-          className="stg-label inline-flex h-11 min-w-[112px] items-center justify-center gap-2 border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-yellow)] px-4 text-[10px] text-[color:var(--stg-ink)] shadow-[4px_4px_0_0_var(--stg-ink)] transition-transform hover:-translate-y-0.5 active:translate-y-0"
+          className="stg-label inline-flex h-11 min-w-[112px] items-center justify-center gap-2 border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-yellow)] px-4 text-[10px] text-white shadow-[4px_4px_0_0_var(--stg-ink)] transition-transform hover:-translate-y-0.5 active:translate-y-0"
         >
           {playing ? <Pause className="h-4 w-4" aria-hidden /> : <Play className="h-4 w-4" aria-hidden />}
           {playing ? 'PAUSE' : ended ? 'REPLAY' : t > 0 ? 'RESUME' : 'PLAY THE CALL'}
@@ -247,7 +243,7 @@ export function ConversationSlide() {
           onClick={() => { const a = audioRef.current; if (!a) return; a.playbackRate = fast ? 1 : 1.5; setFast(!fast); }}
           aria-pressed={fast} aria-label="Toggle 1.5x speed"
           className={cn('stg-label inline-flex h-11 items-center gap-1.5 border-2 px-3 text-[10px] transition-colors',
-            fast ? 'border-[color:var(--stg-ink)] bg-[color:var(--stg-ink)] text-[color:var(--stg-yellow)]' : 'border-[color:var(--stg-ink)]/30 bg-white text-[color:var(--stg-ink)]/70 hover:border-[color:var(--stg-ink)]')}
+            fast ? 'border-[color:var(--stg-ink)] bg-[color:var(--stg-ink)] text-[color:var(--ps-link-dark)]' : 'border-[color:var(--stg-ink)]/30 bg-white text-[color:var(--stg-ink)]/70 hover:border-[color:var(--stg-ink)]')}
         >
           <Gauge className="h-4 w-4" aria-hidden /> 1.5×
         </button>

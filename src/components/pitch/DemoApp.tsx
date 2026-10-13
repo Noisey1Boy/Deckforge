@@ -10,7 +10,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Bot, CalendarCheck, CalendarSearch, CheckCheck, FileText, Globe, Mail, MessageSquare,
+  CalendarCheck, CalendarSearch, CheckCheck, FileText, Globe, Mail, MessageSquare,
   Phone, PhoneCall, PhoneOff, RotateCcw, Send, TerminalSquare, UserPlus,
 } from 'lucide-react';
 import { ACTIONS, AUDIO_SRC, TURNS, actionIndexAt, turnIndexAt } from '@/data/pitch/conversation';
@@ -97,7 +97,7 @@ export function DemoApp({ compact = false }: { compact?: boolean }) {
       {/* ============ the console "device" ============ */}
       <div className="flex flex-col overflow-hidden rounded-xl border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-ink)] text-[color:var(--stg-cream)] shadow-[6px_6px_0_0_var(--stg-yellow)]">
         <div className="flex items-center gap-2 border-b-2 border-white/10 px-3 py-2">
-          <ChannelIcon className="h-3.5 w-3.5 text-[color:var(--stg-yellow)]" aria-hidden />
+          <ChannelIcon className="h-3.5 w-3.5 text-[color:var(--ps-link-dark)]" aria-hidden />
           <span className="stg-label text-[9px]">{CHANNELS.find((c) => c.id === channel)?.label.toUpperCase()} · DOWNTOWN DENTIST</span>
           <span className={cn('stg-label ml-auto flex items-center gap-1 text-[8px]', phase === 'live' ? 'text-emerald-400' : 'text-white/40')}>
             <span className={cn('h-1.5 w-1.5 rounded-full', phase === 'live' ? 'animate-pulse bg-emerald-400' : 'bg-white/30')} aria-hidden />
@@ -110,7 +110,7 @@ export function DemoApp({ compact = false }: { compact?: boolean }) {
           {CHANNELS.map((c) => (
             <button key={c.id} role="tab" aria-selected={channel === c.id} onClick={() => setChannel(c.id)}
               className={cn('stg-label flex items-center gap-1 rounded px-2 py-1.5 text-[8px] transition-colors',
-                channel === c.id ? 'bg-[color:var(--stg-yellow)] text-[color:var(--stg-ink)]' : 'text-white/50 hover:text-white')}>
+                channel === c.id ? 'bg-[color:var(--stg-yellow)] text-white' : 'text-white/50 hover:text-white')}>
               <c.icon className="h-3 w-3" aria-hidden /> {c.label}
             </button>
           ))}
@@ -120,15 +120,15 @@ export function DemoApp({ compact = false }: { compact?: boolean }) {
         <div className="relative min-h-[300px] flex-1 bg-[color:var(--stg-cream)] p-3 text-[color:var(--stg-ink)] sm:min-h-[340px]">
           {phase === 'idle' && (
             <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
-              <div className="grid h-20 w-20 place-items-center rounded-full border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-ink)] text-[color:var(--stg-yellow)]">
-                <Bot className="h-10 w-10" aria-hidden />
+              <div className="grid h-20 w-20 place-items-center rounded-full border-2 border-[color:var(--stg-ink)] bg-white p-1">
+                <img src="/avatars/ai-layla.jpg" alt="Layla — the AI receptionist" className="h-full w-full rounded-full object-cover object-top" draggable={false} />
               </div>
               <div>
                 <p className="stg-display text-lg uppercase">Layla</p>
                 <p className="stg-label mt-1 text-[9px] text-[color:var(--stg-ink)]/55">AI RECEPTIONIST · ANSWERS IN ~700 MS</p>
               </div>
               <button onClick={call} data-testid="demo-call"
-                className="stg-label inline-flex h-12 items-center gap-2 rounded-full border-2 border-[color:var(--stg-ink)] bg-emerald-500 px-6 text-[11px] text-white shadow-[4px_4px_0_0_var(--stg-ink)] transition-transform hover:-translate-y-0.5">
+                className="stg-label inline-flex h-12 items-center gap-2 rounded-full border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-yellow)] px-6 text-[11px] text-white shadow-[4px_4px_0_0_var(--stg-ink)] transition-transform hover:-translate-y-0.5">
                 <PhoneCall className="h-4 w-4" aria-hidden /> CALL LAYLA
               </button>
               <p className="stg-label text-[8px] text-[color:var(--stg-ink)]/40">SIMULATED UI · REAL RECORDED VOICE</p>
@@ -140,8 +140,8 @@ export function DemoApp({ compact = false }: { compact?: boolean }) {
               <div className="relative grid h-20 w-20 place-items-center">
                 <span className="absolute inset-0 animate-ping rounded-full border-2 border-[color:var(--stg-ink)]/40" aria-hidden />
                 <span className="absolute inset-0 animate-ping rounded-full border-2 border-[color:var(--stg-ink)]/25 [animation-delay:0.4s]" aria-hidden />
-                <div className="grid h-16 w-16 place-items-center rounded-full border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-yellow)]">
-                  <PhoneCall className="h-7 w-7 animate-bounce text-[color:var(--stg-ink)]" aria-hidden />
+                <div className="grid h-16 w-16 place-items-center rounded-full border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-yellow)] text-white">
+                  <PhoneCall className="h-7 w-7 animate-bounce" aria-hidden />
                 </div>
               </div>
               <p className="stg-label text-[10px] text-[color:var(--stg-ink)]/60">CONNECTING TO LAYLA…</p>
@@ -160,6 +160,7 @@ export function DemoApp({ compact = false }: { compact?: boolean }) {
                       <div className={cn('max-w-[88%] rounded-xl border-2 px-2.5 py-1.5 text-[11px] leading-snug',
                         mine ? 'border-[color:var(--stg-ink)] bg-[color:var(--stg-ink)] text-[color:var(--stg-cream)]' : 'border-[color:var(--stg-ink)]/25 bg-white',
                         isCurrent && (mine ? 'shadow-[3px_3px_0_0_var(--stg-yellow)]' : 'shadow-[3px_3px_0_0_var(--stg-ink)]'))}>
+                        <span className={cn('stg-label mr-2 text-[8px]', mine ? 'text-[color:var(--ps-link-dark)]' : 'text-[color:var(--stg-ink)]/50')}>{mine ? 'LAYLA' : 'YOU'}</span>
                         {turn.text}
                       </div>
                     </motion.div>
@@ -192,7 +193,7 @@ export function DemoApp({ compact = false }: { compact?: boolean }) {
                 <p className="stg-display mt-1 text-base uppercase leading-tight">Dr. Pegel · Tomorrow 8:00 AM</p>
                 <p className="mt-1 text-[11px] text-[color:var(--stg-ink)]/70"> robertjohn123@yahoo.com · full checkup + toothache · 1 hour</p>
               </div>
-              <button onClick={call} className="stg-label inline-flex h-10 items-center gap-2 border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-yellow)] px-4 text-[10px] shadow-[3px_3px_0_0_var(--stg-ink)] transition-transform hover:-translate-y-0.5">
+              <button onClick={call} className="stg-label inline-flex h-10 items-center gap-2 border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-yellow)] px-4 text-[10px] text-white shadow-[3px_3px_0_0_var(--stg-ink)] transition-transform hover:-translate-y-0.5">
                 <RotateCcw className="h-3.5 w-3.5" aria-hidden /> RUN THE CALL AGAIN
               </button>
             </div>
@@ -206,7 +207,7 @@ export function DemoApp({ compact = false }: { compact?: boolean }) {
           {([['trace', 'AGENT TRACE', TerminalSquare], ['tools', 'TOOL PLAYGROUND', FileText], ['dashboard', 'DASHBOARD', Globe]] as const).map(([id, label, Icon]) => (
             <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
               className={cn('stg-label inline-flex items-center gap-1.5 border-2 px-2.5 py-2 text-[9px] transition-colors',
-                tab === id ? 'border-[color:var(--stg-ink)] bg-[color:var(--stg-ink)] text-[color:var(--stg-yellow)]' : 'border-transparent text-[color:var(--stg-ink)]/55 hover:text-[color:var(--stg-ink)]')}>
+                tab === id ? 'border-[color:var(--stg-ink)] bg-[color:var(--stg-ink)] text-[color:var(--ps-link-dark)]' : 'border-transparent text-[color:var(--stg-ink)]/55 hover:text-[color:var(--stg-ink)]')}>
               <Icon className="h-3.5 w-3.5" aria-hidden /> {label}
             </button>
           ))}
