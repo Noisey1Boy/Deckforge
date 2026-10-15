@@ -5,7 +5,9 @@
  * "having a conversation": the real recorded call plays, speech bubbles
  * appear in sync (timeline computed from the ASR transcript + silence-aligned
  * cut math), avatars animate while their side talks, and tool moments pop
- * as action chips. PlayStation palette via the .ps-scope token remap.
+ * as action chips. Playback goes through the hardened use-pitch-audio hook
+ * (fail-loud status chips, seekable slider, pitch-preserving 1.5×).
+ * PlayStation palette via the .ps-scope token remap.
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -14,6 +16,7 @@ import { CalendarCheck, CalendarSearch, CheckCheck, Gauge, Mail, MessageSquare, 
 import {
   ACTIONS, AUDIO_SRC, CUT_DURATION, TURNS, actionIndexAt, turnIndexAt, type Speaker,
 } from '@/data/pitch/conversation';
+import { usePitchAudio } from '@/hooks/use-pitch-audio';
 import { cn } from '@/lib/utils';
 
 const ACTION_ICONS = [CheckCheck, UserPlus, CalendarSearch, CalendarCheck, Mail, MessageSquare];
@@ -23,7 +26,8 @@ const ACTION_ICONS = [CheckCheck, UserPlus, CalendarSearch, CalendarCheck, Mail,
 /**
  * Photo avatars (user-supplied): Robert = big.jpg, Layla = OIP-….jpg.
  * Equal circular area + 2px ink border; while that side SPEAKS the ring
- * fills with PS Blue (#0070d1) and a soft blue halo appears.
+ * fills with PS Blue (#0070d1) and a soft blue halo appears. Labels sit on
+ * cream chips so they stay readable over the blue speaking halo.
  */
 function Avatar({
   src, name, caption, talking, active, position = 'center', side = 'left',
@@ -56,7 +60,7 @@ function Avatar({
       </div>
       <span
         className={cn(
-          'stg-label absolute -bottom-5 whitespace-nowrap text-[8px] transition-colors',
+          'stg-label absolute -bottom-6 z-10 whitespace-nowrap rounded bg-[color:var(--stg-cream)] px-1.5 py-px text-[8px] transition-colors',
           side === 'right' ? 'right-0' : 'left-0',
           active ? 'text-[color:var(--stg-yellow-deep)]' : 'text-[color:var(--stg-ink)]/60',
         )}
@@ -75,29 +79,52 @@ function HumanAvatar({ talking, active }: { talking: boolean; active: boolean })
   return <Avatar src="/avatars/human-robert.jpg" name="ROBERT" caption="CALLER" talking={talking} active={active} position="center 28%" />;
 }
 
+/* ------------------------- status chip (loading/error) ------------------------ */
+
+function StatusChip({
+  tone, children, onRetry, onTranscript,
+}: {
+  tone: 'loading' | 'transcript' | 'error';
+  children: React.ReactNode;
+  onRetry?: () => void;
+  onTranscript?: () => void;
+}) {
+  return (
+    <span
+      role="status"
+      className={cn(
+        'stg-label inline-flex items-center gap-2 rounded border-2 px-2 py-1 text-[8px]',
+        tone === 'loading' && 'border-[color:var(--stg-ink)]/30 bg-white text-[color:var(--stg-ink)]/60',
+        tone === 'transcript' && 'border-[color:var(--stg-ink)] bg-[color:var(--stg-ink)] text-[color:var(--ps-link-dark)]',
+        tone === 'error' && 'border-[color:var(--ps-warn)] bg-white text-[color:var(--ps-warn)]',
+      )}
+    >
+      {children}
+      {onRetry && (
+        <button onClick={onRetry} className="stg-label rounded border border-current px-1.5 py-px text-[8px] transition-colors hover:bg-[color:var(--stg-ink)] hover:text-white">
+          RETRY
+        </button>
+      )}
+      {onTranscript && (
+        <button onClick={onTranscript} className="stg-label rounded border border-current px-1.5 py-px text-[8px] transition-colors hover:bg-[color:var(--stg-ink)] hover:text-white">
+          RUN TRANSCRIPT MODE
+        </button>
+      )}
+    </span>
+  );
+}
+
 /* --------------------------------- the slide --------------------------------- */
 
 export function ConversationSlide() {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
-  const [t, setT] = useState(0);
-  const [playing, setPlaying] = useState(false);
-  const [fast, setFast] = useState(false);
-  const [ended, setEnded] = useState(false);
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const draggingRef = useRef(false);
 
-  useEffect(() => {
-    let raf = 0;
-    const loop = () => {
-      const a = audioRef.current;
-      if (a) setT(a.currentTime);
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => {
-      cancelAnimationFrame(raf);
-      audioRef.current?.pause();
-    };
-  }, []);
+  const audio = usePitchAudio('/audio/dentist-booking.mp3', CUT_DURATION);
+  const { status, t, duration, rate, error } = audio;
+  const playing = status === 'playing';
+  const ended = status === 'ended';
 
   const idx = turnIndexAt(t);
   const actIdx = actionIndexAt(t);
@@ -108,36 +135,38 @@ export function ConversationSlide() {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
   }, [idx]);
 
-  const toggle = () => {
-    const a = audioRef.current;
-    if (!a) return;
-    if (playing) { a.pause(); setPlaying(false); }
-    else {
-      if (ended) { a.currentTime = 0; setEnded(false); }
-      void a.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
-    }
+  const pct = Math.min(100, (t / (duration || CUT_DURATION)) * 100);
+
+  /* ---- seekable progress track (pointer + keyboard) ---- */
+  const seekFromPointer = (clientX: number) => {
+    const el = trackRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const frac = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    audio.seekTo(frac * (duration || CUT_DURATION));
   };
 
-  const restart = () => {
-    const a = audioRef.current;
-    if (!a) return;
-    a.currentTime = 0; setT(0); setEnded(false);
-    void a.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
-  };
-
-  const pct = Math.min(100, (t / CUT_DURATION) * 100);
+  const fast = rate > 1.05;
+  const toggleRate = () => audio.setRate(fast ? 1 : 1.5);
 
   return (
     <div className="flex h-full flex-col px-4 py-3 sm:px-8" data-testid="conversation-slide">
-      <audio ref={audioRef} src={AUDIO_SRC} preload="auto" onEnded={() => { setPlaying(false); setEnded(true); }} onRateChange={(e) => setFast((e.target as HTMLAudioElement).playbackRate > 1.05)} />
+      <audio {...audio.elementProps} />
 
-      {/* header */}
+      {/* header + status chips */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <p className="stg-label flex items-center gap-2 text-[10px] text-[color:var(--stg-ink)]/60">
           <span className="inline-block h-2 w-2 animate-pulse bg-[color:var(--stg-yellow)]" aria-hidden />
           LIVE RECORDING · DOWNTOWN DENTIST
         </p>
         <p className="stg-label text-[10px] text-[color:var(--stg-ink)]/40">1:50 highlight of the 5:16 real call — not a script</p>
+        {status === 'loading' && <StatusChip tone="loading">LOADING…</StatusChip>}
+        {status === 'transcript' && <StatusChip tone="transcript">TRANSCRIPT MODE</StatusChip>}
+        {status === 'error' && error && (
+          <StatusChip tone="error" onRetry={audio.retry} onTranscript={audio.runTranscript}>
+            {error.kind.toUpperCase()} · {error.message}
+          </StatusChip>
+        )}
       </div>
 
       {/* stage */}
@@ -229,18 +258,18 @@ export function ConversationSlide() {
       {/* controls */}
       <div className="mt-3 flex items-center gap-3">
         <button
-          onClick={toggle}
+          onClick={audio.toggle}
           aria-label={playing ? 'Pause the call' : 'Play the call'}
           className="stg-label inline-flex h-11 min-w-[112px] items-center justify-center gap-2 border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-yellow)] px-4 text-[10px] text-white shadow-[4px_4px_0_0_var(--stg-ink)] transition-transform hover:-translate-y-0.5 active:translate-y-0"
         >
           {playing ? <Pause className="h-4 w-4" aria-hidden /> : <Play className="h-4 w-4" aria-hidden />}
           {playing ? 'PAUSE' : ended ? 'REPLAY' : t > 0 ? 'RESUME' : 'PLAY THE CALL'}
         </button>
-        <button onClick={restart} aria-label="Restart the call" className="grid h-11 w-11 place-items-center border-2 border-[color:var(--stg-ink)]/30 bg-white text-[color:var(--stg-ink)] transition-colors hover:border-[color:var(--stg-ink)]">
+        <button onClick={audio.restart} aria-label="Restart the call" className="grid h-11 w-11 place-items-center border-2 border-[color:var(--stg-ink)]/30 bg-white text-[color:var(--stg-ink)] transition-colors hover:border-[color:var(--stg-ink)]">
           <RotateCcw className="h-4 w-4" aria-hidden />
         </button>
         <button
-          onClick={() => { const a = audioRef.current; if (!a) return; a.playbackRate = fast ? 1 : 1.5; setFast(!fast); }}
+          onClick={toggleRate}
           aria-pressed={fast} aria-label="Toggle 1.5x speed"
           className={cn('stg-label inline-flex h-11 items-center gap-1.5 border-2 px-3 text-[10px] transition-colors',
             fast ? 'border-[color:var(--stg-ink)] bg-[color:var(--stg-ink)] text-[color:var(--ps-link-dark)]' : 'border-[color:var(--stg-ink)]/30 bg-white text-[color:var(--stg-ink)]/70 hover:border-[color:var(--stg-ink)]')}
@@ -248,12 +277,32 @@ export function ConversationSlide() {
           <Gauge className="h-4 w-4" aria-hidden /> 1.5×
         </button>
         <div className="min-w-0 flex-1">
-          <div className="h-2.5 overflow-hidden rounded-full border-2 border-[color:var(--stg-ink)]/25 bg-white" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label="Call progress">
+          <div
+            ref={trackRef}
+            role="slider"
+            tabIndex={0}
+            aria-label="Seek within the call"
+            aria-valuemin={0}
+            aria-valuemax={Math.round(duration || CUT_DURATION)}
+            aria-valuenow={Math.round(t)}
+            aria-valuetext={`${fmt(t)} of ${fmt(duration || CUT_DURATION)}`}
+            onPointerDown={(e) => { draggingRef.current = true; e.currentTarget.setPointerCapture(e.pointerId); seekFromPointer(e.clientX); }}
+            onPointerMove={(e) => { if (draggingRef.current) seekFromPointer(e.clientX); }}
+            onPointerUp={(e) => { draggingRef.current = false; e.currentTarget.releasePointerCapture(e.pointerId); }}
+            onKeyDown={(e) => {
+              const step = e.shiftKey ? 15 : 5;
+              if (e.key === 'ArrowRight') { e.preventDefault(); audio.seekTo(t + step); }
+              else if (e.key === 'ArrowLeft') { e.preventDefault(); audio.seekTo(t - step); }
+              else if (e.key === 'Home') { e.preventDefault(); audio.seekTo(0); }
+              else if (e.key === 'End') { e.preventDefault(); audio.seekTo((duration || CUT_DURATION) - 1); }
+            }}
+            className="h-2.5 cursor-pointer touch-none overflow-hidden rounded-full border-2 border-[color:var(--stg-ink)]/25 bg-white"
+          >
             <div className="h-full bg-[color:var(--stg-ink)] transition-[width] duration-150" style={{ width: `${pct}%` }} />
           </div>
         </div>
         <span className="stg-label w-16 text-right text-[10px] tabular-nums text-[color:var(--stg-ink)]/60">
-          {fmt(t)} / 1:50
+          {fmt(t)} / {fmt(duration || CUT_DURATION)}
         </span>
       </div>
 

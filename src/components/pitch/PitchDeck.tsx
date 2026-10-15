@@ -11,13 +11,13 @@
  * navigate, F = fullscreen, a 4:00 pacing timer runs top-right.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import Link from 'next/link';
 import {
   ArrowLeft, ArrowRight, Bot, CalendarCheck2, CalendarPlus, Clock, Database, FileSpreadsheet,
   Handshake, Headset, Inbox, Layers, Mail, Maximize, MessageSquareText, Mic, MonitorPlay,
-  NotebookPen, Phone, Play, Puzzle, Radio, Rocket, Send, Sheet, Sparkles, Store, Timer,
+  NotebookPen, Phone, Play, Puzzle, Radio, Rocket, Send, Sheet, Store, Timer,
   Wallet, Wrench, Workflow,
 } from 'lucide-react';
 import { ConversationSlide } from '@/components/pitch/ConversationSlide';
@@ -39,20 +39,15 @@ interface Slide {
 function TitleSlide({ onNext }: { onNext: () => void }) {
   return (
     <div className="relative flex h-full flex-col items-center justify-center overflow-hidden px-6 pb-14 text-center">
-      <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="stg-label flex items-center gap-2 text-[10px] text-[color:var(--stg-ink)]/60">
-        <Sparkles className="h-3.5 w-3.5 text-[color:var(--stg-yellow-deep)]" aria-hidden />
-        IDEA PRESENTATION · 4-MINUTE PITCH
-      </motion.div>
-      <h1 className="stg-display mt-4 text-[11vw] uppercase leading-[0.92] text-[color:var(--stg-ink)] sm:text-6xl md:text-7xl lg:text-[86px]">
-        {['The voice agent', 'platform.'].map((line, i) => (
+      <h1 className="stg-display mt-2 text-[11vw] uppercase leading-[0.92] text-[color:var(--stg-ink)] sm:text-6xl md:text-7xl lg:text-[86px]">
+        {['AI Powered', 'Voice Agent'].map((line, i) => (
           <motion.span key={line} className="block" initial={{ opacity: 0, y: 26 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 + i * 0.14, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
             {i === 1 ? <span className="text-[color:var(--stg-yellow-deep)]">{line}</span> : line}
           </motion.span>
         ))}
       </h1>
       <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.55 }} className="mt-5 max-w-xl text-sm leading-relaxed text-[color:var(--stg-ink)]/75 sm:text-base">
-        An AI employee that answers every call, books every appointment and never sleeps —
-        on open source, with self-hosted voices, visible in one dashboard.
+        Your AI employee that answers every call, books every appointment and never sleeps.
       </motion.p>
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.75 }} className="mt-7 flex flex-wrap items-center justify-center gap-3">
         <button onClick={onNext} className="stg-label inline-flex h-12 items-center gap-2 border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-yellow)] px-6 text-[11px] text-white shadow-[5px_5px_0_0_var(--stg-ink)] transition-transform hover:-translate-y-0.5">
@@ -290,18 +285,8 @@ function PipelineSlide() {
         </motion.div>
       </div>
 
-      {/* live example trace */}
-      <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.85 }}
-        className="mt-4 rounded-xl border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-cream-2)] p-3">
-        <p className="stg-label text-[8px] text-[color:var(--stg-ink)]/55">LIVE EXAMPLE</p>
-        <p className="mt-1 font-mono text-[11px] leading-relaxed text-[color:var(--stg-ink)]/85">
-          &gt; caller: Can I come in tomorrow? <span className="text-[color:var(--stg-yellow-deep)]">→</span> agent: checks Calendar <span className="text-[color:var(--stg-yellow-deep)]">→</span> books 10:00 <span className="text-[color:var(--stg-yellow-deep)]">→</span> gmail: invite sent to customer
-        </p>
-      </motion.div>
-
-      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }} className="stg-label mt-4 text-[10px] text-[color:var(--stg-ink)]/60">
-        SAME BRAIN EVERYWHERE — VOICE AND CHAT ARE JUST ADAPTERS.
-      </motion.p>
+      {/* the voice loop — human → STT → LLM → TTS → audio, every turn */}
+      <VoiceLoopStrip />
     </div>
   );
 }
@@ -313,6 +298,62 @@ function ArrowCol({ delay }: { delay: number }) {
         <span className="stg-flow-dot absolute top-0 h-full w-2 bg-[color:var(--stg-yellow-deep)]" />
       </div>
       <span className="stg-label ml-1 text-[8px] text-[color:var(--stg-ink)]/40">→</span>
+    </motion.div>
+  );
+}
+
+/* ------------------------- the voice loop (slide 8 band) ---------------------- */
+
+const VOICE_LOOP = [
+  { icon: Mic, label: 'Caller speaks', tone: 'light' },
+  { icon: Layers, label: 'STT · faster-whisper', tone: 'blue' },
+  { icon: Workflow, label: 'LLM brain + tools', tone: 'ink' },
+  { icon: Radio, label: 'TTS · CosyVoice', tone: 'blue' },
+  { icon: Phone, label: 'Caller hears', tone: 'light' },
+] as const;
+
+function LoopArrow({ delay }: { delay: number }) {
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay }} className="hidden items-center justify-center sm:flex" aria-hidden>
+      <div className="relative h-0.5 w-5 overflow-hidden bg-[color:var(--stg-ink)]/15">
+        <span className="stg-flow-dot absolute top-0 h-full w-1.5 bg-[color:var(--stg-yellow-deep)]" />
+      </div>
+    </motion.div>
+  );
+}
+
+/**
+ * Every turn of every call, end to end: caller speaks → STT (faster-whisper)
+ * → LLM brain + tools → TTS (CosyVoice) → caller hears. Self-hosted STT/TTS,
+ * swappable — the point the reference deck's technical slide needed to land.
+ */
+function VoiceLoopStrip() {
+  return (
+    <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.85 }}
+      className="mt-4 rounded-xl border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-cream-2)] p-3" data-testid="voice-loop">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+        <p className="stg-label text-[8px] text-[color:var(--stg-ink)]/55">EVERY TURN OF EVERY CALL — THE VOICE LOOP</p>
+        <p className="stg-label text-[8px] font-semibold text-[color:var(--stg-yellow-deep)]">SELF-HOSTED STT / TTS · SWAPPABLE</p>
+      </div>
+      <div className="mt-2.5 flex items-center justify-between gap-1.5">
+        {VOICE_LOOP.map((step, i) => (
+          <Fragment key={step.label}>
+            {i > 0 && <LoopArrow delay={0.95 + i * 0.08} />}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 + i * 0.08 }}
+              className="flex min-w-0 flex-col items-center gap-1.5">
+              <div className={cn(
+                'grid h-10 w-10 place-items-center rounded-lg border-2 border-[color:var(--stg-ink)] sm:h-11 sm:w-11',
+                step.tone === 'blue' && 'bg-[color:var(--stg-yellow)] text-white',
+                step.tone === 'ink' && 'bg-[color:var(--stg-ink)] text-[color:var(--stg-cream)]',
+                step.tone === 'light' && 'bg-white text-[color:var(--stg-ink)]',
+              )}>
+                <step.icon className="h-5 w-5" aria-hidden />
+              </div>
+              <span className="stg-label max-w-[72px] text-center text-[7.5px] leading-tight text-[color:var(--stg-ink)]/70 sm:max-w-none">{step.label}</span>
+            </motion.div>
+          </Fragment>
+        ))}
+      </div>
     </motion.div>
   );
 }
@@ -346,10 +387,6 @@ function StackSlide() {
           </motion.div>
         ))}
       </div>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1">
-        <p className="stg-label text-[9px] text-[color:var(--stg-ink)]/55">STRATEGY: VALIDATE ON A HOSTED PLATFORM IN DAYS — THEN OWN THE VOICE LAYER AND THE MARGINS.</p>
-        <p className="stg-label text-[9px] font-semibold text-[color:var(--ps-warn)]">⚠ OFFICIAL WHATSAPP API ONLY.</p>
-      </motion.div>
     </div>
   );
 }
@@ -512,7 +549,7 @@ const variants = {
 
 function buildSlides(go: (n: number) => void): Slide[] {
   return [
-    { id: 'title', label: 'COVER — THE VOICE AGENT PLATFORM', budget: 10, node: <TitleSlide onNext={() => go(1)} /> },
+    { id: 'title', label: 'COVER — AI POWERED VOICE AGENT', budget: 10, node: <TitleSlide onNext={() => go(1)} /> },
     { id: 'problem', label: 'THE PROBLEM', budget: 20, node: <ProblemSlide /> },
     { id: 'solution', label: 'THE SOLUTION', budget: 25, node: <SolutionSlide /> },
     { id: 'hats', label: 'ONE AGENT, MANY HATS', budget: 20, node: <UseCasesSlide /> },
@@ -580,7 +617,7 @@ export function PitchDeck() {
       {/* top chrome */}
       <header className="flex h-12 shrink-0 items-center gap-3 border-b-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-ink)] px-4 text-[color:var(--stg-cream)] sm:px-6">
         <Link href="/" className="stg-label text-[9px] text-white/60 transition-colors hover:text-white" aria-label="Back to DeckForge home">← DECKFORGE</Link>
-        <span className="stg-label hidden text-[9px] text-[color:var(--ps-link-dark)] sm:block">IDEA PITCH · THE VOICE AGENT PLATFORM</span>
+        <span className="stg-label hidden text-[9px] text-[color:var(--ps-link-dark)] sm:block">IDEA PITCH · AI POWERED VOICE AGENT</span>
         <span className={cn('stg-label ml-auto flex items-center gap-1.5 rounded-full border px-3 py-1 text-[9px] tabular-nums', over ? 'border-[color:var(--ps-warn)] text-[color:var(--ps-warn)]' : 'border-white/25 text-white/70')} data-testid="pitch-timer">
           <Clock className="h-3 w-3" aria-hidden /> {mm}:{ss} / 4:00 {over ? '· OVER' : ''}
         </span>
