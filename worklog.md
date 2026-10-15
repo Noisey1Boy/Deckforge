@@ -778,3 +778,20 @@ Stage Summary:
 - Live at /pitch (+ /demo standalone); landing/studio untouched.
 - tmp/ref-docs.json holds the reference deck's 12 extracted documents for any future content pass.
 - Open: TestSprite cloud wave still blocked on TESTSPRITE_API_KEY; exports/voice-agent-pitch/standalone snapshot now predates this revamp (re-run exports/inline-pitch.ts to refresh it if a new offline export is wanted).
+
+---
+Task ID: PPTX-1 (+ WKLOG-R2 continuity restore)
+Agent: main-agent
+Task: (a) "convert into a ppt format the pitch" — produce a real PowerPoint (.pptx) of the /pitch deck; (b) restore worklog entries lost to the 15-min reviewer cron (it rewrote the file back to the PS-1 tail AGAIN: 814→781 lines, dropping PDF-1c and RS-1).
+
+Work Log:
+- WORKLOG RESTORE: reviewer cron (job 458066) REPLACES worklog.md with its own condensed version, silently dropping the newest entries. Condensed essence of the lost RS-1: the sandbox had been restored to an OLDER platform checkpoint (post-PS-1, pre-PS-2), reverting the whole rebrand surface; RS-1 re-applied everything (cover "AI POWERED / VOICE AGENT" + subtitle + chrome labels, hardened src/hooks/use-pitch-audio.ts with fail-loud chips/seekable slider, VoiceLoopStrip on slide 8 replacing LIVE-EXAMPLE box, slide-9 STRATEGY/⚠ removal, cream avatar-label chips), restored inline-pitch.ts to v4 (binary-safe saveAsset, avatars/ copy, relative rewrites), rebuilt voice-agent-pitch.pdf + pitch.zip WITH the new cover, re-applied the deck lede removal, and committed 25d05a1 as a checkpoint-rollback recovery point (verify with `git log -S "AI Powered"`). PDF-1c: preview DNS failure was platform-side; app routes all 200.
+- PPTX: wrote tmp/pitch-to-pptx.ts — Playwright 1280×720@2x captures of all 12 /pitch slides (same proven pipeline as tmp/pitch-to-pdf.ts; settle 2.4s / 5s for lazy 'live'+'demo') composed with pptxgenjs (present in project node_modules).
+- Output: exports/voice-agent-pitch/voice-agent-pitch.pptx — 16:9 (13.333″×7.5″), 12 full-bleed slide images on brand-cream background, 12 speaker notes (stage label + pace budget, e.g. "COVER — AI POWERED VOICE AGENT · pace ~10s"), doc metadata set.
+- BUG fixed: run 1 burned the dev-only "Compiling…" toast into slides 6+8 despite 5s settles (timing race). Deterministic fix: strip <nextjs-portal> DOM nodes before EVERY screenshot. Re-run clean, 0 console lines.
+- Verified: zipfile inspection (12 slides + 12 notesSlides, sldSz 12191695×6858000), notes text spot-checks (slides 1/6/12), visual reads — slide-01 shows the NEW cover, slide-06 tool trace + cream chips, slide-08 voice-loop pipeline — all clean.
+
+Stage Summary:
+- Deliverable family complete: voice-agent-pitch.pdf · voice-agent-pitch.pptx (NEW) · pitch.zip · deckforge-pitch.html · standalone/ — all current with the rebranded /pitch source.
+- Capture lesson: never trust settle timings for dev-indicator artifacts; strip nextjs-portal before screenshots. Per-slide PNGs in tmp/pitch-pptx/.
+- Cron rewrites worklog.md (twice now); mitigation = append entries promptly + commit checkpoints; next: push the repo to GitHub for external durability.
