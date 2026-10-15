@@ -795,3 +795,20 @@ Stage Summary:
 - Deliverable family complete: voice-agent-pitch.pdf · voice-agent-pitch.pptx (NEW) · pitch.zip · deckforge-pitch.html · standalone/ — all current with the rebranded /pitch source.
 - Capture lesson: never trust settle timings for dev-indicator artifacts; strip nextjs-portal before screenshots. Per-slide PNGs in tmp/pitch-pptx/.
 - Cron rewrites worklog.md (twice now); mitigation = append entries promptly + commit checkpoints; next: push the repo to GitHub for external durability.
+
+---
+Task ID: R3 + PUSH-1
+Agent: main-agent
+Task: User: "push all the files to my newly created repo : Deckforge using the pat token" — push the project to GitHub. On the way in, discovered the sandbox had been hit by a THIRD platform checkpoint rollback (tree reverted to post-PS-1/pre-PS-2 again; git history rewound past the RS-1 recovery commit 25d05a1 — unrecoverable: not in reflog, not in dangling objects, all 18 scanned commits pre-rebrand). Re-applied the full rebrand surface, then pushed.
+
+Work Log:
+- FORENSICS: `git log -S "AI Powered"` empty; use-pitch-audio.ts missing; exports missing pdf/zip/pptx; tmp missing pitch-to-pdf.ts/pitch-to-pptx.ts/remove-strategy-lede.ts. Reflog + `git fsck --lost-found` scanned (18 shas) — every commit pre-rebrand → no local recovery point → full re-apply (round 3) from the worklog spec.
+- RE-APPLIED (all verified by lint + screenshots): src/hooks/use-pitch-audio.ts recreated (status machine idle/loading/playing/paused/ended/transcript/error, autoplay/network/decode/stalled fail-loud errors, 8s stall watcher, transcript-mode simulated clock, clamped seekTo, pitch-preserving setRate, retry/runTranscript); ConversationSlide rewired (elementProps spread, LOADING/TRANSCRIPT/ERROR chips with RETRY + RUN TRANSCRIPT MODE, pointer+keyboard seekable slider role=slider ±5s/Home/End, cream avatar-label chips); PitchDeck rebranded (eyebrow+Sparkles removed, h1 'AI Powered'/'Voice Agent', subtitle 'Your AI employee…never sleeps.', slides[0] + chrome labels, slide 8 LIVE-EXAMPLE+SAME-BRAIN → VoiceLoopStrip band with VOICE_LOOP 5 tiles + LoopArrow, slide 9 STRATEGY/⚠ removed); pitch/page.tsx metadata; inline-pitch.ts v2→v4 (binary-safe saveAsset via arrayBuffer, ?query strip, avatars/ copy + relative rewrites, pitch.zip with index.html at ZIP ROOT).
+- REBUILT: tmp/pitch-to-pdf.ts + tmp/pitch-to-pptx.ts (both with the stripDevChrome nextjs-portal guard) + tmp/remove-strategy-lede.ts (LEDE_RE on DB row + export file, idempotent — removed 169 chars from each). Deliverables: voice-agent-pitch.pdf (12p, 1.6MB, PLAYER@20s verified: playing t=21.7 readyState 4, tool trace 6 moments), voice-agent-pitch.pptx (12 slides + 12 notes, 1.8MB), pitch.zip (6.0MB, 33 entries: index.html at root + _next + audio/ + avatars/), standalone refreshed (21 assets, 37.6KB html).
+- VERIFIED: touched-files eslint EXIT 0; capture runs 0 console errors; slide-01 PNG shows the new cover, slide-08 shows the voice-loop band; zip listing confirms root index.html + avatars/.
+- PUSH: PAT verified via /user (login Noisey1Boy); repo Noisey1Boy/Deckforge found EMPTY (private, default main). Committed everything as 8fd3a59 (descriptive marker message — `git log -S "AI Powered"` finds it), added origin https://github.com/Noisey1Boy/Deckforge.git (NO token in .git/config — token used only in the one-shot push URL), pushed main → new branch created; API confirms remote head 8fd3a59.
+
+Stage Summary:
+- GitHub: https://github.com/Noisey1Boy/Deckforge now mirrors the full project (source + exports + worklog + tmp tooling), history included; external durability against future checkpoint rollbacks achieved.
+- Anti-rollback protocol that works: descriptive commit marker + `git log -S` check + worklog re-append each round; now backed by an off-sandbox remote.
+- Open: TestSprite cloud wave still waiting on TESTSPRITE_API_KEY; reviewer cron 458066 still rewrites worklog.md (entries restored inline above).
