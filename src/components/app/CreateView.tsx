@@ -18,6 +18,7 @@ import type { ChartPlan, MermaidPlan } from '@/lib/data/plans';
 import { buildChartSpec, parseFileToTables, tableToMeta, type ParsedTable } from '@/lib/data/parse';
 import { parseMarkdownOutline, suggestThemeId } from '@/lib/data/markdown-outline';
 import { STRATEGY_OPTIONS, TONE_OPTIONS, VERBOSITY_OPTIONS } from '@/lib/ai/strategies';
+import { THEMES } from '@/lib/design/themes';
 import type { StrategyId, ToneId, Verbosity } from '@/lib/ai/strategies';
 import { cn } from '@/lib/utils';
 import {
@@ -53,7 +54,7 @@ const TICKET_CONTENT =
   'border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-cream)] text-[color:var(--stg-ink)] rounded-none';
 
 const MARQUEE_ITEMS = [
-  '8 DESIGN SYSTEMS',
+  `${THEMES.length} DESIGN SYSTEMS`,
   '11 SLIDE LAYOUTS',
   'CHARTS FROM YOUR OWN DATA',
   'EDITABLE PPTX',
@@ -91,11 +92,11 @@ const METHOD_STEPS = [
 const HOUSE_RULES = [
   {
     title: 'Your numbers are sacred.',
-    body: 'Charts are computed from the data you attach. If a figure can’t be traced to your files, it doesn’t get charted. The slide falls back to words.',
+    body: 'Charts are computed from the data you attach. If a figure can’t be traced to your files, it doesn’t get charted — the slide falls back to words. Prose follows your brief; charts follow your data.',
   },
   {
     title: 'Design systems, not templates.',
-    body: 'Every slide is rendered live from a token set. Swap themes mid-deck and nothing breaks, nothing overflows, nothing needs re-aligning.',
+    body: 'Every slide is rendered live from a token set. Swap themes mid-deck and the whole deck re-renders from the same tokens — same structure, new skin, no manual re-alignment.',
   },
   {
     title: 'Outline before pixels.',
@@ -103,7 +104,7 @@ const HOUSE_RULES = [
   },
   {
     title: 'The file is yours.',
-    body: 'Native editable charts in PPTX, a print-perfect PDF, and a standalone HTML deck that works offline. No watermarks. No lock-in.',
+    body: 'Native editable charts in PPTX, a print-ready PDF, and a standalone HTML deck that works offline. Seven export options, no watermarks, no lock-in.',
   },
 ];
 
@@ -424,7 +425,7 @@ export function CreateView() {
           HERO — the stage. Ink, poster yellow, and the screen.
          ================================================================ */}
       <section className="relative overflow-hidden bg-[color:var(--stg-ink)] text-[color:var(--stg-cream)]">
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 pt-16 sm:pt-24 pb-14 sm:pb-20">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 pt-10 pb-10 sm:pt-24 sm:pb-20">
           <div className="grid items-center gap-12 lg:grid-cols-12 lg:gap-14">
             {/* Copy */}
             <motion.div {...enter(0)} className="lg:col-span-6 space-y-7">
@@ -432,7 +433,7 @@ export function CreateView() {
                 <span className="inline-block h-2 w-2 bg-[color:var(--stg-yellow)]" aria-hidden />
                 DeckForge AI · A presentation foundry
               </p>
-              <h1 className="stg-display text-[clamp(3.1rem,7vw,5.9rem)] uppercase leading-[0.93]">
+              <h1 className="stg-display text-[clamp(2.3rem,8vw,5.9rem)] uppercase leading-[0.93]">
                 <span className="block">The lights go down.</span>
                 <span className="block text-[color:var(--stg-yellow)]">Your story holds the room.</span>
               </h1>
@@ -461,8 +462,9 @@ export function CreateView() {
               </p>
             </motion.div>
 
-            {/* The Screen — real slides, real themes */}
-            <motion.div {...enter(0.12)} className="lg:col-span-6">
+            {/* The Screen — real slides, real themes (desktop only; on mobile the
+                brief should sit as high as possible) */}
+            <motion.div {...enter(0.12)} className="hidden lg:col-span-6 lg:block">
               <HeroSpecimen />
             </motion.div>
           </div>
@@ -486,48 +488,7 @@ export function CreateView() {
       </section>
 
       {/* ================================================================
-          01 — THE METHOD (poster rows, oversized numerals)
-         ================================================================ */}
-      <section id="method" className="scroll-mt-16 bg-[color:var(--stg-cream)] text-[color:var(--stg-ink)]">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-14 sm:py-20">
-          <motion.div {...enter(0)} className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="stg-label flex items-center gap-2.5 text-[color:var(--stg-ink)]/60">
-                <span className="inline-block h-2 w-2 bg-[color:var(--stg-yellow)]" aria-hidden />
-                01 · The method
-              </p>
-              <h2 className="stg-display mt-3 text-4xl sm:text-5xl uppercase leading-[0.95]">
-                You own the story. We own the pixels.
-              </h2>
-            </div>
-            <p className="max-w-xs pb-1 text-sm leading-relaxed text-[color:var(--stg-ink)]/70">
-              Four steps, in order, every time. Nothing is generated past a step you haven’t approved.
-            </p>
-          </motion.div>
-
-          <motion.ol {...enter(0.08)} className="mt-10">
-            {METHOD_STEPS.map((step, i) => (
-              <li
-                key={step.n}
-                className={cn(
-                  'stg-num-fill grid grid-cols-[auto_1fr] items-start gap-5 border-t-2 border-[color:var(--stg-ink)] py-7 sm:gap-10 sm:py-9',
-                  i === 1 && 'lg:pl-20',
-                  i === 3 && 'lg:pl-20',
-                )}
-              >
-                <span className="stg-num select-none pt-1 text-6xl sm:text-8xl" aria-hidden>{step.n}</span>
-                <div className="pt-1.5">
-                  <h3 className="stg-display text-2xl sm:text-3xl uppercase">{step.title}</h3>
-                  <p className="mt-2 max-w-[62ch] text-sm sm:text-base leading-relaxed text-[color:var(--stg-ink)]/75">{step.body}</p>
-                </div>
-              </li>
-            ))}
-          </motion.ol>
-        </div>
-      </section>
-
-      {/* ================================================================
-          02 — THE WORKBENCH (functional: brief → materials → systems)
+          01 — THE WORKBENCH (functional: brief → materials → systems)
          ================================================================ */}
       <section id="brief" className="scroll-mt-16 bg-[color:var(--stg-cream-2)] text-[color:var(--stg-ink)]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 py-14 sm:py-20">
@@ -535,7 +496,7 @@ export function CreateView() {
             <div>
               <p className="stg-label flex items-center gap-2.5 text-[color:var(--stg-ink)]/60">
                 <span className="inline-block h-2 w-2 bg-[color:var(--stg-yellow)]" aria-hidden />
-                02 · The workbench
+                01 · The workbench
               </p>
               <h2 className="stg-display mt-3 text-4xl sm:text-5xl uppercase leading-[0.95]">Start the job.</h2>
             </div>
@@ -568,6 +529,8 @@ export function CreateView() {
                 <button
                   key={ex}
                   onClick={() => setPrompt(ex)}
+                  title={ex}
+                  aria-label={`Use example brief: ${ex}`}
                   className="stg-label max-w-full truncate border border-[color:var(--stg-ink)]/45 px-3 py-1.5 text-[10px] text-[color:var(--stg-ink)]/85 transition-colors hover:bg-[color:var(--stg-ink)] hover:text-[color:var(--stg-yellow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--stg-ink)]"
                 >
                   {ex.length > 52 ? ex.slice(0, 52) + '…' : ex}
@@ -669,8 +632,9 @@ export function CreateView() {
                   Bring your own evidence.
                 </h3>
                 <p className="mt-1.5 max-w-[55ch] text-sm leading-relaxed text-[color:var(--stg-ink)]/70">
-                  Spreadsheets become charts with the exact numbers. Screenshots get read.
-                  Structure you wrote stays exactly as you wrote it.
+                  Spreadsheets become charts with the exact numbers — parsed in your browser,
+                  only a summary travels to the AI. Chart screenshots get read on the Chart
+                  img tab. Mermaid and Markdown stay exactly as you wrote them.
                 </p>
               </div>
 
@@ -712,7 +676,7 @@ export function CreateView() {
                     >
                       <FileUp className="mx-auto h-6 w-6 text-[color:var(--stg-ink)]/50" aria-hidden />
                       <p className="mt-2 text-sm font-semibold">Drop or click to upload</p>
-                      <p className="stg-label mt-1 text-[9px] text-[color:var(--stg-ink)]/60">CSV · XLSX · JSON · Max 4 MB</p>
+                      <p className="stg-label mt-1 text-[9px] text-[color:var(--stg-ink)]/60">CSV · XLSX · JSON · TXT · Max 4 MB</p>
                     </button>
                     <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls,.json,.txt" multiple hidden onChange={(e) => handleFiles(e.target.files)} />
                     {tables.length > 0 && (
@@ -831,7 +795,7 @@ export function CreateView() {
                 <div>
                   <p className="stg-label text-[color:var(--stg-ink)]/60">C · Design system</p>
                   <h3 id="systems-h" className="stg-display mt-2 text-2xl uppercase">
-                    Twenty-four systems. Zero templates.
+                    Twenty-four systems. Zero skins.
                   </h3>
                 </div>
                 <p className="max-w-xs pb-1 text-sm leading-relaxed text-[color:var(--stg-ink)]/70">
@@ -841,6 +805,47 @@ export function CreateView() {
               <TemplateGallery compact />
             </motion.section>
           </div>
+        </div>
+      </section>
+
+      {/* ================================================================
+          02 — THE METHOD (poster rows, oversized numerals)
+         ================================================================ */}
+      <section id="method" className="scroll-mt-16 bg-[color:var(--stg-cream)] text-[color:var(--stg-ink)]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-14 sm:py-20">
+          <motion.div {...enter(0)} className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="stg-label flex items-center gap-2.5 text-[color:var(--stg-ink)]/60">
+                <span className="inline-block h-2 w-2 bg-[color:var(--stg-yellow)]" aria-hidden />
+                02 · The method
+              </p>
+              <h2 className="stg-display mt-3 text-4xl sm:text-5xl uppercase leading-[0.95]">
+                You own the story. We own the pixels.
+              </h2>
+            </div>
+            <p className="max-w-xs pb-1 text-sm leading-relaxed text-[color:var(--stg-ink)]/70">
+              Four steps, in order, every time. Nothing is generated past a step you haven’t approved.
+            </p>
+          </motion.div>
+
+          <motion.ol {...enter(0.08)} className="mt-10">
+            {METHOD_STEPS.map((step, i) => (
+              <li
+                key={step.n}
+                className={cn(
+                  'stg-num-fill grid grid-cols-[auto_1fr] items-start gap-5 border-t-2 border-[color:var(--stg-ink)] py-7 sm:gap-10 sm:py-9',
+                  i === 1 && 'lg:pl-20',
+                  i === 3 && 'lg:pl-20',
+                )}
+              >
+                <span className="stg-num select-none pt-1 text-6xl sm:text-8xl" aria-hidden>{step.n}</span>
+                <div className="pt-1.5">
+                  <h3 className="stg-display text-2xl sm:text-3xl uppercase">{step.title}</h3>
+                  <p className="mt-2 max-w-[62ch] text-sm sm:text-base leading-relaxed text-[color:var(--stg-ink)]/75">{step.body}</p>
+                </div>
+              </li>
+            ))}
+          </motion.ol>
         </div>
       </section>
 

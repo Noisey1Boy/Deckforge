@@ -49,10 +49,47 @@ const FONTS_HREF =
   "&family=DM+Mono:wght@400;500" +
   "&display=swap";
 
+/**
+ * Canonical site URL. Set NEXT_PUBLIC_SITE_URL in production to the real
+ * domain; the preview/sandbox default keeps OG URLs absolute but harmless.
+ */
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
+const DEFAULT_DESCRIPTION =
+  "Generate designed, on-brand presentations from a prompt or your own data. 24 curated design systems, live re-theming, charts, present mode and PPTX/PDF/HTML export.";
+
 export const metadata: Metadata = {
-  title: "DeckForge AI — Prompt to polished presentation",
-  description:
-    "Generate designed, on-brand presentations from a prompt or your own data. 24 curated design systems, live re-theming, charts, present mode and PPTX/PDF/HTML export.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "DeckForge AI — Prompt to polished presentation",
+    template: "%s | DeckForge AI",
+  },
+  description: DEFAULT_DESCRIPTION,
+  applicationName: "DeckForge AI",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "DeckForge AI",
+    url: SITE_URL,
+    title: "DeckForge AI — Prompt to polished presentation",
+    description:
+      "Outline first, design second. 24 design systems, 57 HTML templates, charts from your own data, 7 export options.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "DeckForge AI — prompt to polished presentation",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "DeckForge AI — Prompt to polished presentation",
+    description:
+      "Outline first, design second. 24 design systems, 57 HTML templates, charts from your own data, 7 export options.",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({

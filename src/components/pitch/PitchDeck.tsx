@@ -608,6 +608,19 @@ export function PitchDeck() {
     return () => clearInterval(id);
   }, [started]);
 
+  // touch swipe — mobile navigation alongside the on-screen arrows
+  const touchStartX = useRef<number | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0]?.clientX ?? null;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const start = touchStartX.current;
+    touchStartX.current = null;
+    if (start == null) return;
+    const dx = (e.changedTouches[0]?.clientX ?? start) - start;
+    if (Math.abs(dx) > 56) go(index + (dx < 0 ? 1 : -1));
+  };
+
   const over = elapsed > TARGET_SECONDS;
   const mm = Math.floor(elapsed / 60);
   const ss = String(elapsed % 60).padStart(2, '0');
@@ -617,7 +630,7 @@ export function PitchDeck() {
       {/* top chrome */}
       <header className="flex h-12 shrink-0 items-center gap-3 border-b-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-ink)] px-4 text-[color:var(--stg-cream)] sm:px-6">
         <Link href="/" className="stg-label text-[9px] text-white/60 transition-colors hover:text-white" aria-label="Back to DeckForge home">← DECKFORGE</Link>
-        <span className="stg-label hidden text-[9px] text-[color:var(--ps-link-dark)] sm:block">IDEA PITCH · AI POWERED VOICE AGENT</span>
+        <span className="stg-label hidden text-[9px] text-[color:var(--ps-link-dark)] sm:block">SHOWCASE DECK · AI POWERED VOICE AGENT</span>
         <span className={cn('stg-label ml-auto flex items-center gap-1.5 rounded-full border px-3 py-1 text-[9px] tabular-nums', over ? 'border-[color:var(--ps-warn)] text-[color:var(--ps-warn)]' : 'border-white/25 text-white/70')} data-testid="pitch-timer">
           <Clock className="h-3 w-3" aria-hidden /> {mm}:{ss} / 4:00 {over ? '· OVER' : ''}
         </span>
@@ -627,8 +640,12 @@ export function PitchDeck() {
         </button>
       </header>
 
-      {/* stage */}
-      <main className="relative min-h-0 flex-1 overflow-hidden">
+      {/* stage — swipe left/right on touch devices; arrows + dots below */}
+      <main
+        className="relative min-h-0 flex-1 overflow-hidden"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
         <AnimatePresence mode="wait" custom={dir} initial={false}>
           <motion.section
             key={slides[index].id}

@@ -29,6 +29,7 @@ export default function LoginPage() {
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
 
   // Already signed in → straight to the studio.
   useEffect(() => {
@@ -142,6 +143,29 @@ export default function LoginPage() {
                 )}
               </div>
 
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowForgot((p) => !p)}
+                  aria-expanded={showForgot}
+                  aria-controls="forgot-password-note"
+                  className="stg-label text-[9px] text-[color:var(--stg-ink)]/55 underline decoration-dotted underline-offset-4 transition-colors hover:text-[color:var(--stg-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--stg-ink)]"
+                >
+                  Forgot password?
+                </button>
+              </div>
+              {showForgot && (
+                <p
+                  id="forgot-password-note"
+                  role="note"
+                  className="border-2 border-dashed border-[color:var(--stg-ink)]/25 bg-white/60 px-3 py-2 text-xs leading-relaxed text-[color:var(--stg-ink)]/70"
+                >
+                  During the beta, password resets are manual — email{' '}
+                  <a className="font-semibold underline" href="mailto:support@deckforge.app">support@deckforge.app</a>{' '}
+                  from your account address, or simply create a new account.
+                </p>
+              )}
+
               <Button
                 type="submit"
                 disabled={busy}
@@ -156,6 +180,13 @@ export default function LoginPage() {
                 )}
               </Button>
             </form>
+
+            <p className="mt-4 text-center text-[11px] leading-relaxed text-[color:var(--stg-ink)]/55">
+              By continuing you agree to our{' '}
+              <Link href="/terms" className="underline decoration-[color:var(--stg-yellow)] underline-offset-4 hover:bg-[color:var(--stg-yellow)]">Terms</Link>
+              {' '}and{' '}
+              <Link href="/privacy" className="underline decoration-[color:var(--stg-yellow)] underline-offset-4 hover:bg-[color:var(--stg-yellow)]">Privacy Policy</Link>.
+            </p>
 
             <p className="mt-6 border-t-2 border-dashed border-[color:var(--stg-ink)]/20 pt-4 text-sm text-[color:var(--stg-ink)]/70">
               New to the foundry?{' '}

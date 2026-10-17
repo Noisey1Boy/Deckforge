@@ -161,10 +161,11 @@ export function HomePage() {
               </p>
             </div>
             <div className="stg-label space-y-2.5 text-[10px] text-white/55">
-              <p>24 systems · 57 templates · 11 layouts · 6 export formats</p>
+              <p>24 systems · 57 templates · 11 layouts · 7 export options</p>
+              <p className="text-white/40">PPTX · PDF · HTML · PNG · speaker notes · .deck.json</p>
               <p className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 bg-[color:var(--stg-yellow)]" aria-hidden />
-                AI runs server-side · Your data stays yours
+                AI runs server-side · Decks stored server-side · Your content stays yours
               </p>
             </div>
           </div>

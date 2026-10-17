@@ -32,7 +32,7 @@ import { LayoutGrid, LogOut, Menu, Presentation, Settings as SettingsIcon } from
  */
 
 const NAV_ITEMS = [
-  { href: '/pitch', label: 'Pitch' },
+  { href: '/pitch', label: 'Showcase' },
   { href: '/create', label: 'Create' },
   { href: '/decks', label: 'My decks' },
   { href: '/settings', label: 'Settings' },
@@ -250,9 +250,11 @@ export function SiteHeader({ showCreateCta = false }: { showCreateCta?: boolean 
           </Sheet>
         </div>
       </div>
-      {/* accessibility: announce auth state to screen readers without visual noise */}
+      {/* accessibility: announce auth state to screen readers without visual noise
+          (nothing is announced while the first session check is in flight — the
+          header already renders the guest state by default, so there is no flash) */}
       <span className="sr-only" aria-live="polite">
-        {loading ? 'Checking session' : user ? `Signed in as ${user.name || user.email}` : 'Browsing as guest'}
+        {!loading && (user ? `Signed in as ${user.name || user.email}` : 'Browsing as guest')}
       </span>
     </header>
   );

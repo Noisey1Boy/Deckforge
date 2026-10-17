@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Eye, EyeOff, Loader2, Presentation } from 'lucide-react';
 
 /**
@@ -25,6 +26,7 @@ interface FieldErrors {
   email?: string;
   password?: string;
   confirm?: string;
+  terms?: string;
 }
 
 export default function SignupPage() {
@@ -36,6 +38,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -53,6 +56,7 @@ export default function SignupPage() {
     if (!EMAIL_RE.test(email.trim())) errors.email = 'Enter a valid email address.';
     if (password.length < 8) errors.password = 'Password needs at least 8 characters.';
     if (confirm !== password) errors.confirm = 'Passwords don’t match.';
+    if (!agreed) errors.terms = 'Please agree to the Terms and Privacy Policy.';
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
@@ -133,7 +137,8 @@ export default function SignupPage() {
               Join the foundry.
             </h1>
             <p className="mt-2 text-sm leading-relaxed text-[color:var(--stg-ink)]/65">
-              A free account keeps your decks, themes and preferences together. No credit card, no watermark.
+              A free account keeps your decks, themes and preferences together. No credit
+              card, no watermark — free during beta, fair-use limits apply on AI generation.
             </p>
 
             {formError && (
@@ -200,6 +205,32 @@ export default function SignupPage() {
                 'At least 8 characters.',
               )}
               {passwordField('signup-confirm', confirm, setConfirm, 'Confirm password', 'new-password', fieldErrors.confirm)}
+
+              <div className="space-y-1">
+                <label
+                  htmlFor="signup-terms"
+                  className="flex cursor-pointer items-start gap-2.5 text-xs leading-relaxed text-[color:var(--stg-ink)]/75"
+                >
+                  <Checkbox
+                    id="signup-terms"
+                    checked={agreed}
+                    onCheckedChange={(v) => setAgreed(v === true)}
+                    aria-describedby={fieldErrors.terms ? 'signup-terms-error' : undefined}
+                    className="mt-0.5 rounded-none border-2 border-[color:var(--stg-ink)] bg-white data-[state=checked]:border-[color:var(--stg-ink)] data-[state=checked]:bg-[color:var(--stg-ink)] data-[state=checked]:text-[color:var(--stg-yellow)]"
+                  />
+                  <span>
+                    I agree to the{' '}
+                    <Link href="/terms" target="_blank" className="underline decoration-[color:var(--stg-yellow)] underline-offset-4 hover:bg-[color:var(--stg-yellow)]">Terms</Link>
+                    {' '}and the{' '}
+                    <Link href="/privacy" target="_blank" className="underline decoration-[color:var(--stg-yellow)] underline-offset-4 hover:bg-[color:var(--stg-yellow)]">Privacy Policy</Link>.
+                  </span>
+                </label>
+                {fieldErrors.terms && (
+                  <p id="signup-terms-error" className="text-xs font-medium text-red-600">
+                    {fieldErrors.terms}
+                  </p>
+                )}
+              </div>
 
               <Button
                 type="submit"

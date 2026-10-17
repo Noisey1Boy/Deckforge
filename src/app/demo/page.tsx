@@ -3,9 +3,22 @@ import Link from 'next/link';
 import { DemoApp } from '@/components/pitch/DemoApp';
 
 export const metadata: Metadata = {
-  title: 'Live Demo — Voice Agent Platform | DeckForge AI',
+  title: 'Live Demo — Voice Agent Platform',
   description:
-    'Interactive demo of the voice-agent platform: call Layla, watch the real recorded conversation with a live agent tool trace, then explore the tool playground and dashboard.',
+    'A DeckForge showcase: interactive demo of the voice-agent platform — call Layla, watch the real recorded conversation with a live agent tool trace, then explore the tool playground and dashboard.',
+  openGraph: {
+    title: 'Live Demo — Voice Agent Platform (a DeckForge showcase)',
+    description:
+      'Call Layla, watch the recorded conversation with a live agent tool trace — an interactive showcase built with DeckForge AI.',
+    images: ['/og-image.png'],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Live Demo — Voice Agent Platform (a DeckForge showcase)',
+    description: 'An interactive showcase built with DeckForge AI.',
+    images: ['/og-image.png'],
+  },
 };
 
 export default function DemoPage() {
@@ -13,7 +26,7 @@ export default function DemoPage() {
     <div className="ps-scope flex min-h-screen flex-col bg-[color:var(--stg-cream)]">
       <header className="flex h-12 shrink-0 items-center gap-3 border-b-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-ink)] px-4 text-[color:var(--stg-cream)] sm:px-6">
         <Link href="/pitch" className="stg-label text-[9px] text-white/60 transition-colors hover:text-white">← BACK TO THE PITCH</Link>
-        <span className="stg-label text-[9px] text-[color:var(--ps-link-dark)]">LIVE DEMO · THE VOICE AGENT PLATFORM</span>
+        <span className="stg-label text-[9px] text-[color:var(--ps-link-dark)]">DECKFORGE SHOWCASE · VOICE AGENT PLATFORM</span>
         <span className="stg-label ml-auto hidden text-[8px] text-white/40 sm:block">SIMULATED UI · REAL RECORDED VOICE · ILLUSTRATIVE DATA</span>
       </header>
       <main className="flex min-h-0 flex-1 flex-col px-4 py-5 sm:px-8">
@@ -21,7 +34,8 @@ export default function DemoPage() {
           Talk to <span className="text-[color:var(--stg-yellow-deep)]">Layla.</span>
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[color:var(--stg-ink)]/70">
-          The product we’re proposing, as a clickable mock: one agent that answers on phone, WhatsApp, Telegram
+          A DeckForge showcase — an example product demo, not DeckForge itself. The product
+          we’re proposing, as a clickable mock: one agent that answers on phone, WhatsApp, Telegram
           and web — books appointments, sends email, updates sheets — with every tool call visible.
         </p>
         <div className="mt-5 flex min-h-0 flex-1 items-start justify-center">

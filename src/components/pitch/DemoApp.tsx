@@ -92,7 +92,7 @@ export function DemoApp({ compact = false }: { compact?: boolean }) {
 
   return (
     <div className={cn('grid w-full gap-3', compact ? 'lg:grid-cols-[300px_1fr]' : 'lg:grid-cols-[340px_1fr]')} data-testid="demo-app">
-      <audio ref={audioRef} src={AUDIO_SRC} preload="auto" onEnded={() => { setPhase('done'); setTab('dashboard'); }} />
+      <audio ref={audioRef} src={AUDIO_SRC} preload="auto" onEnded={() => { setPhase('done'); setTab('dashboard'); }} aria-label="Recorded call audio (transcript is captioned in the chat feed)" />
 
       {/* ============ the console "device" ============ */}
       <div className="flex flex-col overflow-hidden rounded-xl border-2 border-[color:var(--stg-ink)] bg-[color:var(--stg-ink)] text-[color:var(--stg-cream)] shadow-[6px_6px_0_0_var(--stg-yellow)]">
@@ -150,7 +150,7 @@ export function DemoApp({ compact = false }: { compact?: boolean }) {
 
           {phase === 'live' && (
             <div className="flex h-full min-h-0 flex-col" data-testid="demo-live">
-              <div ref={feedRef} className="stg-scroll min-h-0 flex-1 space-y-2 overflow-y-auto pr-1" aria-live="polite">
+              <div ref={feedRef} className="stg-scroll min-h-0 flex-1 space-y-2 overflow-y-auto pr-1" aria-live="polite" aria-label="Live call transcript — the conversation is captioned here in sync with the audio">
                 {visible.map((turn, vi) => {
                   const mine = turn.speaker === 'layla';
                   const isCurrent = idx - Math.max(0, idx - 5) === vi;
@@ -218,7 +218,7 @@ export function DemoApp({ compact = false }: { compact?: boolean }) {
 
         <div className="stg-scroll min-h-[260px] flex-1 overflow-y-auto p-3 sm:min-h-[320px]">
           {tab === 'trace' && (
-            <div className="space-y-2" data-testid="demo-trace">
+            <div className="space-y-2" data-testid="demo-trace" aria-live="polite">
               <p className="stg-label text-[8px] text-[color:var(--stg-ink)]/50">WHAT LAYLA DOES WHILE SHE TALKS — EVERY STEP IS A REAL TOOL CALL</p>
               {TRACE_STEPS.map((s, i) => {
                 const fired = actIdx >= i && (phase === 'live' || phase === 'done');

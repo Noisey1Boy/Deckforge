@@ -25,17 +25,24 @@ export function SiteFooter() {
             </p>
           </div>
           <div className="stg-label space-y-2.5 text-[10px] text-white/55">
-            <p>24 systems · 57 templates · 11 layouts · 6 export formats</p>
+            <p>24 systems · 57 templates · 11 layouts · 7 export options</p>
+            <p className="text-white/40">PPTX · PDF · HTML · PNG · speaker notes · .deck.json</p>
             <p className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 bg-[color:var(--stg-yellow)]" aria-hidden />
-              AI runs server-side · Your data stays yours
+              AI runs server-side · Decks stored server-side · Your content stays yours
             </p>
             <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-1" aria-label="Footer">
               <Link
                 href="/pitch"
                 className="stg-link py-1 text-[10px] text-white/55 transition-colors hover:text-[color:var(--stg-cream)]"
               >
-                Pitch
+                Showcase
+              </Link>
+              <Link
+                href="/demo"
+                className="stg-link py-1 text-[10px] text-white/55 transition-colors hover:text-[color:var(--stg-cream)]"
+              >
+                Live demo
               </Link>
               <Link
                 href="/create"
@@ -55,6 +62,26 @@ export function SiteFooter() {
               >
                 Settings
               </Link>
+            </nav>
+            <nav className="flex flex-wrap items-center gap-x-5 gap-y-2" aria-label="Legal">
+              <Link
+                href="/terms"
+                className="stg-link py-1 text-[9px] text-white/45 transition-colors hover:text-[color:var(--stg-cream)]"
+              >
+                Terms
+              </Link>
+              <Link
+                href="/privacy"
+                className="stg-link py-1 text-[9px] text-white/45 transition-colors hover:text-[color:var(--stg-cream)]"
+              >
+                Privacy
+              </Link>
+              <a
+                href="mailto:support@deckforge.app"
+                className="stg-link py-1 text-[9px] text-white/45 transition-colors hover:text-[color:var(--stg-cream)]"
+              >
+                Contact
+              </a>
             </nav>
           </div>
         </div>

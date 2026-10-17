@@ -47,13 +47,21 @@ const METHOD_STEPS = [
     title: 'Design',
     body: 'Slides are rendered live from design tokens, with charts computed from your real numbers.',
   },
+  {
+    n: '04',
+    icon: MonitorPlay,
+    title: 'Present & export',
+    body: 'Fullscreen with speaker notes and a timer. Then take the file: editable PPTX, print-ready PDF, standalone HTML — or the deck file itself.',
+  },
 ];
 
 const STATS = [
   { value: '24', label: 'Design systems' },
   { value: '57', label: 'HTML templates' },
-  { value: '6', label: 'Export formats' },
+  { value: '7', label: 'Export options' },
 ];
+
+const EXPORT_LIST = 'PPTX (editable + pixel-perfect) · PDF · HTML · PNG · speaker notes · .deck.json';
 
 export function LandingPage() {
   const osReduced = useReducedMotion();
@@ -115,7 +123,14 @@ export function LandingPage() {
                     className="stg-label inline-flex h-12 items-center gap-2 border-2 border-white/25 px-6 text-[color:var(--stg-cream)] transition-colors hover:border-[color:var(--stg-yellow)] hover:text-[color:var(--stg-yellow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--stg-ink)]"
                   >
                     <Play className="h-4 w-4" aria-hidden />
-                    Watch the 4-min pitch
+                    Watch the 4-min showcase
+                  </Link>
+                  <Link
+                    href="/demo"
+                    className="stg-label inline-flex h-12 items-center gap-2 border-2 border-white/25 px-6 text-[color:var(--stg-cream)] transition-colors hover:border-[color:var(--stg-yellow)] hover:text-[color:var(--stg-yellow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--stg-ink)]"
+                  >
+                    <MonitorPlay className="h-4 w-4" aria-hidden />
+                    Try the live demo
                   </Link>
                   <Link
                     href="/login"
@@ -125,7 +140,7 @@ export function LandingPage() {
                   </Link>
                 </div>
                 <p className="stg-label pb-1 pt-1 text-[10px] text-white/40">
-                  No invented numbers · Outline first · AI runs server-side
+                  Free during beta · Outline first · No invented chart numbers · AI runs server-side
                 </p>
               </motion.div>
 
@@ -258,7 +273,7 @@ export function LandingPage() {
                   The method
                 </p>
                 <h2 className="stg-display mt-3 text-4xl uppercase leading-[0.95] sm:text-5xl">
-                  Three steps, in order, every time.
+                  Four steps, in order, every time.
                 </h2>
               </div>
               <p className="max-w-xs pb-1 text-sm leading-relaxed text-[color:var(--stg-ink)]/70">
@@ -310,8 +325,11 @@ export function LandingPage() {
                 </div>
               ))}
             </motion.div>
-            <motion.p {...enter(0.1)} className="stg-label mt-10 text-center text-[10px] text-white/40">
-              24 systems · 57 templates · 6 export formats — one foundry
+            <motion.p {...enter(0.08)} className="stg-label mt-8 text-center text-[10px] uppercase tracking-wide text-white/50">
+              {EXPORT_LIST}
+            </motion.p>
+            <motion.p {...enter(0.1)} className="stg-label mt-4 text-center text-[10px] text-white/40">
+              24 systems · 57 templates · 7 export options — one foundry
             </motion.p>
           </div>
         </section>

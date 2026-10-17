@@ -82,6 +82,8 @@ export function SettingsView() {
 
   // ---- danger zone ----
   const [purgeBusy, setPurgeBusy] = useState(false);
+  const [purgeOpen, setPurgeOpen] = useState(false);
+  const [purgeConfirm, setPurgeConfirm] = useState('');
 
   useEffect(() => {
     try {
@@ -254,8 +256,9 @@ export function SettingsView() {
         ) : (
           <div className="mt-5 space-y-4">
             <p className="text-sm leading-relaxed text-[color:var(--stg-ink)]/70">
-              You are browsing as a guest. Decks still save to this browser, but an account
-              keeps everything together.
+              You are browsing as a guest. Decks save to the DeckForge server — not your
+              browser — and decks saved as a guest share a temporary common space. An
+              account keeps them under your name.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
@@ -273,6 +276,16 @@ export function SettingsView() {
             </div>
           </div>
         )}
+
+        {/* plain-language data map — states exactly where things live */}
+        <div className="mt-6 border-t-2 border-dashed border-[color:var(--stg-ink)]/20 pt-4">
+          <p className="stg-label text-[9px] text-[color:var(--stg-ink)]/60">Where things live</p>
+          <ul className="mt-2 space-y-1 text-xs leading-relaxed text-[color:var(--stg-ink)]/65">
+            <li>· Decks &amp; exports → the DeckForge server database, tied to your account.</li>
+            <li>· Uploads → parsed in your browser; only a summary is sent to plan charts. Never stored, never used for training.</li>
+            <li>· Preferences (theme, motion) → this browser only (localStorage).</li>
+          </ul>
+        </div>
       </section>
 
       {/* ============================================================
@@ -353,7 +366,7 @@ export function SettingsView() {
           3 · PREFERENCES
          ============================================================ */}
       <section className={cardFrame()} aria-labelledby="prefs-h">
-        {cardLabel(<Palette className="h-4 w-4" aria-hidden />, '03 · Preferences')}
+        {cardLabel(<Palette className="h-4 w-4" aria-hidden />, user ? '03 · Preferences' : '02 · Preferences')}
         <h2 id="prefs-h" className="stg-display mt-2 text-2xl uppercase leading-none">
           Set the stage
         </h2>
@@ -422,17 +435,42 @@ export function SettingsView() {
         className="border-2 border-red-600 bg-[color:var(--stg-cream)] p-5 shadow-[6px_6px_0_0_#dc2626] sm:p-6"
         aria-labelledby="danger-h"
       >
-        {cardLabel(<ShieldAlert className="h-4 w-4" aria-hidden />, '04 · Danger zone', 'red')}
+        {cardLabel(<ShieldAlert className="h-4 w-4" aria-hidden />, user ? '04 · Danger zone' : '03 · Danger zone', 'red')}
         <h2 id="danger-h" className="stg-display mt-2 text-2xl uppercase leading-none">
           Delete all decks
         </h2>
+        {loading ? (
+          <p className="mt-3 flex items-center gap-2 text-sm text-[color:var(--stg-ink)]/60">
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Checking session…
+          </p>
+        ) : !user ? (
+          <div className="mt-3 space-y-4">
+            <p className="text-sm leading-relaxed text-[color:var(--stg-ink)]/70">
+              Bulk deletion is available to signed-in accounts only — as a guest, your decks
+              sit in a temporary shared space. Sign in to manage them.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/login"
+                className="stg-label inline-flex h-11 items-center gap-2 rounded-none border-2 border-[color:var(--stg-ink)] bg-transparent px-4 text-[10px] text-[color:var(--stg-ink)] shadow-[4px_4px_0_0_var(--stg-ink)] transition-all hover:bg-[color:var(--stg-ink)] hover:text-[color:var(--stg-yellow)]"
+              >
+                <LogIn className="h-4 w-4" aria-hidden /> Log in
+              </Link>
+              <Link href="/signup" className={primaryButtonClass + ' inline-flex items-center px-4'}>
+                Sign up — it&apos;s free
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <>
         <p className="mt-3 text-sm leading-relaxed text-[color:var(--stg-ink)]/70">
           Permanently removes every studio deck <em>and</em> every HTML template deck saved in
           this workspace. Decks currently open in the editor keep running until you leave; the
-          files are gone afterwards. This cannot be undone.
+          files are gone afterwards. This cannot be undone — you&apos;ll be asked to type
+          DELETE to confirm.
         </p>
 
-        <AlertDialog>
+        <AlertDialog open={purgeOpen} onOpenChange={(o) => { setPurgeOpen(o); if (!o) setPurgeConfirm(''); }}>
           <AlertDialogTrigger asChild>
             <Button
               variant="outline"
@@ -458,19 +496,35 @@ export function SettingsView() {
                 permanently — both libraries are wiped. This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
+            <div className="space-y-1.5">
+              <Label htmlFor="purge-confirm" className="stg-label text-[10px] text-[color:var(--stg-ink)]/70">
+                Type <span className="font-bold uppercase">DELETE</span> to confirm
+              </Label>
+              <Input
+                id="purge-confirm"
+                value={purgeConfirm}
+                onChange={(e) => setPurgeConfirm(e.target.value)}
+                placeholder="DELETE"
+                autoComplete="off"
+                className={inputClass}
+              />
+            </div>
             <AlertDialogFooter className="gap-2 sm:gap-0">
               <AlertDialogCancel className="rounded-none border-2 border-[color:var(--stg-ink)] bg-transparent font-semibold hover:bg-[color:var(--stg-ink)]/5">
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={purgeAllDecks}
-                className="rounded-none border-2 border-red-600 bg-red-600 font-semibold text-white hover:bg-red-700 focus-visible:ring-red-600"
+                disabled={purgeConfirm.trim().toUpperCase() !== 'DELETE' || purgeBusy}
+                className="rounded-none border-2 border-red-600 bg-red-600 font-semibold text-white hover:bg-red-700 focus-visible:ring-red-600 disabled:pointer-events-none disabled:opacity-40"
               >
                 Yes, delete everything
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+          </>
+        )}
       </section>
     </div>
   );

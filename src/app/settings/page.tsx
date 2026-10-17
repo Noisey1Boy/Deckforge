@@ -18,8 +18,8 @@ export default function SettingsPage() {
             Settings.
           </h1>
           <p className="mt-3 max-w-[62ch] text-sm leading-relaxed text-[color:var(--stg-ink)]/70 sm:text-base">
-            Account, security and stage preferences. Everything here applies to this browser —
-            decks stay wherever you saved them.
+            Account, security and stage preferences. Preferences apply to this browser;
+            decks, exports and uploads are handled server-side — see the data map below.
           </p>
           <div className="mt-10">
             <SettingsView />
