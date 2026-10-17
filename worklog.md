@@ -834,3 +834,24 @@ Stage Summary:
 - All 6 reviewer priorities shipped + a11y/claims items; leftover-string sweep CLEAN (no '8 DESIGN SYSTEMS'/'Zero templates'/'6 export formats'/'print-perfect'/old pitch CTA in src/).
 - Known risks for next round: (1) guest decks share the userId=null bucket in /api/decks — copy now discloses it, but an anonymous session cookie would be the real fix; (2) contact email support@deckforge.app is a placeholder; (3) pitch swipe implemented but not device-tested (CLI has no touch emulation); (4) blob-download capture unverified end-to-end (export menu items execute, no error toasts).
 - Deliverable from ZIP-1 round still valid: deckforge-app.zip at project root (now excludes og-image/qa pngs added after — rebuild on request).
+
+---
+Task ID: CLEANUP-1
+Agent: main-agent (Z.ai Code)
+Task: Remove all unnecessary files from the workspace (tool-results, QA screenshots, scratch scripts, uploads, backups, test configs, export intermediates)
+
+Work Log:
+- Grepped src/ for references to upload/, tool-results/, tmp/, decksmith, testsprite, backups, agent-ctx — confirmed ALL matches are historical code comments only; no runtime code reads or writes these folders (runtime uploads/images go to public/generated/, created on demand).
+- Checked exports/voice-agent-pitch/deckforge-pitch.html for audio references before deleting the audio copy — none found, safe.
+- Deleted (root): tool-results/ (11 MB QA screenshots + read/bash dumps), tmp/ (19 MB slide PNGs, QA shots, scratch build/patch scripts), backups/ (108 K old landing snapshot), testsprite/ (232 K test plans), tests/, scripts/ (wave2 contrast QA script), docs/ (council process docs), agent-ctx/, download/, stray junk file "--full-page" (56 K).
+- Deleted hidden .testsprite/ failure-export cache (3.4 MB). Kept .zscripts/ (platform dev-server infra: dev.sh/dev.pid/dev.log) and .impeccable/ (platform tooling) untouched.
+- upload/ is a sandbox mount point (rm of the dir itself fails, "Device or resource busy") — emptied its full contents instead (44 MB freed: decksmith.zip, decksmith-extracted/ duplicate project, dentist.wav, reference images/notes); empty mount dir remains.
+- exports/ reduced 44 MB → 9.3 MB. Kept only final deliverables in exports/voice-agent-pitch/: voice-agent-pitch.pptx, voice-agent-pitch.pdf, pitch.zip, deckforge-pitch.html, README.md, pitch-script.md, conversation-timings.json. Deleted intermediates: slides/ PNGs, audio/ duplicates, standalone/ extracted dir, stale voice-agent-pitch-full.zip (11 MB), voice-agent-pitch-standalone.zip (5.8 MB), inline-pitch.ts + serve-standalone.ts scratch build scripts.
+- NOT touched: node_modules, skills/ (platform skill library), public/ (app assets incl. templates/frameworks/revealjs/audio/avatars), src/, prisma/, db/custom.db, .env, bun.lock, README/PRODUCT/DESIGN.md, worklog.md, examples/, mini-services/.
+- Verified app health after cleanup: curl / → HTTP 200 (title renders), /api/decks + /api/htmldecks + /api/auth/me → 200 in dev.log; `bun run lint` → clean, zero errors.
+
+Stage Summary:
+- Workspace reclaimed ≈ 83 MB of scratch (not counting upload mount contents) — project root now contains only app source, config, db, and final pitch deliverables.
+- All pitch deliverables remain: PPTX (new cover), PDF (old cover), pitch.zip, deckforge-pitch.html.
+- Loss accepted: tmp/ export build scripts (pitch-to-pptx.ts / pitch-to-pdf.ts / inline-pitch.ts) deleted — regeneration steps documented in worklog PUSH/EXPORT entries if ever needed.
+- External review priority fixes (24-vs-8 count, Pitch/Demo separation, per-route metadata, auth links, /create layout) remain the next development backlog.

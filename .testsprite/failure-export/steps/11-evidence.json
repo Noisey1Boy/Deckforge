@@ -1,8 +1,0 @@
-[
-  {
-    "kind": "snapshot",
-    "stepIndex": 11,
-    "summary": "Step 11 'The editor Export control is visible in the toolbar so export options can be opened.' failed. Error: TEST FAILURE\n\nClicking the PPTX export option could not be verified — repeated automated click attempts timed out and no .pptx download or success toast occurred.\n\nObservations:\n- The Export menu lists PowerPoint (PPTX), PDF, Standalone HTML and PNG; the primary export options are visible and enabled.\n- The 'Standalone HTML' export succeeded: a notification/toast saying 'Standalone HTML downloaded.' is visible on the page and in the screenshot.\n- Repeated attempts to click the 'PPTX (editable)' option timed out (multiple click watchdog timeouts), and no .pptx download or success toast was observed; the PPTX export could not be triggered by the automated test.",
-    "path": "steps/11-snapshot.html"
-  }
-]
