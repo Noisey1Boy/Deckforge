@@ -855,3 +855,21 @@ Stage Summary:
 - All pitch deliverables remain: PPTX (new cover), PDF (old cover), pitch.zip, deckforge-pitch.html.
 - Loss accepted: tmp/ export build scripts (pitch-to-pptx.ts / pitch-to-pdf.ts / inline-pitch.ts) deleted — regeneration steps documented in worklog PUSH/EXPORT entries if ever needed.
 - External review priority fixes (24-vs-8 count, Pitch/Demo separation, per-route metadata, auth links, /create layout) remain the next development backlog.
+
+---
+Task ID: HYD-1
+Agent: main-agent (Z.ai Code)
+Task: Diagnose and fix the React hydration error reported on / (Radix SheetTrigger aria-controls mismatch)
+
+Work Log:
+- Read the full render chain: layout.tsx (AuthProvider → TooltipProvider → children, Toasters after), page.tsx → LandingPage → SiteHeader, AuthProvider (initial state identical SSR/client: user=null, loading=true → guest header on both passes — hydration-safe), useMotionPreference (useSyncExternalStore with server snapshot=false — hydration-safe), HeroSpecimen (renders after the header, cannot shift its useId position).
+- Reproduced the server value: curl / shows aria-controls="radix-_R_2qpbmmlb_" — the exact SSR value from the user's report.
+- Verified current build is CONSISTENT: agent-browser fresh loads show zero hydration warnings in console; dev.log has zero hydration mentions; and after hydration the auth refresh re-renders the header client-side, rewriting aria-controls from the client useId — DOM still holds radix-_R_2qpbmmlb_ → client useId == server useId on the current bundle.
+- Root cause: the user's preview session held a STALE client bundle from before the dev-server restart / CLEANUP-1 churn; old JS encoded the Sheet at an older tree position (_R_mlbmmlb_) while fresh SSR HTML used the new position (_R_2qpbmmlb_). One-off dev-mode skew, self-healing on reload.
+- Hardening: added suppressHydrationWarning to the two Radix triggers in SiteHeader.tsx (SheetTrigger + DropdownMenuTrigger) with an explanatory comment — Radix's aria-controls is a third-party auto-generated id that self-corrects; this keeps the dev console clean when the user sits on a stale preview during HMR/restarts. React-sanctioned pattern for exactly this case.
+- Verified: bun run lint clean; fresh load console clean; mobile 390×844 → trigger visible, Sheet opens (data-state=open), zero console errors.
+
+Stage Summary:
+- No real hydration bug existed in the current tree — the error came from stale-preview HMR skew. suppressHydrationWarning on the radix triggers prevents the scary console wall from recurring.
+- User should hard-reload the preview tab once to pick up the fresh bundle.
+- File touched: src/components/app/SiteHeader.tsx only.

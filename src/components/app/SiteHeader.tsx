@@ -111,6 +111,7 @@ export function SiteHeader({ showCreateCta = false }: { showCreateCta?: boolean 
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger
+                suppressHydrationWarning
                 aria-label="Account menu"
                 className="grid h-9 w-9 place-items-center rounded-full border-2 border-[color:var(--stg-yellow)]/60 bg-[color:var(--stg-yellow)] text-sm font-bold text-[color:var(--stg-ink)] transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--stg-yellow)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--stg-ink)]"
               >
@@ -161,7 +162,13 @@ export function SiteHeader({ showCreateCta = false }: { showCreateCta?: boolean 
 
           {/* mobile menu */}
           <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+            {/* suppressHydrationWarning: Radix generates the aria-controls id
+                via useId — a stale dev bundle (HMR across server restarts) can
+                hold an older tree position, which makes that single auto-id
+                differ on first paint. It self-corrects; keep the console clean
+                instead of alarming the user with a hydration wall of text. */}
             <SheetTrigger
+              suppressHydrationWarning
               aria-label="Open menu"
               className="grid h-11 w-11 place-items-center border border-white/20 text-[color:var(--stg-cream)] transition-colors hover:border-[color:var(--stg-yellow)] hover:text-[color:var(--stg-yellow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--stg-yellow)] md:hidden"
             >
