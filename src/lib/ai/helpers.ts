@@ -1,3 +1,5 @@
+import 'server-only';
+
 import ZAI from 'z-ai-web-dev-sdk';
 
 /**
@@ -94,4 +96,16 @@ export function clientKey(req: Request): string {
     req.headers.get('x-real-ip') ||
     'local'
   );
+}
+
+/**
+ * Server-side body-size guard (P0 audit: "enforce upload limits server-side").
+ * Raw user files are parsed in the browser by design — only compact summaries
+ * reach these routes — so the server-side analog of the UI's 4 MB file cap is
+ * a request-body cap. Best-effort: relies on Content-Length (set by every
+ * browser fetch; chunked bodies fall through to per-route post-read checks).
+ */
+export function bodyTooLarge(req: Request, maxBytes: number): boolean {
+  const len = Number(req.headers.get('content-length') ?? '0');
+  return Number.isFinite(len) && len > 0 && len > maxBytes;
 }

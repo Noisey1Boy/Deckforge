@@ -58,6 +58,7 @@ function TemplatePreview({ id, name }: { id: string; name: string }) {
           src={`/templates/${id}/template.html`}
           title={`${name} template preview`}
           loading="lazy"
+          sandbox="allow-scripts allow-popups allow-modals"
           onLoad={() => setLoaded(true)}
           tabIndex={-1}
           aria-hidden="true"

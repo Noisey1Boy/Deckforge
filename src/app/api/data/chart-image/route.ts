@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { extractJson, getZAI, rateLimit, sanitizeText, toFiniteNumber, clientKey } from '@/lib/ai/helpers';
+import { extractJson, getZAI, rateLimit, sanitizeText, toFiniteNumber, clientKey, bodyTooLarge } from '@/lib/ai/helpers';
 import type { ChartSpec } from '@/lib/deck/types';
 
 export const maxDuration = 120;
@@ -11,6 +11,9 @@ export const maxDuration = 120;
 export async function POST(req: NextRequest) {
   if (!rateLimit(`chartimg:${clientKey(req)}`, 12, 60_000)) {
     return NextResponse.json({ error: 'Too many requests — please wait a moment.' }, { status: 429 });
+  }
+  if (bodyTooLarge(req, 12_000_000)) {
+    return NextResponse.json({ error: 'Image too large — please upload a PNG/JPG/WebP under ~6 MB.' }, { status: 413 });
   }
   try {
     const body = (await req.json()) as { image?: string; language?: string };
@@ -30,6 +33,8 @@ export async function POST(req: NextRequest) {
         },
         {
           role: 'user',
+          /* SDK types content as string, but the multimodal endpoint accepts the
+             standard content-part array — cast past the narrower declaration. */
           content: [
             {
               type: 'text',
@@ -44,7 +49,7 @@ export async function POST(req: NextRequest) {
 Max 8 data points. If a value must be estimated from the axis, estimate conservatively.`,
             },
             { type: 'image_url', image_url: { url: image } },
-          ],
+          ] as unknown as string,
         },
       ],
       thinking: { type: 'disabled' },

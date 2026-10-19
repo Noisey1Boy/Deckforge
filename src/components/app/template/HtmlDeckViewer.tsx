@@ -186,7 +186,12 @@ export function HtmlDeckViewer({
       const win = frame.contentWindow;
       const doc = frame.contentDocument;
       if (!win || !doc || !doc.body) return;
-      const ev = new win.KeyboardEvent('keydown', {
+      /* Sandboxed frames (no allow-same-origin) return a null contentDocument
+         above — forwarding only runs for legacy same-origin docs. The sandboxed
+         iframe still receives real key events itself once the user clicks it. */
+      const WinKB = (win as Window & { KeyboardEvent?: typeof KeyboardEvent }).KeyboardEvent;
+      if (!WinKB) return;
+      const ev = new WinKB('keydown', {
         key: e.key,
         code: e.code,
         keyCode,
@@ -358,6 +363,10 @@ export function HtmlDeckViewer({
             title={`${title} — HTML deck`}
             onLoad={() => setIframeLoaded(true)}
             allow="fullscreen"
+            /* P0 audit hardening: AI-written deck HTML runs from an opaque origin —
+               no access to this app's cookies, storage or DOM. The position chip
+               degrades gracefully (its contentDocument poll already try/catches). */
+            sandbox="allow-scripts allow-popups allow-modals allow-forms allow-downloads"
             className={cn(
               'block w-full border-0 bg-white',
               isFullscreen ? 'h-full' : 'aspect-video',

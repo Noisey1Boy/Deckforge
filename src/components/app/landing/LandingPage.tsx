@@ -6,6 +6,7 @@ import { SiteHeader } from '@/components/app/SiteHeader';
 import { SiteFooter } from '@/components/app/SiteFooter';
 import { HeroSpecimen } from '@/components/app/landing/HeroSpecimen';
 import { useMotionPreference } from '@/components/app/settings/useMotionPreference';
+import { THEMES } from '@/lib/design/themes';
 import { Hammer, Layers, ListTree, MonitorPlay, Palette, PenLine, Play } from 'lucide-react';
 
 /**
@@ -17,7 +18,7 @@ import { Hammer, Layers, ListTree, MonitorPlay, Palette, PenLine, Play } from 'l
  */
 
 const TICKER_ITEMS = [
-  '24 DESIGN SYSTEMS',
+  `${THEMES.length} DESIGN SYSTEMS`,
   '57 HTML TEMPLATES',
   '11 SLIDE LAYOUTS',
   'CHARTS FROM YOUR OWN DATA',
@@ -56,7 +57,7 @@ const METHOD_STEPS = [
 ];
 
 const STATS = [
-  { value: '24', label: 'Design systems' },
+  { value: String(THEMES.length), label: 'Design systems' },
   { value: '57', label: 'HTML templates' },
   { value: '7', label: 'Export options' },
 ];
@@ -329,7 +330,7 @@ export function LandingPage() {
               {EXPORT_LIST}
             </motion.p>
             <motion.p {...enter(0.1)} className="stg-label mt-4 text-center text-[10px] text-white/40">
-              24 systems · 57 templates · 7 export options — one foundry
+              {THEMES.length} systems · 57 templates · 7 export options — one foundry
             </motion.p>
           </div>
         </section>

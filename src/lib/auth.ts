@@ -1,3 +1,5 @@
+import 'server-only';
+
 import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
 import { cookies } from 'next/headers'
 import { db } from '@/lib/db'
@@ -95,4 +97,61 @@ export async function destroySession(): Promise<void> {
     secure: process.env.NODE_ENV === 'production',
     expires: new Date(0),
   })
+}
+
+export const ANON_COOKIE = 'df_anon'
+const ANON_TTL_S = 60 * 60 * 24 * 365 // 1 year
+
+/**
+ * Resolve the current VISITOR as a deck owner.
+ * - Signed-in → the real user.
+ * - Guest → a per-browser anonymous User row keyed by an httpOnly `df_anon`
+ *   cookie, created on first deck-related API call. Every visitor therefore
+ *   owns a PRIVATE deck space — replacing the old shared `userId: null` pool
+ *   that any guest could list, edit or delete (P0 audit fix).
+ *
+ * Route handlers only: cookies() must be mutable to mint the anon cookie.
+ * The returned id is the ownership key every deck/htmldeck query filters by.
+ */
+export async function getVisitorUser(): Promise<SessionUser> {
+  const sessionUser = await getSessionUser()
+  if (sessionUser) return sessionUser
+
+  const store = await cookies()
+  const cookieId = store.get(ANON_COOKIE)?.value
+  if (cookieId && /^anon_[a-f0-9]{24}$/.test(cookieId)) {
+    const existing = await db.user.findUnique({ where: { id: cookieId } })
+    if (existing) {
+      return {
+        id: existing.id,
+        name: existing.name,
+        email: existing.email,
+        createdAt: existing.createdAt.toISOString(),
+      }
+    }
+  }
+
+  const id = `anon_${randomBytes(12).toString('hex')}`
+  const guest = await db.user.create({
+    data: {
+      id,
+      name: 'Guest',
+      email: `${id}@guest.deckforge.local`,
+      passwordHash: '',
+      isGuest: true,
+    },
+  })
+  store.set(ANON_COOKIE, id, {
+    httpOnly: true,
+    sameSite: 'lax',
+    path: '/',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: ANON_TTL_S,
+  })
+  return {
+    id: guest.id,
+    name: guest.name,
+    email: guest.email,
+    createdAt: guest.createdAt.toISOString(),
+  }
 }

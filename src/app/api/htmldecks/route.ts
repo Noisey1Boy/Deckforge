@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { getSessionUser } from '@/lib/auth'
+import { getVisitorUser } from '@/lib/auth'
 import { HTML_CAP, serializeHtmlDeck } from '@/lib/htmlgen/decks'
+import { bodyTooLarge } from '@/lib/ai/helpers'
 
 export const runtime = 'nodejs'
 
-/** GET /api/htmldecks — list HTML decks (metadata only, NO html field), scoped to the session user. */
+/** GET /api/htmldecks — list HTML decks (metadata only, NO html field), scoped to the visitor (session user or per-browser anon owner). */
 export async function GET() {
   try {
-    const sessionUser = await getSessionUser()
+    const owner = await getVisitorUser()
     const decks = await db.htmlDeck.findMany({
-      where: { userId: sessionUser?.id ?? null },
+      where: { userId: owner.id },
       orderBy: { updatedAt: 'desc' },
       take: 100,
       select: {
@@ -38,6 +39,9 @@ export async function GET() {
 
 /** POST /api/htmldecks — create an HTML deck. Returns the full deck JSON. */
 export async function POST(req: NextRequest) {
+  if (bodyTooLarge(req, 4_500_000)) {
+    return NextResponse.json({ error: 'Deck payload too large (html cap 1.5 MB + outline).' }, { status: 413 })
+  }
   try {
     const body = (await req.json()) as {
       title?: unknown
@@ -71,7 +75,7 @@ export async function POST(req: NextRequest) {
       typeof body.templateId === 'string' && /^[a-z0-9-]{0,64}$/.test(body.templateId) ? body.templateId : ''
     const engine = typeof body.engine === 'string' && body.engine ? body.engine.slice(0, 32) : 'opendesign'
 
-    const sessionUser = await getSessionUser()
+    const owner = await getVisitorUser()
     const created = await db.htmlDeck.create({
       data: {
         title: title.slice(0, 200),
@@ -80,7 +84,7 @@ export async function POST(req: NextRequest) {
         engine,
         html,
         outlineJson,
-        userId: sessionUser?.id ?? null,
+        userId: owner.id,
       },
     })
     return NextResponse.json(serializeHtmlDeck(created), { status: 201 })

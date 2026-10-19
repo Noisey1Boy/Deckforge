@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { extractJson, getZAI, rateLimit, sanitizeText, clientKey } from '@/lib/ai/helpers';
+import { extractJson, getZAI, rateLimit, sanitizeText, clientKey, bodyTooLarge } from '@/lib/ai/helpers';
 import type { ChartPlan, MermaidPlan } from '@/lib/data/plans';
 
 export const maxDuration = 120;
@@ -27,16 +27,12 @@ interface Req {
   context?: string;
 }
 
-export interface MermaidPlan {
-  title: string;
-  direction: 'lr' | 'tb';
-  nodes: Array<{ id: string; label: string; shape?: 'box' | 'pill' | 'diamond' }>;
-  edges: Array<{ from: string; to: string; label?: string }>;
-}
-
 export async function POST(req: NextRequest) {
   if (!rateLimit(`analyze:${clientKey(req)}`, 20, 60_000)) {
     return NextResponse.json({ error: 'Too many requests — please wait a moment.' }, { status: 429 });
+  }
+  if (bodyTooLarge(req, 2_000_000)) {
+    return NextResponse.json({ error: 'Payload too large — send compact table metadata (max 2 MB).' }, { status: 413 });
   }
   try {
     const body = (await req.json()) as Req;

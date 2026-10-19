@@ -48,7 +48,7 @@ function looksLikeQuote(line: string): boolean {
 /** Heuristic theme suggestion from the pasted text (client-side, deterministic). */
 export function suggestThemeId(text: string): string {
   const t = text.toLowerCase();
-  const score: Array<[string, number]> = [
+  const score: Array<[string, RegExp]> = [
     ['corporate-clean', /(revenue|sales|quarterly|investor|stakeholder|kpi|finance|budget|b2b|report|growth|market)/g],
     ['tech-modern', /(product|platform|engineering|api|launch|roadmap|tech|developer|saas|feature|release)/g],
     ['dark-elegant', /(vision|luxury|premium|exclusive|midnight|future|ai|secret|keynote)/g],

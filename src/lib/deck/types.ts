@@ -41,6 +41,8 @@ export interface ChartSpec {
   data: Array<{ label: string; value: number }>;
   /** Optional multi-series (line/area/column only). */
   series?: Array<{ name: string; points: number[] }>;
+  /** Chart title rendered above the plot (AI-planned or from the source file). */
+  title?: string;
   /** Unit suffix, e.g. "%", "M USD". */
   unit?: string;
   /** One-line takeaway rendered as annotation. */

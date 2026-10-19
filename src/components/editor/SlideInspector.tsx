@@ -342,8 +342,8 @@ export function SlideInspector({ slide }: { slide: Slide }) {
                 variant="secondary"
                 size="sm"
                 className="h-8 gap-1"
-                disabled={slide.chart.data.length >= 12}
-                onClick={() => set({ chart: { ...slide.chart!, data: [...slide.chart.data, { label: `Item ${slide.chart!.data.length + 1}`, value: 0 }] } })}
+                disabled={(slide.chart?.data.length ?? 0) >= 12}
+                onClick={() => set({ chart: { ...slide.chart!, data: [...slide.chart!.data, { label: `Item ${slide.chart!.data.length + 1}`, value: 0 }] } })}
               >
                 <Plus className="h-3.5 w-3.5" /> Add row
               </Button>

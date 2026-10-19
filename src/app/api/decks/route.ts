@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { getSessionUser } from '@/lib/auth';
+import { getVisitorUser } from '@/lib/auth';
+import { bodyTooLarge } from '@/lib/ai/helpers';
 import type { Deck, DeckMeta, DeckOutline, Slide } from '@/lib/deck/types';
 import { getTheme } from '@/lib/design/themes';
 
-/** GET /api/decks — list recent decks (metadata only), scoped to the session user. */
+/** GET /api/decks — list recent decks (metadata only), scoped to the visitor (session user or per-browser anon owner). */
 export async function GET() {
   try {
-    const sessionUser = await getSessionUser();
+    const owner = await getVisitorUser();
     const decks = await db.deck.findMany({
-      where: { userId: sessionUser?.id ?? null },
+      where: { userId: owner.id },
       orderBy: { updatedAt: 'desc' },
       take: 24,
     });
@@ -46,6 +47,9 @@ export async function GET() {
 
 /** POST /api/decks — create a deck. */
 export async function POST(req: NextRequest) {
+  if (bodyTooLarge(req, 8_000_000)) {
+    return NextResponse.json({ error: 'Deck payload too large (max 8 MB).' }, { status: 413 });
+  }
   try {
     const body = (await req.json()) as Partial<Deck>;
     const slides: Slide[] = Array.isArray(body.slides) ? body.slides : [];
@@ -56,7 +60,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Decks are limited to 60 slides' }, { status: 400 });
     }
     const themeId = getTheme(body.themeId).id;
-    const sessionUser = await getSessionUser();
+    const owner = await getVisitorUser();
     const created = await db.deck.create({
       data: {
         title: body.title.slice(0, 200),
@@ -64,7 +68,7 @@ export async function POST(req: NextRequest) {
         themeId,
         slidesJson: JSON.stringify(slides),
         metaJson: JSON.stringify((body.meta ?? {}) as DeckMeta),
-        userId: sessionUser?.id ?? null,
+        userId: owner.id,
       },
     });
     return NextResponse.json({ id: created.id }, { status: 201 });

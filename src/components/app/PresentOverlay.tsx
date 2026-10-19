@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion, type TargetAndTransition } from 'framer-motion';
 import { useAppStore } from '@/lib/store/deck-store';
 import { getTheme, deckTheme } from '@/lib/design/themes';
 import { deckFooterText } from '@/lib/deck/types';
@@ -48,9 +48,9 @@ function loadPresenterWidth(): number {
 }
 
 interface MotionPreset {
-  initial: Record<string, unknown>;
-  animate: Record<string, unknown>;
-  exit: Record<string, unknown>;
+  initial: boolean | TargetAndTransition;
+  animate: TargetAndTransition;
+  exit: TargetAndTransition;
 }
 
 /** Framer Motion preset for a transition kind ("inherit" follows the theme). */
@@ -114,7 +114,7 @@ export function PresentOverlay() {
   }, []);
 
   const slides = deck?.slides ?? [];
-  const theme = useMemo(() => (deck ? deckTheme(deck) : getTheme(deck?.themeId)), [deck]);
+  const theme = useMemo(() => (deck ? deckTheme(deck) : getTheme(undefined)), [deck]);
   const footerText = deck ? deckFooterText(deck) : '';
   const showPageNumbers = deck?.meta?.showPageNumbers !== false;
   const slide = slides[index];
@@ -549,7 +549,7 @@ export function PresentOverlay() {
             ))}
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => setLoop((v) => !v)}
+              onClick={() => setLoop(!loop)}
               className="justify-between text-sm"
               role="menuitemcheckbox"
               aria-checked={loop}

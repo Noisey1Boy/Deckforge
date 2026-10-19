@@ -52,3 +52,25 @@ prompt
 server.log
 # Skills directory
 /skills/
+# --- DeckForge repo hygiene (P0/P1 audit) ---
+# local SQLite data — never commit user decks
+/db/*.db
+/db/*.db-journal
+# built deliverables live on disk only
+/exports/
+# platform/dev-agent scratch (not part of the app source)
+/worklog.md
+/.zscripts/
+/.impeccable/
+/mini-services/
+/examples/
+/upload/
+/download/
+/agent-ctx/
+/tmp/
+/tool-results/
+/backups/
+/testsprite/
+
+# but DO commit the example env template
+!.env.example

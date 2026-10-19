@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Presentation } from 'lucide-react';
+import { THEMES } from '@/lib/design/themes';
 
 /**
  * SiteFooter — the ink colophon (markup carried over from the old HomePage
@@ -25,7 +26,7 @@ export function SiteFooter() {
             </p>
           </div>
           <div className="stg-label space-y-2.5 text-[10px] text-white/55">
-            <p>24 systems · 57 templates · 11 layouts · 7 export options</p>
+            <p>{THEMES.length} systems · 57 templates · 11 layouts · 7 export options</p>
             <p className="text-white/40">PPTX · PDF · HTML · PNG · speaker notes · .deck.json</p>
             <p className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 bg-[color:var(--stg-yellow)]" aria-hidden />

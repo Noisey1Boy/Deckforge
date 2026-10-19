@@ -67,7 +67,7 @@ function SlideCard({
   showCaption?: boolean;
 }) {
   const deck = useAppStore((s) => s.deck);
-  const themeManifest = deck ? deckTheme(deck) : getTheme(deck?.themeId ?? 'corporate-clean');
+  const themeManifest = deck ? deckTheme(deck) : getTheme('corporate-clean');
   return (
     <div
       draggable

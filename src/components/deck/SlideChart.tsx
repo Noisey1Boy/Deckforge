@@ -73,7 +73,7 @@ function BrowserSizer({ children }: { children: React.ReactNode }) {
   }, []);
   return (
     <div ref={ref} style={{ width: '100%', height: '100%' }}>
-      {ready ? <ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer> : null}
+      {ready ? <ResponsiveContainer width="100%" height="100%">{children as React.ReactElement}</ResponsiveContainer> : null}
     </div>
   );
 }

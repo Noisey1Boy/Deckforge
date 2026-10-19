@@ -177,6 +177,8 @@ export const THEMES: ThemeManifest[] = [
         textMuted: '#7a6a58',
         primary: '#e6003d',
         primaryContrast: '#ffffff',
+        // contrast-safe darker cherry for accent TEXT on the cream bg (WCAG AA)
+        primaryText: '#dc0039',
         accent: '#ffb500',
         border: '#f2dfc8',
       },
@@ -333,6 +335,8 @@ export const THEMES: ThemeManifest[] = [
         textMuted: '#6d675c',
         primary: '#b4552d',
         primaryContrast: '#fffdf8',
+        // contrast-safe darker terracotta for accent TEXT on the cream bg (WCAG AA)
+        primaryText: '#ad512b',
         accent: '#5b6e4f',
         border: '#e3d9c8',
       },
